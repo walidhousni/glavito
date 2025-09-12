@@ -1,0 +1,26 @@
+{
+  "name": "shared-kafka",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/kafka/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/kafka",
+        "main": "libs/shared/kafka/src/index.ts",
+        "tsConfig": "libs/shared/kafka/tsconfig.lib.json",
+        "assets": ["libs/shared/kafka/*.md"]
+      }
+    },
+    "typecheck": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "libs/shared/kafka/tsconfig.lib.json",
+        "noEmit": true
+      }
+    }
+  },
+  "tags": ["scope:shared", "type:library"]
+}

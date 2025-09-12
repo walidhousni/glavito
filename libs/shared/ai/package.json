@@ -1,0 +1,16 @@
+{
+  "name": "@glavito/shared-ai",
+  "version": "0.0.1",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "dependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/config": "^4.0.2",
+    "openai": "^4.0.0",
+    "@anthropic-ai/sdk": "^0.24.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/config": "^4.0.2"
+  }
+}

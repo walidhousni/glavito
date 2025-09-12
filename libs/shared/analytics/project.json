@@ -1,0 +1,26 @@
+{
+  "name": "shared-analytics",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/analytics/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/analytics",
+        "main": "libs/shared/analytics/src/index.ts",
+        "tsConfig": "libs/shared/analytics/tsconfig.lib.json",
+        "assets": ["libs/shared/analytics/*.md"]
+      }
+    },
+    "typecheck": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "libs/shared/analytics/tsconfig.lib.json",
+        "noEmit": true
+      }
+    }
+  },
+  "tags": ["scope:shared", "type:library"]
+}

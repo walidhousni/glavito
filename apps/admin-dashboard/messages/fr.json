@@ -1,0 +1,2971 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Sauvegarder",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "submit": "Soumettre",
+    "close": "Fermer",
+    "allRightsReserved": "Tous droits réservés",
+    "search": "Rechercher...",
+    "searchPlaceholder": "Rechercher tickets, clients, connaissances...",
+    "create": "Créer",
+    "today": "Aujourd'hui",
+    "coverage": "Couverture",
+    "write": "Écrire",
+    "send": "Envoyer",
+    "sending": "Envoi en cours...",
+    "select": "Sélectionner",
+    "notifications": "Notifications",
+    "new": "nouveau",
+    "tryAgain": "Réessayer",
+    "goHome": "Aller à l'accueil",
+    "goBack": "Retour",
+    "newTicket": "Nouveau ticket",
+    "theme": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système",
+    "viewAll": "Voir tout",
+    "settings": "Paramètres",
+    "help": "Aide",
+    "logout": "Déconnexion",
+    "processing": "Traitement...",
+    "add": "Ajouter",
+    "markAllRead": "Tout marquer comme lu"
+  },
+  "whiteLabel": {
+    "assets": {
+      "title": "Assets de marque",
+      "uploadLogo": "Téléverser le logo",
+      "uploadFavicon": "Téléverser le favicon",
+      "remove": "Supprimer",
+      "loading": "Chargement des assets..."
+    },
+    "email": {
+      "templates": "Modèles d'email",
+      "builder": "Constructeur d'email",
+      "preview": "Aperçu",
+      "multiClient": "Aperçu multi-clients",
+      "gmail": "Gmail",
+      "outlook": "Outlook",
+      "appleMail": "Apple Mail",
+      "deliveries": "Envois récents",
+      "opens": "ouvertures",
+      "clicks": "clics"
+    }
+  },
+  
+  "marketplace": {
+    "title": "Place de marché",
+    "search": "Rechercher",
+    "searchPlaceholder": "Rechercher des intégrations, flux, thèmes...",
+    "install": "Installer",
+    "installing": "Installation...",
+    "loadError": "Échec du chargement de la place de marché",
+    "category": "Catégorie",
+    "type": "Type",
+    "all": "Tous",
+    "tagPlaceholder": "Filtrer par tag",
+    "sort": "Trier",
+    "sortUpdated": "Récemment mis à jour",
+    "sortPopular": "Les plus populaires",
+    "sortRating": "Les mieux notés",
+    "sortNewest": "Les plus récents",
+    "premiumOnly": "Premium uniquement",
+    "prev": "Préc.",
+    "next": "Suiv.",
+    "page": "Page {page}"
+  },
+  "ai": {
+    "title": "Intelligence IA",
+    "subtitle": "Insights et analyses IA avancés pour les interactions clients",
+    "buttons": {
+      "export": "Exporter le rapport",
+      "trainModel": "Entraîner le modèle"
+    },
+    "autopilot": {
+      "title": "Autopilote IA & Insights",
+      "mode": "Mode",
+      "minConfidence": "Confiance min",
+      "settings": "Paramètres",
+      "dialogTitle": "Paramètres d'autopilote",
+      "dialogDesc": "Configurez le comportement de l'autopilote IA pour les conversations.",
+      "modeLabel": "Mode",
+      "off": "Désactivé",
+      "draft": "Brouillon (validation agent)",
+      "auto": "Envoi auto",
+      "minConfidenceLabel": "Confiance minimale",
+      "maxRepliesLabel": "Max réponses auto / heure",
+      "allowedChannelsLabel": "Canaux autorisés",
+      "channels": { "whatsapp": "WhatsApp", "instagram": "Instagram", "email": "Email", "web": "Web", "voice": "Voix" },
+      "close": "Fermer",
+      "save": "Enregistrer",
+      "saving": "Enregistrement...",
+      "error": "Échec de l'enregistrement"
+    },
+    "metrics": {
+      "totalAnalyses": "Analyses totales",
+      "avgConfidence": "Confiance moy.",
+      "modelsActive": "Modèles actifs",
+      "responseTime": "Temps de réponse"
+    },
+    "tabs": {
+      "overview": "Aperçu",
+      "sentiment": "Analyse des sentiments",
+      "intents": "Classification d'intentions",
+      "predictions": "Prédictions",
+      "models": "Modèles"
+    },
+    "charts": {
+      "sentimentTrends": "Tendances de sentiment",
+      "sentimentTrendsDesc": "Sentiment client dans le temps",
+      "topIntents": "Intentions principales",
+      "topIntentsDesc": "Intentions clients les plus courantes",
+      "aiPerformance": "Métriques de performance IA",
+      "accuracy": "Précision",
+      "successRate": "Taux de succès"
+    },
+    "recentSentiment": "Analyses de sentiment récentes",
+    "intentResults": "Résultats de classification d'intentions",
+    "escalationPredictions": "Prédictions d'escalade",
+    "churnRiskAssessment": "Évaluation du risque d'attrition",
+    "labels": {
+      "confidence": "confiance",
+      "probability": "probabilité",
+      "risk": "risque"
+    },
+    "models": {
+      "title": "Statut des modèles IA",
+      "desc": "Vue d'ensemble des modèles IA actifs et de leurs performances"
+    },
+    "suggestions": {
+      "title": "Suggestions de réponse IA",
+      "subtitle": "Suggestions IA basées sur l'analyse du message client",
+      "analyzing": "Analyse...",
+      "regenerate": "Régénérer",
+      "customerMessage": "Message client",
+      "tabs": {
+        "responses": "Réponses IA",
+        "templates": "Modèles",
+        "knowledge": "Base de connaissances",
+        "faqs": "FAQs"
+      },
+      "labels": {
+        "confidence": "confiance",
+        "match": "correspondance",
+        "relevant": "pertinent",
+        "characters": "caractères"
+      },
+      "buttons": {
+        "useTemplate": "Utiliser le modèle",
+        "viewArticle": "Voir l'article",
+        "saveAsTemplate": "Enregistrer comme modèle",
+        "sendResponse": "Envoyer la réponse"
+      },
+      "yourResponse": "Votre réponse",
+      "yourResponseDesc": "Modifiez et personnalisez votre réponse avant l'envoi",
+      "placeholders": {
+        "writeHere": "Tapez votre réponse ici..."
+      }
+    }
+  },
+  "localization": {
+    "title": "Localisation",
+    "subtitle": "Langue et devise préférées",
+    "locale": "Langue",
+    "currency": "Devise",
+    "save": "Enregistrer",
+    "saved": "Préférences enregistrées"
+  },
+  "auth": {
+    "login": {
+      "title": "Bienvenue",
+      "subtitle": "Connectez-vous à votre compte",
+      "email": "Email",
+      "password": "Mot de passe",
+      "rememberMe": "Se souvenir de moi",
+      "forgotPassword": "Mot de passe oublié ?",
+      "submit": "Se connecter",
+      "noAccount": "Pas encore de compte ?",
+      "signUp": "S'inscrire",
+      "errors": {
+        "invalidCredentials": "Email ou mot de passe invalide",
+        "required": "Ce champ est requis",
+        "invalidEmail": "Veuillez entrer une adresse email valide"
+      }
+    },
+    "register": {
+      "title": "Créer un compte",
+      "subtitle": "Rejoignez notre plateforme aujourd'hui",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Créer le compte",
+      "hasAccount": "Vous avez déjà un compte ?",
+      "signIn": "Se connecter",
+      "errors": {
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "weakPassword": "Le mot de passe doit contenir au moins 8 caractères",
+        "emailExists": "Cet email existe déjà"
+      }
+    },
+    "forgotPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "subtitle": "Entrez votre email pour recevoir les instructions",
+      "email": "Email",
+      "submit": "Envoyer l'email de réinitialisation",
+      "backToLogin": "Retour à la connexion",
+      "success": "Email de réinitialisation envoyé avec succès"
+    },
+    "resetPassword": {
+      "title": "Définir un nouveau mot de passe",
+      "subtitle": "Entrez votre nouveau mot de passe",
+      "password": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "submit": "Réinitialiser le mot de passe",
+      "success": "Mot de passe réinitialisé avec succès"
+    },
+    "verifyEmail": {
+      "title": "Vérifier l'email",
+      "subtitle": "Vérifiez votre email pour le lien de vérification",
+      "resend": "Renvoyer l'email de vérification",
+      "success": "Email vérifié avec succès"
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Gérez votre tableau de bord administrateur efficacement",
+    "welcome": "Bon retour, {name}!",
+    "welcomeToGlavito": "Bienvenue sur Glavito",
+    "systemReady": "Votre système de support multicanal est prêt!",
+    "onboardingComplete": "Intégration terminée",
+    "settings": "Paramètres",
+    "totalTickets": "Total des tickets",
+    "activeAgents": "Agents actifs",
+    "avgResponseTime": "Temps de réponse moyen",
+    "satisfaction": "Satisfaction",
+    "readyToReceive": "Prêt à recevoir des tickets",
+    "youreOnline": "Vous êtes en ligne",
+    "noDataYet": "Aucune donnée pour le moment",
+    "noRatingsYet": "Aucune évaluation pour le moment",
+    "gettingStarted": "Commencer",
+    "gettingStartedDesc": "Complétez ces étapes pour tirer le meilleur parti de votre système de support",
+    "completeOnboarding": "Terminer l'intégration",
+    "completeOnboardingDesc": "Configurez votre organisation et vos canaux",
+    "done": "Terminé",
+    "testChannels": "Tester vos canaux",
+    "testChannelsDesc": "Envoyez un message de test via vos canaux connectés",
+    "testNow": "Tester maintenant",
+    "inviteTeam": "Inviter des membres d'équipe",
+    "inviteTeamDesc": "Ajoutez votre équipe de support pour commencer à collaborer",
+    "invite": "Inviter",
+    "createFirstTicket": "Créer votre premier ticket",
+    "createFirstTicketDesc": "Testez le flux de création et de gestion des tickets",
+    "create": "Créer",
+    "quickActions": "Actions rapides",
+    "quickActionsDesc": "Tâches courantes et raccourcis",
+    "viewAllTickets": "Voir tous les tickets",
+    "manageTeam": "Gérer l'équipe",
+    "viewReports": "Voir les rapports",
+    "systemSettings": "Paramètres système",
+    "needHelp": "Besoin d'aide?",
+    "needHelpDesc": "Nous sommes là pour vous aider à réussir",
+    "viewDocumentation": "Voir la documentation",
+    "contactSupport": "Contacter le support",
+    "joinCommunity": "Rejoindre la communauté",
+    "createTicket": "Créer un ticket",
+    "createTicketDesc": "Créer un nouveau ticket de support",
+    "addCustomer": "Ajouter un client",
+    "addCustomerDesc": "Ajouter un nouveau client au système",
+    "sendEmail": "Envoyer un email",
+    "sendEmailDesc": "Envoyer un email aux clients",
+    "overview": "Aperçu du tableau de bord",
+    "monitorPerformance": "Surveillez les performances de votre support et les métriques de l'équipe",
+    "searchPlaceholder": "Rechercher des tickets, agents ou clients...",
+    "newTicket": "Nouveau ticket",
+    "reports": "Rapports",
+    "totalTicketsLabel": "Total des tickets",
+    "avgResponseTimeLabel": "Temps de réponse moyen",
+    "resolutionRate": "Taux de résolution",
+    "activeIssues": "Problèmes actifs",
+    "vsLastMonth": "vs le mois dernier",
+    "fasterThanLastMonth": "15% plus rapide",
+    "improvementThisMonth": "+8.2% d'amélioration",
+    "thisMonth": "ce mois-ci",
+    "urgentNeedAttention": "Urgent nécessite attention",
+    "needAttention": "nécessite attention",
+    "responseTimeAnalytics": "Analyses du temps de réponse",
+    "performanceTrendsDescription": "Suivez les temps de réponse et les tendances de résolution dans le temps",
+    "thisWeek": "Cette semaine",
+    "firstResponse": "Première réponse",
+    "resolutionTime": "Temps de résolution",
+    "avg": "Moy",
+    "commonTasks": "Tâches communes et raccourcis",
+    "inviteAgent": "Inviter un agent",
+    "settings": "Paramètres",
+    "aiInsights": "Insights IA",
+    "smartRecommendations": "Recommandations intelligentes alimentées par l'IA",
+    "peakHoursDetected": "Heures de pointe détectées",
+    "peakHoursRecommendation": "Considérez ajouter plus d'agents entre 14h-16h quand le volume de tickets est le plus élevé.",
+    "highImpact": "Impact élevé",
+    "slaRiskAlert": "Alerte risque SLA",
+    "slaRiskDescription": "3 tickets approchent de la violation SLA. Attention immédiate requise.",
+    "urgent": "Urgent",
+    "viewAllAiInsights": "Voir tous les insights IA",
+    "customerSatisfaction": "Satisfaction client",
+    "averageRatingFeedback": "Note moyenne et analyse des commentaires",
+    "overallSatisfaction": "Satisfaction globale",
+    "positiveFeedback": "Commentaires positifs",
+    "neutralFeedback": "Commentaires neutres",
+    "negativeFeedback": "Commentaires négatifs",
+    "ticketStatus": "Statut des tickets",
+    "currentDistributionStatuses": "Distribution actuelle des statuts de tickets",
+    "open": "Ouvert",
+    "inProgress": "En cours",
+    "waiting": "En attente",
+    "resolved": "Résolu",
+    "closed": "Fermé",
+    "tickets": "tickets",
+    "total": "Total",
+    "errorLoadingDashboard": "Erreur lors du chargement du tableau de bord",
+    "resolutionTime": "Temps de résolution",
+    "avgTime": "Moy: 2.4h",
+    "quickActionsTitle": "Actions rapides",
+    "quickActionsSubtitle": "Tâches courantes et raccourcis",
+    "createTicketAction": "Créer un ticket",
+    "inviteAgent": "Inviter un agent",
+    "viewReportsAction": "Voir les rapports",
+    "settingsAction": "Paramètres",
+    "aiInsights": "Insights IA",
+    "aiInsightsSubtitle": "Recommandations intelligentes alimentées par l'IA",
+    "peakHoursDetected": "Heures de pointe détectées",
+    "peakHoursRecommendation": "Envisagez d'ajouter 2 agents supplémentaires de 14h à 16h pour réduire les temps de réponse de 23%",
+    "highImpact": "Impact élevé",
+    "slaRiskAlert": "Alerte de risque SLA",
+    "slaRiskMessage": "3 tickets approchent d'une violation SLA. Auto-escalader vers les agents seniors?",
+    "urgent": "Urgent",
+    "viewAllAiInsights": "Voir tous les insights IA",
+    "customerSatisfactionTicketStatus": "Satisfaction client et statut des tickets",
+    "customerSatisfactionTitle": "Satisfaction client",
+    "customerSatisfactionSubtitle": "Note moyenne basée sur les commentaires de résolution des tickets",
+    "overallSatisfaction": "Satisfaction globale",
+    "positiveFeedback": "Commentaires positifs",
+    "neutralFeedback": "Commentaires neutres",
+    "negativeFeedback": "Commentaires négatifs",
+    "ticketStatusTitle": "Statut des tickets",
+    "ticketStatusSubtitle": "Distribution actuelle des statuts de tickets",
+    "open": "Ouvert",
+    "inProgress": "En cours",
+    "waiting": "En attente",
+    "resolved": "Résolu",
+    "closed": "Fermé",
+    "errorLoadingDashboard": "Erreur lors du chargement du tableau de bord",
+    "viewAnalytics": "Voir les analyses",
+    "viewAnalyticsDesc": "Voir les analyses détaillées et les rapports",
+    "recentActivity": "Activité récente",
+    "totalCustomers": "Total des clients",
+    "revenue": "Revenus",
+    "growth": "Croissance",
+    "fromLastMonth": "du mois dernier",
+    "performanceTrendsDescription": "Tendances de performance sur les 12 dernières périodes",
+    "avg": "Moy",
+    "commonTasks": "Tâches communes et raccourcis",
+    "createTicket": "Créer un ticket",
+    "viewReports": "Voir les rapports",
+    "settings": "Paramètres",
+    "smartRecommendations": "Recommandations intelligentes alimentées par l'IA",
+    "averageRatingFeedback": "Note moyenne basée sur les commentaires de résolution des tickets",
+    "currentDistributionStatuses": "Distribution actuelle de tous les statuts",
+    "total": "Total",
+    "tickets": "tickets",
+    "activityFeed": {
+      "title": "Activité Récente",
+      "description": "Dernières mises à jour de votre plateforme de support",
+      "viewAll": "Voir Tout",
+      "priority": {
+        "urgent": "Urgent",
+        "high": "Élevé",
+        "medium": "Moyen",
+        "low": "Faible"
+      },
+      "remaining": "restant",
+      "noActivity": {
+        "title": "Aucune Activité Récente",
+        "description": "L'activité apparaîtra ici lorsque votre équipe travaillera sur les tickets et que les clients interagiront avec votre plateforme."
+      }
+    },
+    "search": {
+      "title": "Résultats de Recherche",
+      "tickets": "Tickets",
+      "customers": "Clients",
+      "knowledge": "Base de Connaissances",
+      "noResults": "Aucun résultat trouvé"
+    },
+    "metricCard": {
+      "vsLastMonth": "vs le mois dernier"
+    },
+    "performanceOverview": {
+      "title": "Meilleurs Performeurs",
+      "description": "Vos meilleurs agents ce mois-ci",
+      "badges": {
+        "topAgent": "Meilleur Agent",
+        "secondPlace": "2ème Place",
+        "thirdPlace": "3ème Place"
+      },
+      "metrics": {
+        "tickets": "Tickets",
+        "rating": "Note",
+        "response": "Réponse",
+        "resolutionRate": "Taux de Résolution"
+      },
+      "emptyState": {
+        "title": "Aucune donnée d'agent disponible",
+        "description": "Les données de performance apparaîtront ici une fois que les agents commenceront à résoudre les tickets"
+      }
+    },
+    "quickActions": {
+      "title": "Actions Rapides",
+      "actions": {
+        "newTicket": {
+          "title": "Nouveau Ticket",
+          "description": "Créer un ticket de support"
+        },
+        "addAgent": {
+          "title": "Ajouter un Agent",
+          "description": "Inviter un membre de l'équipe"
+        },
+        "liveChat": {
+          "title": "Chat en Direct",
+          "description": "Surveiller les conversations"
+        },
+        "analytics": {
+          "title": "Analyses",
+          "description": "Voir les performances"
+        },
+        "workflows": {
+          "title": "Flux de Travail",
+          "description": "Automatiser les processus"
+        },
+        "reports": {
+          "title": "Rapports",
+          "description": "Générer des insights"
+        },
+        "emailSetup": {
+          "title": "Configuration Email",
+          "description": "Configurer les canaux"
+        },
+        "settings": {
+          "title": "Paramètres",
+          "description": "Configuration système"
+        }
+      }
+    },
+    "activity": {
+      "newTicketCreated": "Nouveau ticket de support créé",
+      "billingInquiry": "Demande client concernant la facturation",
+      "twoMinutesAgo": "il y a 2 minutes",
+      "fifteenMinutesAgo": "il y a 15 minutes",
+      "oneHourAgo": "il y a 1 heure",
+      "twoHoursAgo": "il y a 2 heures",
+      "ticketResolved": "Ticket résolu",
+      "technicalIssueFixed": "Problème technique résolu",
+      "profileUpdated": "Profil mis à jour",
+      "sarahUpdatedContact": "Sarah a mis à jour ses informations de contact",
+      "newCustomerRegistered": "Nouveau client enregistré",
+      "johnDoeJoined": "John Doe a rejoint en tant que nouveau client"
+    },
+    "stats": {
+      "totalTickets": "Total des tickets",
+      "openTickets": "Tickets ouverts",
+      "resolvedTickets": "Tickets résolus",
+      "responseTime": "Temps de réponse moyen"
+    }
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "agent_dashboard": "Boîte unifiée",
+    "conversations": "Conversations",
+    "tickets": "Tickets",
+    "customers": "Clients",
+    "agents": "Agents",
+    "teams": "Équipes",
+    "availability": "Disponibilité",
+    "myPerformance": "Ma Performance",
+    "analytics": "Analytiques",
+    "ai_intelligence": "Intelligence IA",
+    "coaching": "Coaching",
+    "callsAnalytics": "Analytique des appels",
+    "knowledge": "Base de connaissances",
+    "workflows": "Flux de travail",
+    "flows": "Flux",
+    "collaboration": "Collaboration",
+    "portal_kb_preview": "Aperçu du portail KB",
+    "marketplace": "Marketplace",
+    "customize_dashboard": "Personnaliser le tableau",
+    "permissions": "Autorisations",
+    "admin_settings": "Paramètres admin",
+    "integrations": "Intégrations",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "logout": "Déconnexion",
+    "newTicket": "Nouveau ticket",
+    "crm": "CRM",
+    "marketing": "Marketing",
+    "supportPlatform": "Plateforme de support",
+    "groups": {
+      "main": "Principal",
+      "manage": "Gérer",
+      "insights": "Analyses",
+      "automation": "Automatisation",
+      "settings": "Paramètres"
+    }
+  },
+  "crm": {
+    "title": "Hub CRM",
+    "subtitle": "Leads et pipeline au même endroit",
+    "tabs": { "leads": "Leads", "pipeline": "Pipeline", "segments": "Segments", "analytics": "Analytique" },
+    "actions": { "createLead": "Créer un lead", "createDeal": "Créer une affaire" },
+    "searchLeadsPlaceholder": "Rechercher des leads...",
+    "empty": { "leads": "Aucun lead", "deals": "Aucune affaire dans cette étape" },
+    "stages": {
+      "new": "Nouveau",
+      "qualified": "Qualifié",
+      "proposal": "Proposition",
+      "negotiation": "Négociation",
+      "won": "Gagné",
+      "lost": "Perdu"
+    },
+    "createLeadDialog": {
+      "title": "Créer un nouveau lead",
+      "description": "Ajoutez un nouveau lead à votre pipeline CRM et commencez à suivre son parcours.",
+      "sections": {
+        "personalInfo": "Informations personnelles",
+        "contactInfo": "Informations de contact",
+        "companyInfo": "Informations de l'entreprise"
+      },
+      "firstName": "Prénom",
+      "lastName": "Nom de famille",
+      "email": "Adresse e-mail",
+      "company": "Entreprise",
+      "phone": "Numéro de téléphone",
+      "source": "Source du lead",
+      "placeholders": {
+        "firstName": "Jean",
+        "lastName": "Dupont",
+        "email": "jean@entreprise.com",
+        "company": "Acme Corporation",
+        "phone": "+33 6 12 34 56 78",
+        "source": "Sélectionner la source du lead"
+      },
+      "sources": {
+        "website": "Site web",
+        "referral": "Recommandation",
+        "socialMedia": "Réseaux sociaux",
+        "emailCampaign": "Campagne e-mail",
+        "coldCall": "Appel à froid",
+        "tradeShow": "Salon professionnel",
+        "partner": "Partenaire",
+        "other": "Autre"
+      },
+      "cancel": "Annuler",
+      "create": "Créer le lead",
+      "creating": "Création du lead...",
+      "errors": {
+        "firstNameRequired": "Le prénom est requis",
+        "lastNameRequired": "Le nom de famille est requis",
+        "emailRequired": "L'adresse e-mail est requise",
+        "emailInvalid": "Veuillez saisir une adresse e-mail valide",
+        "companyRequired": "Le nom de l'entreprise est requis",
+        "phoneInvalid": "Veuillez saisir un numéro de téléphone valide"
+      }
+    },
+    "createDealDialog": {
+      "title": "Créer une nouvelle affaire",
+      "description": "Ajoutez une nouvelle affaire au pipeline.",
+      "sections": {
+        "dealInfo": "Informations sur l'affaire",
+        "financialInfo": "Informations financières",
+        "pipelineInfo": "Pipeline & étape",
+        "customFields": "Champs supplémentaires"
+      },
+      "fields": {
+        "name": "Nom de l'affaire",
+        "description": "Description",
+        "value": "Valeur",
+        "currency": "Devise",
+        "pipeline": "Pipeline",
+        "stage": "Étape"
+      },
+      "placeholders": {
+        "name": "ex. Offre Entreprise",
+        "description": "Détails optionnels...",
+        "value": "5000",
+        "currency": "Sélectionner la devise",
+        "pipeline": "Sélectionner le pipeline",
+        "stage": "Sélectionner l'étape"
+      },
+      "errors": {
+        "nameRequired": "Le nom de l'affaire est requis",
+        "valueRequired": "La valeur de l'affaire est requise",
+        "valueInvalid": "Veuillez saisir un montant valide",
+        "pipelineRequired": "Le pipeline est requis"
+      },
+      "cancel": "Annuler",
+      "create": "Créer l'affaire",
+      "creating": "Création de l'affaire..."
+    }
+  },
+  "analytics": {
+    "pipelineOverview": "Aperçu du pipeline",
+    "weightedPipeline": "Pipeline pondéré",
+    "winRate": "Taux de gain",
+    "avgCycle": "Cycle moyen (jours)",
+    "byStage": "Affaires par étape",
+    "salesForecast": "Prévision des ventes (30j)",
+    "totalForecast": "Prévision totale",
+    "days": "Jours",
+    "nextDays": "Prochains jours"
+  },
+  "analytics": {
+    "ui": {
+      "title": "Tableau d'analyse",
+      "subtitle": "Intelligence d'affaires et performances complètes",
+      "loadingFailed": "Échec du chargement des données d'analyse",
+      "retry": "Réessayer",
+      "time": { "24h": "24h", "7d": "7j", "30d": "30j", "90d": "90j" },
+      "tabs": {
+        "overview": "Aperçu",
+        "performance": "Performance",
+        "predictive": "Prédictif",
+        "financial": "Financier",
+        "custom": "Rapports personnalisés",
+        "calls": "Analytique des appels",
+        "satisfaction": "Satisfaction"
+      },
+      "realtime": {
+        "activeTickets": "Tickets actifs",
+        "queue": "File",
+        "activeAgents": "Agents actifs",
+        "onlineNow": "En ligne",
+        "avgResponseTime": "Temps de réponse moy.",
+        "last24h": "Dernières 24 heures",
+        "customerSatisfaction": "Satisfaction client",
+        "outOf5": "Sur 5,0"
+      },
+      "kpi": {
+        "fromLastPeriod": "{value}% vs période précédente",
+        "target": "Cible : {value}"
+      },
+      "charts": {
+        "channelDistribution": "Répartition par canal",
+        "channelDistributionDesc": "Volume de tickets par canal",
+        "priorityDistribution": "Répartition par priorité",
+        "priorityDistributionDesc": "Volume de tickets par priorité",
+        "slaCompliance": "Conformité SLA",
+        "slaComplianceDesc": "Taux actuel de violation SLA",
+        "complianceRate": "Taux de conformité",
+        "slaAboveThreshold": "Le taux de violation SLA est au‑dessus du seuil"
+      },
+      "performance": {
+        "title": "Analytique de performance",
+        "desc": "Métriques détaillées et classements",
+        "topChannels": "Meilleurs canaux",
+        "topChannelsDesc": "Canaux de support les plus productifs",
+        "agentLeaderboard": "Classement des agents",
+        "agentLeaderboardDesc": "Top agents par tickets résolus et CSAT",
+        "resolved": "Résolus",
+        "csat": "CSAT",
+        "viewDetails": "Voir les détails",
+        "agentDetails": "Détails de l'agent",
+        "agentDetailsDesc": "Performance et qualité de l'agent",
+        "agent": "Agent",
+        "ticketsHandled": "Tickets traités",
+        "avgResp": "Réponse moy.",
+        "avgRes": "Résolution moy.",
+        "channelDetails": "Détails du canal",
+        "channelDetailsDesc": "Métriques de performance du canal",
+        "channel": "Canal",
+        "tickets": "Tickets",
+        "trendPerformance": "Tendance performance",
+        "trendSatisfaction": "Tendance satisfaction",
+        "trendVolume": "Tendance volume"
+      },
+      "predictive": {
+        "demandForecast": "Prévision de la demande",
+        "demandForecastDesc": "Volume de tickets prévu pour les 30 prochains jours",
+        "noForecast": "Aucune donnée de prévision disponible",
+        "capacityAnalysis": "Analyse de capacité",
+        "capacityAnalysisDesc": "Capacité actuelle vs demande prévue",
+        "currentCapacity": "Capacité actuelle",
+        "predictedDemand": "Demande prévue",
+        "utilizationRate": "Taux d'utilisation",
+        "highUtilization": "Taux d'utilisation élevé — envisager d'augmenter la capacité",
+        "noCapacity": "Aucune donnée de capacité disponible",
+        "churnRiskAnalysis": "Analyse du risque d'attrition",
+        "churnRiskAnalysisDesc": "Clients à risque d'attrition",
+        "customer": "Client {id}",
+        "riskLevel": "Niveau de risque :",
+        "days": "jours",
+        "noChurn": "Aucune prédiction d'attrition disponible"
+      },
+      "financial": {
+        "title": "Analytique financière",
+        "desc": "Revenus, coûts et ROI",
+        "revenue": "Revenus",
+        "costs": "Coûts",
+        "roi": "ROI",
+        "revenueByChannel": "Revenus par canal"
+      },
+      "customReports": {
+        "title": "Rapports personnalisés",
+        "desc": "Créez et gérez des rapports et tableaux de bord personnalisés"
+      },
+      "loading": "Chargement...",
+      "noData": "Aucune donnée"
+    },
+    "observability": {
+      "title": "Santé du système",
+      "healthSummary": "État actuel du système et métriques de performance"
+    },
+    "common": {
+      "viewAll": "Voir tout",
+      "loading": "Chargement..."
+    },
+    "customers": {
+      "exportData": "Exporter les données"
+    },
+    "ai": {
+      "buttons": {
+        "export": "Exporter"
+      }
+    },
+    "revenue": {
+      "byChannel": "Revenus par canal",
+      "title": "Analyses des revenus",
+      "subtitle": "Suivez l'attribution des revenus par canal"
+    },
+    "calls": {
+      "totalCalls": "Total des appels",
+      "activeCalls": "Actifs",
+      "endedCalls": "Terminés",
+      "totalMinutes": "Total des minutes",
+      "byType": "Par type",
+      "byDirection": "Par direction",
+      "quality24h": "Qualité (24h)",
+      "trend7d": "7 derniers jours (minutes)",
+      "noData": "Aucune donnée"
+    },
+    "satisfaction": {
+      "title": "Satisfaction client",
+      "subtitle": "Suivez et analysez les commentaires clients sur tous les canaux",
+      "error": "Échec du chargement des analyses de satisfaction",
+      "export": "Exporter",
+      "timeRanges": {
+        "7d": "7 jours",
+        "30d": "30 jours",
+        "90d": "90 jours"
+      },
+      "metrics": {
+        "surveysSent": "Enquêtes envoyées",
+        "responseRate": "Taux de réponse",
+        "averageRating": "Note moyenne",
+        "totalResponses": "Total des réponses",
+        "activeCampaign": "Campagne active",
+        "noSurveys": "Aucune enquête envoyée",
+        "of": "de",
+        "responded": "ont répondu",
+        "valuableFeedback": "Commentaires précieux collectés"
+      },
+      "charts": {
+        "ratingDistribution": "Distribution des notes",
+        "ratingDistributionDesc": "Répartition des notes de satisfaction client",
+        "channelPerformance": "Performance des canaux",
+        "channelPerformanceDesc": "Distribution des enquêtes par canal de communication"
+      },
+      "recentFeedback": {
+        "title": "Commentaires récents",
+        "subtitle": "Dernières réponses de satisfaction client et commentaires",
+        "noResponses": "Aucune réponse d'enquête pour le moment"
+      }
+    },
+    "noData": "Aucune donnée"
+  },
+  "teams": {
+    "title": "Gestion des équipes",
+    "subtitle": "Gérez vos équipes de support et leurs membres",
+    "members": "membres",
+    "noTeamsFound": "Aucune équipe trouvée",
+    "actions": {
+      "createTeam": "Créer une équipe",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "editTeam": "Modifier l'équipe",
+      "addMember": "Ajouter un membre",
+      "settings": "Paramètres",
+      "deleteTeam": "Supprimer l'équipe"
+    },
+    "labels": {
+      "default": "Par défaut",
+      "members": "membres",
+      "teamLead": "Chef d'équipe"
+    },
+    "fields": {
+      "name": "Nom de l'équipe",
+      "description": "Description",
+      "color": "Couleur de l'équipe"
+    },
+    "placeholders": {
+      "teamName": "Entrez le nom de l'équipe",
+      "teamDescription": "Entrez la description de l'équipe"
+    },
+    "create": {
+      "title": "Créer une nouvelle équipe",
+      "description": "Créez une équipe de support pour organiser vos agents et gérer les tickets."
+    }
+  },
+  "knowledge": {
+    "title": "Centre d'aide",
+    "subtitle": "Trouvez des réponses aux questions courantes, obtenez une aide instantanée de notre assistant IA, ou contactez notre équipe de support",
+    "searchPlaceholder": "Recherchez des articles d'aide, FAQ, ou posez une question...",
+    "noResults": "Aucun résultat trouvé",
+    "tryDifferentSearch": "Essayez un terme de recherche différent",
+    "articles": "Articles d'aide",
+    "articlesSubtitle": "Guides complets et tutoriels",
+    "articlesDescription": "Explorez notre base de connaissances complète",
+    "articlesCount": "150+ Articles",
+    "faqs": "Questions Fréquemment Posées",
+    "faqsSubtitle": "Réponses rapides aux questions courantes",
+    "chat": "Assistant IA",
+    "chatSubtitle": "Obtenez des réponses instantanées alimentées par l'IA",
+    "chatWithAI": "Discuter avec l'Assistant IA",
+    "chatDescription": "Obtenez des réponses instantanées de notre assistant intelligent",
+    "chatStart": "Commencez la conversation en posant une question.",
+    "chatPlaceholder": "Tapez votre question...",
+    "suggestions": "Articles suggérés :",
+    "continueWhatsapp": "Continuer sur WhatsApp",
+    "askByEmail": "Contacter le Support par Email",
+    "emailSubtitle": "Envoyez-nous un message et nous vous répondrons",
+    "emailAddress": "Adresse Email",
+    "message": "Message",
+    "messagePlaceholder": "Décrivez votre question ou problème en détail...",
+    "getResumeLink": "Obtenir le lien de reprise",
+    "browseArticles": "Parcourir les Articles",
+    "contactSupport": "Contacter le Support",
+    "supportDescription": "Contactez notre équipe de support experte",
+    "aiPowered": "Support Alimenté par l'IA",
+    "avgResponseTime": "< 2min de Réponse",
+    "helpedUsers": "10k+ Utilisateurs Aidés",
+    "fullArticle": "Contenu complet de l'article",
+    "helpful": "Cela vous a-t-il aidé ?",
+    "backToSearch": "Retour à la Recherche",
+    "stillNeedHelp": "Besoin d'aide supplémentaire ?",
+    "contactDescription": "Notre équipe de support est là pour vous aider avec toutes vos questions ou problèmes.",
+    "scheduleCall": "Programmer un Appel",
+    "analyticsOverview": "Vue d'ensemble analytique",
+    "totalViews": "Vues totales",
+    "helpfulRate": "Taux d'utilité",
+    "trending": "Tendance",
+    "maintenance": "Maintenance",
+    "markReviewed": "Marquer comme révisé",
+    "suggested": "Articles suggérés",
+    "tipSelectText": "Sélectionnez du texte dans les messages pour affiner les suggestions.",
+    "copied": "Copié",
+    "copySnippet": "Copier",
+    "copyArticle": "Copier l'article",
+    "generateFromTicket": "Générer depuis le ticket"
+  },
+  "search": {
+    "noResults": "Aucun résultat trouvé",
+    "tryDifferent": "Essayez un terme de recherche différent",
+    "searchIn": "Rechercher dans {count} résultats",
+    "resultTypes": {
+      "ticket": "Ticket",
+      "customer": "Client",
+      "knowledge": "Connaissance",
+      "user": "Utilisateur",
+      "team": "Équipe"
+    }
+  },
+  "tickets": {
+    "aiAnalyze": "Analyse IA",
+    "aiAutoAssign": "Affectation IA",
+    "bulkAnalyzeSuccess": "Analyse IA effectuée pour {count} ticket(s)",
+    "bulkAnalyzeError": "Échec de l'analyse des tickets sélectionnés",
+    "bulkAssignSuccess": "Affectation automatique de {count} ticket(s)",
+    "bulkAssignError": "Échec de l'affectation automatique",
+    "title": "Tickets",
+    "subtitle": "Gérer et suivre les tickets de support",
+    "startVoiceCall": "Démarrer un appel vocal",
+    "startVideoCall": "Démarrer un appel vidéo",
+    "searchPlaceholder": "Rechercher des tickets...",
+    "saved": {
+      "button": "Enregistrés",
+      "none": "Aucune recherche enregistrée",
+      "saveAs": "Enregistrer la recherche sous...",
+      "semanticOn": "Sémantique : ACTIVÉ",
+      "semanticOff": "Sémantique : DÉSACTIVÉ"
+    },
+    "save": "Sauvegarder",
+    "filtersLabel": "Filtres",
+    "listView": "Liste",
+    "kanbanView": "Kanban",
+    "tableView": "Tableau",
+    "subject": "Sujet",
+    "status": {
+      "open": "Ouvert",
+      "in_progress": "En cours",
+      "waiting": "En attente",
+      "resolved": "Résolu",
+      "closed": "Fermé"
+    },
+    "priority": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "urgent": "Urgent",
+      "critical": "Critique"
+    },
+    "urgent": "Urgent",
+    "cancel": "Annuler",
+    "optional": "Optionnel",
+    "statusLabel": "Statut",
+    "priorityLabel": "Priorité",
+    "assignee": "Assigné à",
+    "created": "Créé",
+    "unassigned": "Non assigné",
+    "view": "Voir",
+    "edit": "Modifier",
+    "assign": "Assigner",
+    "autoAssign": "Attribution automatique",
+    "refresh": "Actualiser",
+    "createTicket": "Créer un ticket",
+    "showingResults": "Affichage de {start}-{end} sur {total} résultats",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "overdue": "En retard",
+    "slaRisk": "Risque SLA",
+    "aiInsights": "Insights IA",
+    "urgency": "Urgence",
+    "breaches": "violations",
+    "justNow": "À l'instant",
+    "hoursAgo": "Il y a {hours} heures",
+    "daysAgo": "Il y a {days} jours",
+    "sentiment": {
+      "positive": "Positif",
+      "negative": "Négatif",
+      "neutral": "Neutre"
+    },
+    "filters": {
+      "title": "Filtres",
+      "active": "actifs",
+      "clear": "Effacer",
+      "status": "Statut",
+      "priority": "Priorité",
+      "assignee": "Assigné à",
+      "selectAssignee": "Sélectionner un assigné",
+      "allAssignees": "Tous les assignés",
+      "customer": "Client",
+      "selectCustomer": "Sélectionner un client",
+      "allCustomers": "Tous les clients",
+      "channel": "Canal",
+      "selectChannel": "Sélectionner un canal",
+      "allChannels": "Tous les canaux",
+      "team": "Équipe",
+      "selectTeam": "Sélectionner une équipe",
+      "allTeams": "Toutes les équipes",
+      "dateRange": "Plage de dates",
+      "from": "De",
+      "to": "À",
+      "special": "Filtres spéciaux",
+      "overdue": "En retard",
+      "unassigned": "Non assigné",
+      "slaAtRisk": "SLA à risque",
+      "tags": "Étiquettes",
+      "activeFilters": "Filtres actifs"
+    },
+    "suggestions": {
+      "subjects": "Sujets",
+      "tags": "Étiquettes",
+      "customers": "Clients"
+    },
+    "details": "Détails",
+    "conversation": "Conversation",
+    "reply": "Répondre",
+    "typeMessage": "Saisissez votre message...",
+    "insertIntoReply": "Insérer dans la réponse",
+    "insertedIntoReply": "Inséré dans la réponse",
+    "actions": "Actions",
+    "customer": "Client",
+    "assignedAgent": "Agent assigné",
+    "aiAnalysis": "Analyse IA",
+    "sentimentLabel": "Sentiment",
+    "confidence": "Confiance",
+    "suggestedActions": "Actions suggérées",
+    "timeline": "Chronologie",
+    "workspace": {
+      "selectTicketPlaceholder": "Sélectionnez un ticket pour voir la conversation",
+      "knowledgeBase": "Connaissances",
+      "searchKnowledge": "Rechercher dans la base...",
+      "search": "Rechercher",
+      "searching": "Recherche...",
+      "kbEmpty": "Aucun résultat de connaissances",
+      "emptyConversation": "Aucun message pour l'instant"
+    },
+    "createNew": "Créer un nouveau ticket",
+    "createNewDescription": "Renseignez les détails ci-dessous pour créer un ticket",
+    "basicInformation": "Informations de base",
+    "basicInformationDescription": "Fournissez les informations essentielles pour ce ticket",
+    "fields": {
+      "title": "Titre",
+      "descriptionLabel": "Description",
+      "category": "Catégorie",
+      "tags": "Étiquettes"
+    },
+    "titlePlaceholder": "Entrez un titre concis",
+    "descriptionPlaceholder": "Décrivez le problème en détail",
+    "selectCategory": "Sélectionner une catégorie",
+    "assignment": "Attribution",
+    "assignmentDescription": "Choisissez le client et éventuellement un agent",
+    "selectCustomer": "Sélectionner un client",
+    "selectAgent": "Sélectionner un agent",
+    "tagsDescription": "Ajoutez des étiquettes pour aider à classer ce ticket",
+    "addTag": "Ajouter une étiquette",
+    "analyzingContent": "Analyse du contenu...",
+    "aiAnalysisDescription": "Suggestions IA basées sur le titre et la description",
+    "suggestedPriority": "Priorité suggérée",
+    "suggestedCategory": "Catégorie suggérée",
+    "suggestedTags": "Étiquettes suggérées",
+    "enterContentForAnalysis": "Saisissez du contenu à analyser",
+    "creating": "Création...",
+    "stats": {
+      "totalTickets": "Total des tickets",
+      "allTickets": "Tous les tickets",
+      "openTickets": "Tickets ouverts",
+      "needsAttention": "Nécessitent une attention",
+      "inProgress": "En cours",
+      "beingWorked": "En traitement",
+      "resolved": "Résolus",
+      "completedToday": "Complétés aujourd'hui",
+      "overdue": "En retard",
+      "pastDueDate": "Date dépassée",
+      "unassigned": "Non assignés",
+      "needsAssignment": "Besoin d'assignation",
+      "slaAtRisk": "SLA à risque",
+      "approachingDeadline": "Échéance approchant",
+      "avgResolutionTime": "Temps moyen de résolution",
+      "timeToResolve": "Temps pour résoudre",
+      "ofTotal": "du total",
+      "statusDistribution": "Répartition par statut",
+      "performance": "Performance",
+      "avgFirstResponse": "Temps moyen de première réponse",
+      "customerSatisfaction": "Satisfaction client",
+      "thisWeek": "Cette semaine",
+      "improving": "En amélioration",
+      "declining": "En baisse",
+      "stable": "Stable",
+      "priorityBreakdown": "Répartition par priorité"
+    },
+    "createDialog": {
+      "title": "Créer un ticket",
+      "description": "Fournissez les détails pour créer un nouveau ticket.",
+      "step": "Étape",
+      "of": "sur",
+      "subject": "Sujet",
+      "subjectPlaceholder": "Entrez un sujet clair",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Décrivez le problème en détail",
+      "customer": "Client",
+      "selectCustomer": "Sélectionner un client",
+      "searchCustomer": "Rechercher des clients...",
+      "noCustomerFound": "Aucun client trouvé",
+      "channel": "Canal",
+      "priority": "Priorité",
+      "assignee": "Assigné à",
+      "selectAgent": "Sélectionner un agent",
+      "unassigned": "Non assigné",
+      "team": "Équipe",
+      "selectTeam": "Sélectionner une équipe",
+      "noTeam": "Aucune équipe",
+      "tags": "Étiquettes",
+      "addTag": "Ajouter une étiquette",
+      "suggestedTags": "Étiquettes suggérées",
+      "selectedTags": "Étiquettes sélectionnées",
+      "dueDate": "Date d'échéance",
+      "selectDueDate": "Sélectionner la date d'échéance",
+      "summary": "Résumé",
+      "additionalFields": "Champs supplémentaires",
+      "back": "Retour",
+      "next": "Suivant",
+      "creating": "Création...",
+      "create": "Créer"
+    },
+    "validation": {
+      "subjectRequired": "Le sujet est requis",
+      "descriptionRequired": "La description est requise",
+      "customerRequired": "Le client est requis",
+      "channelRequired": "Le canal est requis",
+      "createFailed": "Échec de la création du ticket"
+    },
+    "bulkActions": {
+      "selected": "sélectionnés",
+      "chooseAction": "Choisissez une action",
+      "assign": "Assigner",
+      "status": "Statut",
+      "priority": "Priorité",
+      "tags": "Étiquettes",
+      "moreActions": "Plus d'actions",
+      "removeTags": "Supprimer les étiquettes",
+      "merge": "Fusionner",
+      "archive": "Archiver",
+      "export": "Exporter",
+      "delete": "Supprimer",
+      "assignTitle": "Assigner les tickets",
+      "assignDescription": "Assigner {count} tickets à un agent",
+      "selectAgent": "Sélectionner un agent",
+      "chooseAgent": "Choisir un agent",
+      "reason": "Raison",
+      "assignReason": "Raison de l'assignation (optionnel)",
+      "updateStatusTitle": "Mettre à jour le statut",
+      "updateStatusDescription": "Mettre à jour le statut de {count} tickets",
+      "selectStatus": "Sélectionner un statut",
+      "chooseStatus": "Choisir un statut",
+      "statusReason": "Raison du changement de statut (optionnel)",
+      "updatePriorityTitle": "Mettre à jour la priorité",
+      "updatePriorityDescription": "Mettre à jour la priorité de {count} tickets",
+      "selectPriority": "Sélectionner une priorité",
+      "choosePriority": "Choisir une priorité",
+      "priorityReason": "Raison du changement de priorité (optionnel)",
+      "addTagsTitle": "Ajouter des étiquettes",
+      "addTagsDescription": "Ajouter des étiquettes à {count} tickets",
+      "enterTags": "Entrer les étiquettes",
+      "tagsPlaceholder": "Entrez les étiquettes séparées par des virgules",
+      "tagsHelp": "Séparez plusieurs étiquettes par des virgules",
+      "tagsPreview": "Aperçu des étiquettes",
+      "deleteTitle": "Supprimer les tickets",
+      "deleteDescription": "Supprimer définitivement {count} tickets",
+      "deleteWarning": "Cette action ne peut pas être annulée",
+      "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer ces tickets ?",
+      "deleteReason": "Raison de la suppression",
+      "deleteReasonPlaceholder": "Veuillez fournir une raison pour supprimer ces tickets"
+    }
+  },
+  "observability": {
+    "title": "Observabilité",
+    "healthSummary": "Résumé de santé"
+  },
+  "agents": {
+    "title": "Gestion des Agents",
+    "subtitle": "Gérez vos agents de support et leurs performances",
+    "totalAgents": "Total des Agents",
+    "availableAgents": "Disponibles",
+    "avgResponseTime": "Temps de Réponse Moyen",
+    "satisfaction": "Satisfaction",
+    "inviteAgent": "Inviter un Agent",
+    "searchAgents": "Rechercher des agents...",
+    "filterByStatus": "Filtrer par statut",
+    "filterBySkill": "Filtrer par compétence",
+    "allStatus": "Tous les Statuts",
+    "allSkills": "Toutes les Compétences",
+    "available": "Disponible",
+    "busy": "Occupé",
+    "away": "Absent",
+    "offline": "Hors ligne",
+    "autoAssign": "Attribution automatique",
+    "manual": "Manuel",
+    "currentWorkload": "Charge de Travail Actuelle",
+    "responseTime": "Temps de Réponse",
+    "resolutionRate": "Taux de Résolution",
+    "resolved": "Résolu",
+    "skills": "Compétences",
+    "teams": "Équipes",
+    "editProfile": "Modifier le Profil",
+    "viewPerformance": "Voir les Performances",
+    "noAgentsFound": "Aucun agent trouvé",
+    "tryAdjustingSearch": "Essayez d'ajuster vos critères de recherche.",
+    "getStartedInviting": "Commencez par inviter votre premier agent.",
+    "cards": {
+      "totalAgentsDesc": "Agents de support actifs",
+      "availableDesc": "Prêts pour les affectations",
+      "avgResponseDesc": "Moyenne sur tous les agents",
+      "satisfactionDesc": "Note moyenne"
+    },
+    "inviteDialog": {
+      "title": "Inviter des agents",
+      "emailsLabel": "Adresses e‑mail",
+      "emailsPlaceholder": "Saisissez des e‑mails et appuyez sur Entrée (virgule ou espace pour séparer)",
+      "invalidNotice": "Non valides :",
+      "roleLabel": "Rôle",
+      "teamsLabel": "Assigner aux équipes",
+      "noTeams": "Aucune équipe",
+      "messageLabel": "Message personnalisé (optionnel)",
+      "messagePlaceholder": "Ajoutez une note de bienvenue...",
+      "cancel": "Annuler",
+      "send": "Envoyer les invitations",
+      "sending": "Envoi...",
+      "successAll": "Invitations envoyées avec succès",
+      "successPartial": "{success} sur {total} invitations envoyées",
+      "failed": "Échec de l'envoi des invitations"
+    },
+    "roles": {
+      "admin": "Admin",
+      "manager": "Manager",
+      "agent": "Agent"
+    }
+  },
+  
+  "availability": {
+    "title": "Ma Disponibilité",
+    "subtitle": "Gérez vos heures de travail et votre statut de disponibilité",
+    "currentStatus": "Statut Actuel",
+    "changeStatus": "Changer le Statut",
+    "statusMessage": "Message de Statut",
+    "enterStatusMessage": "Entrez le message de statut",
+    "autoAssignment": "Attribution Automatique",
+    "maxConcurrentTickets": "Tickets Simultanés Maximum",
+    "workingHours": "Heures de Travail",
+    "setRegularSchedule": "Définissez votre horaire régulier",
+    "timezone": "Fuseau Horaire",
+    "weeklySchedule": "Horaire Hebdomadaire",
+    "breakSchedule": "Horaire des Pauses",
+    "enableBreaks": "Activer les Pauses",
+    "outOfOffice": "Absence du Bureau",
+    "outOfOfficeDesc": "Configurez des messages automatiques lorsque vous n'êtes pas disponible",
+    "outOfOfficeMessage": "Message d'Absence",
+    "enterOutOfOfficeMessage": "Entrez le message à afficher lorsque vous êtes absent",
+    "startDate": "Date de Début",
+    "endDate": "Date de Fin",
+    "scheduleOutOfOffice": "Programmer une Absence",
+    "saveChanges": "Sauvegarder les Modifications"
+  },
+  "performance": {
+    "title": "Ma Performance",
+    "subtitle": "Suivez vos métriques de support et vos réalisations",
+    "ticketsResolved": "Tickets Résolus",
+    "responseTime": "Temps de Réponse",
+    "satisfaction": "Satisfaction",
+    "resolutionRate": "Taux de Résolution",
+    "vsLastPeriod": "vs période précédente",
+    "overview": "Aperçu",
+    "goals": "Objectifs",
+    "feedback": "Commentaires",
+    "achievements": "Réalisations",
+    "thisWeek": "Cette Semaine",
+    "thisMonth": "Ce Mois",
+    "thisQuarter": "Ce Trimestre",
+    "thisYear": "Cette Année",
+    "assigned": "Assigné",
+    "inProgress": "En Cours",
+    "firstContactResolution": "Résolution au Premier Contact",
+    "performanceOverview": "Aperçu des Performances",
+    "currentPeriodMetrics": "Métriques de la période actuelle",
+    "recentTrends": "Tendances Récentes",
+    "last7Days": "7 derniers jours",
+    "dailyTicketVolume": "Volume Quotidien de Tickets",
+    "responseTrend": "Tendance du Temps de Réponse",
+    "satisfactionTrend": "Tendance de Satisfaction",
+    "performanceGoals": "Objectifs de Performance",
+    "trackProgress": "Suivez vos progrès par rapport aux objectifs",
+    "responseTimeGoal": "Objectif Temps de Réponse",
+    "resolutionRateGoal": "Objectif Taux de Résolution",
+    "satisfactionGoal": "Objectif Satisfaction",
+    "goalAchieved": "Objectif atteint!",
+    "goalExceeded": "Objectif dépassé!",
+    "underTarget": "sous l'objectif",
+    "aboveTarget": "au-dessus de l'objectif",
+    "goalProgress": "Progrès des Objectifs",
+    "monthlyTargets": "Objectifs mensuels et réalisations",
+    "allGoalsMet": "Tous les Objectifs Atteints!",
+    "exceedingTargets": "Vous dépassez tous les objectifs de performance ce mois-ci",
+    "goalsMet": "Objectifs Atteints",
+    "avgProgress": "Progrès Moyen",
+    "recentFeedback": "Commentaires Récents des Clients",
+    "latestReviews": "Derniers avis et évaluations des clients",
+    "earned": "Gagné",
+    "complete": "Complet",
+    "keepGoing": "Continuez pour débloquer cette réalisation!",
+    "speedDemon": "Démon de la Vitesse",
+    "speedDemonDesc": "Maintenu un temps de réponse inférieur à 15 minutes pendant une semaine",
+    "customerChampion": "Champion du Client",
+    "customerChampionDesc": "Atteint une note de satisfaction de 4.5+",
+    "resolutionMaster": "Maître de la Résolution",
+    "resolutionMasterDesc": "Résolu 50+ tickets en un mois"
+  },
+  "onboarding": {
+    "title": "Configurez votre plateforme de tickets",
+    "subtitle": "Commencez avec votre système de support complet",
+    "wizardTitle": "Assistant d'Intégration",
+    "progressDescription": "Étape {completed} sur {total} terminée",
+    "loading": {
+      "initializing": "Initialisation de votre expérience d'intégration...",
+      "saving": "Sauvegarde...",
+      "completing": "Finalisation de la configuration..."
+    },
+    "errors": {
+      "loadingFailed": "Échec du chargement de l'intégration"
+    },
+    "role": {
+      "admin": "Administrateur",
+      "agent": "Agent"
+    },
+    "progress": {
+      "step": "Étape {current} sur {total}",
+      "estimatedTime": "Temps restant estimé : {minutes} minutes",
+      "completed": "Terminé",
+      "current": "Actuel",
+      "pending": "En attente"
+    },
+    "navigation": {
+      "previous": "Précédent",
+      "next": "Continuer",
+      "skip": "Ignorer pour l'instant",
+      "complete": "Terminer la configuration",
+      "save": "Sauvegarder et continuer",
+      "finishOnboarding": "Terminer l'Intégration"
+    },
+    "common": {
+      "next": "Suivant",
+      "back": "Retour",
+      "skip": "Ignorer",
+      "complete": "Terminer",
+      "unknownStep": "Étape inconnue : {stepId}",
+      "genericStepDescription": "Veuillez terminer cette étape pour continuer.",
+      "unknownOnboardingType": "Type d'intégration inconnu",
+      "contactSupport": "Veuillez contacter le support pour obtenir de l'aide."
+    },
+    "tenantSetup": {
+      "welcome": {
+        "title": "Bienvenue sur Glavito",
+        "description": "Configurons votre plateforme de tickets pour votre organisation."
+      },
+      "organizationSetup": {
+        "title": "Configuration de l'Organisation",
+        "description": "Configurez les détails de votre entreprise et votre image de marque."
+      },
+      "channelConfiguration": {
+        "title": "Configuration des Canaux",
+        "description": "Configurez vos canaux de communication (WhatsApp, Instagram, Email)."
+      },
+      "aiConfiguration": {
+        "title": "Configuration IA",
+        "description": "Configurez les fonctionnalités IA et les règles d'automatisation."
+      },
+      "knowledgeBase": {
+        "title": "Base de Connaissances",
+        "description": "Configurez votre base de connaissances et vos articles d'aide."
+      },
+      "paymentSetup": {
+        "title": "Configuration des Paiements",
+        "description": "Configurez la facturation et les paramètres de paiement."
+      },
+      "teamManagement": {
+        "title": "Gestion d'Équipe",
+        "description": "Créez des équipes et invitez vos agents."
+      },
+      "workflowConfiguration": {
+        "title": "Configuration des Workflows",
+        "description": "Configurez les workflows automatisés et les modèles."
+      },
+      "customerPortal": {
+        "title": "Portail Client",
+        "description": "Configurez votre portail d'auto-service client."
+      },
+      "dataImport": {
+        "title": "Import de Données",
+        "description": "Importez les données clients et tickets existantes."
+      },
+      "analyticsSetup": {
+        "title": "Configuration des Analytiques",
+        "description": "Configurez les rapports et tableaux de bord analytiques."
+      },
+      "analytics_setup": {
+        "title": "Configuration des Analytiques",
+        "description": "Configurez les rapports et tableaux de bord analytiques."
+      }
+    },
+    "agentWelcome": {
+      "welcome": {
+        "title": "Bienvenue dans l'Équipe !",
+        "description": "Vous avez été invité à rejoindre l'équipe de support. Configurons votre compte."
+      },
+      "profileSetup": {
+        "title": "Configuration du Profil",
+        "description": "Complétez votre profil et vos préférences."
+      },
+      "teamAssignment": {
+        "title": "Affectation d'Équipe",
+        "description": "Vous avez été affecté à une équipe. Découvrez votre rôle."
+      },
+      "permissionsOverview": {
+        "title": "Aperçu des Permissions",
+        "description": "Comprenez ce à quoi vous pouvez accéder et ce que vous pouvez faire."
+      },
+      "featureTour": {
+        "title": "Visite des Fonctionnalités",
+        "description": "Faites un tour rapide des fonctionnalités de la plateforme."
+      },
+      "testTicket": {
+        "title": "Ticket de Test",
+        "description": "Pratiquez avec un ticket de test pour vous familiariser."
+      },
+      "notificationPreferences": {
+        "title": "Préférences de Notification",
+        "description": "Configurez comment vous voulez être notifié."
+      },
+      "quickStart": {
+        "title": "Démarrage Rapide",
+        "description": "Vous êtes prêt ! Voici quelques actions rapides pour commencer."
+      }
+    },
+    "steps": {
+      "welcome": {
+        "title": "Bienvenue sur Glavito",
+        "subtitle": "Transformez votre support client avec des tickets alimentés par l'IA",
+        "description": "Vous êtes sur le point de configurer une plateforme de tickets et CRM puissante qui transformera la façon dont vous gérez le support client. Mettons-nous en route en quelques minutes seulement.",
+        "getStarted": "Commençons",
+        "features": {
+          "multiChannel": {
+            "title": "Support multi-canal",
+            "description": "WhatsApp, Instagram, Email et plus dans une boîte de réception unifiée"
+          },
+          "aiPowered": {
+            "title": "Automatisation alimentée par l'IA",
+            "description": "Routage intelligent des tickets, réponses automatiques et analyse des sentiments"
+          },
+          "teamCollaboration": {
+            "title": "Collaboration d'équipe",
+            "description": "Invitez des agents, définissez des permissions et suivez les performances"
+          },
+          "analytics": {
+            "title": "Analytiques avancées",
+            "description": "Insights en temps réel et rapports complets"
+          }
+        },
+        "expectations": {
+          "title": "À quoi s'attendre",
+          "time": "5-10 minutes pour terminer la configuration de base",
+          "guidance": "Guidance étape par étape pour chaque configuration",
+          "optional": "Ignorez les étapes optionnelles et configurez-les plus tard",
+          "progress": "Sauvegardez les progrès et reprenez à tout moment"
+        }
+      },
+      "analytics": {
+        "overview": {
+          "title": "Aperçu des Analytiques",
+          "description": "Configurez les tableaux de bord, rapports et indicateurs de performance clés"
+        },
+        "features": {
+          "dashboard": {
+            "title": "Tableau de Bord",
+            "description": "Métriques et insights en temps réel"
+          },
+          "reporting": {
+            "title": "Rapports Automatisés",
+            "description": "Rapports programmés par email"
+          },
+          "surveys": {
+            "title": "Enquêtes Clients",
+            "description": "Collecter les retours clients"
+          },
+          "premium": "Premium"
+        },
+        "dashboard": {
+          "title": "Configuration du Tableau de Bord",
+          "description": "Choisissez les widgets à afficher sur votre tableau de bord",
+          "enabled": "Activé"
+        },
+        "reporting": {
+          "title": "Rapports Automatisés",
+          "description": "Configurez les rapports programmés à envoyer par email",
+          "fields": {
+            "email": "Email de Rapport",
+            "frequency": "Fréquence de Rapport"
+          },
+          "placeholders": {
+            "email": "manager@company.com"
+          },
+          "frequencies": {
+            "daily": "Quotidien",
+            "weekly": "Hebdomadaire",
+            "monthly": "Mensuel"
+          }
+        },
+        "integrations": {
+          "title": "Intégrations Externes",
+          "description": "Connectez-vous aux plateformes d'analytiques externes",
+          "fields": {
+            "googleAnalytics": "ID Google Analytics"
+          },
+          "help": {
+            "googleAnalytics": "Optionnel : Suivre l'utilisation du portail dans Google Analytics"
+          }
+        },
+        "placeholders": {
+          "googleAnalyticsId": "GA-XXXXXXXXX-X"
+        },
+        "kpis": {
+          "title": "Indicateurs de Performance Clés",
+          "description": "Suivez ces métriques importantes",
+          "responseTime": {
+            "name": "Temps de Réponse Moyen",
+            "target": "Objectif : 4 heures"
+          },
+          "satisfaction": {
+            "name": "Satisfaction Client",
+            "target": "Objectif : 4.5/5"
+          },
+          "resolution": {
+            "name": "Résolution au Premier Contact",
+            "target": "Objectif : 80%"
+          }
+        },
+        "widgets": {
+          "ticketOverview": {
+            "name": "Aperçu des Tickets",
+            "description": "Résumé du statut et du volume des tickets"
+          },
+          "responseTimes": {
+            "name": "Temps de Réponse",
+            "description": "Temps de réponse et de résolution moyens"
+          },
+          "customerSatisfaction": {
+            "name": "Satisfaction Client",
+            "description": "Scores CSAT et tendances des retours"
+          },
+          "agentPerformance": {
+            "name": "Performance des Agents",
+            "description": "Métriques et classements des agents individuels"
+          }
+        },
+        "defaults": {
+          "dashboardName": "Tableau de Bord Principal",
+          "kpiNames": {
+            "averageResponseTime": "Temps de Réponse Moyen",
+            "customerSatisfaction": "Satisfaction Client",
+            "firstContactResolution": "Résolution au Premier Contact"
+          }
+        }
+      },
+      "organization": {
+        "title": "Configuration de l'organisation",
+        "subtitle": "Configurez les informations et l'image de marque de votre entreprise",
+        "description": "Parlez-nous de votre organisation pour personnaliser votre expérience",
+        "companyInfo": {
+          "title": "Informations sur l'entreprise",
+          "companyName": "Nom de l'entreprise",
+          "companyNamePlaceholder": "Entrez le nom de votre entreprise",
+          "website": "Site web",
+          "websitePlaceholder": "https://votreentreprise.com",
+          "industry": "Secteur",
+          "industryPlaceholder": "Sélectionnez le secteur",
+          "companySize": "Taille de l'entreprise",
+          "companySizePlaceholder": "Sélectionnez la taille"
+        },
+        "logo": {
+          "title": "Logo de l'entreprise",
+          "description": "Téléchargez le logo de votre entreprise pour personnaliser votre plateforme",
+          "upload": "Télécharger le logo",
+          "change": "Changer le logo",
+          "requirements": "PNG, JPG jusqu'à 2MB. Recommandé : 200x200px"
+        },
+        "branding": {
+          "title": "Couleurs de marque",
+          "description": "Choisissez des couleurs qui correspondent à l'identité de votre marque",
+          "primaryColor": "Couleur principale",
+          "presets": "Préréglages de couleurs",
+          "preview": "Aperçu :"
+        },
+        "industries": {
+          "technology": "Technologie",
+          "healthcare": "Santé",
+          "finance": "Finance",
+          "ecommerce": "E-commerce",
+          "education": "Éducation",
+          "retail": "Commerce de détail",
+          "hospitality": "Hôtellerie",
+          "manufacturing": "Fabrication",
+          "realEstate": "Immobilier",
+          "consulting": "Conseil",
+          "nonProfit": "Association",
+          "other": "Autre"
+        },
+        "companySizes": {
+          "1-10": "1-10 employés",
+          "11-50": "11-50 employés",
+          "51-200": "51-200 employés",
+          "201-500": "201-500 employés",
+          "500+": "500+ employés"
+        },
+        "errors": {
+          "companyNameRequired": "Le nom de l'entreprise est requis",
+          "companyNameTooShort": "Le nom de l'entreprise doit contenir au moins 2 caractères",
+          "invalidColor": "Veuillez entrer une couleur hexadécimale valide"
+        },
+        "basic": {
+          "title": "Informations de base",
+          "description": "Détails essentiels de votre organisation"
+        },
+        "contact": {
+          "title": "Informations de contact",
+          "description": "Comment les clients peuvent vous joindre"
+        },
+        "address": {
+          "title": "Adresse",
+          "description": "Localisation de votre organisation"
+        },
+        "timezone": {
+          "title": "Fuseau horaire",
+          "description": "Définissez votre fuseau horaire par défaut",
+          "detected": "Fuseau détecté"
+        },
+        "fields": {
+          "companyName": "Nom de l'entreprise",
+          "website": "Site web",
+          "industry": "Secteur",
+          "companySize": "Taille de l'entreprise",
+          "description": "Description",
+          "contactEmail": "Email de contact",
+          "contactPhone": "Téléphone de contact",
+          "street": "Adresse",
+          "city": "Ville",
+          "state": "État/Province",
+          "country": "Pays",
+          "postalCode": "Code postal",
+          "timezone": "Fuseau horaire"
+        },
+        "placeholders": {
+          "companyName": "Entrez le nom de votre entreprise",
+          "website": "https://votreentreprise.com",
+          "description": "Brève description de votre activité",
+          "contactEmail": "support@votreentreprise.com",
+          "contactPhone": "+33 1 23 45 67 89",
+          "street": "123 rue Principale",
+          "city": "Paris",
+          "state": "Île-de-France",
+          "country": "France",
+          "postalCode": "75001",
+          "timezone": "Europe/Paris",
+          "selectIndustry": "Sélectionnez le secteur",
+          "selectCompanySize": "Sélectionnez la taille de l'entreprise"
+        },
+        "validation": {
+          "companyNameRequired": "Le nom de l'entreprise est requis",
+          "industryRequired": "Veuillez sélectionner un secteur",
+          "companySizeRequired": "Veuillez sélectionner la taille de l'entreprise",
+          "websiteInvalid": "Veuillez saisir une URL de site valide",
+          "emailInvalid": "Veuillez saisir une adresse email valide"
+        },
+        "saving": "Sauvegarde...",
+        "continue": "Continuer"
+      },
+      "channels": {
+        "title": "Configuration des canaux",
+        "subtitle": "Connectez vos canaux de communication",
+        "description": "Connectez vos canaux de communication pour commencer à recevoir les messages clients dans une boîte de réception unifiée. Vous pouvez ignorer cette étape et configurer les canaux plus tard.",
+        "whatsapp": {
+          "title": "WhatsApp Business",
+          "description": "Connectez votre compte WhatsApp Business",
+          "businessAccountId": "ID du compte professionnel",
+          "phoneNumberId": "ID du numéro de téléphone",
+          "accessToken": "Jeton d'accès",
+          "testConnection": "Tester la connexion"
+        },
+        "instagram": {
+          "title": "Instagram Business",
+          "description": "Connectez votre compte Instagram Business",
+          "businessAccountId": "ID du compte professionnel",
+          "pageId": "ID de la page",
+          "accessToken": "Jeton d'accès"
+        },
+        "email": {
+          "title": "Support par email",
+          "description": "Configurez l'intégration email pour les tickets de support",
+          "provider": "Fournisseur d'email",
+          "providers": {
+            "gmail": "Gmail",
+            "outlook": "Outlook",
+            "custom": "SMTP/IMAP personnalisé"
+          },
+          "imapHost": "Hôte IMAP",
+          "imapPort": "Port IMAP",
+          "smtpHost": "Hôte SMTP",
+          "smtpPort": "Port SMTP",
+          "username": "Nom d'utilisateur",
+          "password": "Mot de passe"
+        },
+        "connectionStatus": {
+          "testing": "Test en cours...",
+          "success": "Connexion réussie !",
+          "failed": "Échec de la connexion. Veuillez vérifier vos identifiants."
+        },
+        "placeholders": {
+          "whatsappPhone": "+1234567890",
+          "whatsappWebhook": "https://votre-domaine.com/webhook",
+          "emailHost": "smtp.gmail.com",
+          "emailPort": "587",
+          "emailUsername": "support@votreentreprise.com"
+        },
+        "overview": {
+          "title": "Aperçu des canaux",
+          "description": "Connectez plusieurs canaux pour centraliser toutes les communications client",
+          "enabled": "activés",
+          "configured": "configurés",
+          "complete": "complet"
+        },
+        "status": {
+          "enabled": "Activé",
+          "disabled": "Désactivé"
+        },
+        "channels": {
+          "whatsapp": { "description": "Connectez l'API WhatsApp Business pour la messagerie" },
+          "instagram": { "description": "Gérez les messages directs et commentaires Instagram" },
+          "email": { "description": "Gérez les tickets de support par email" },
+          "facebook": { "description": "Répondez aux conversations Facebook Messenger" },
+          "phone": { "description": "Suivez et gérez les appels de support téléphonique" }
+        },
+        "config": {
+          "title": "Configuration",
+          "description": "Configurez le canal sélectionné",
+          "comingSoon": "Configuration à venir",
+          "whatsapp": {
+            "phoneNumber": "Numéro de téléphone",
+            "accessToken": "Jeton d'accès",
+            "tokenPlaceholder": "Saisissez votre jeton WhatsApp Business API",
+            "webhookUrl": "URL de webhook"
+          },
+          "instagram": {
+            "pageId": "ID de la page",
+            "pageIdPlaceholder": "Saisissez l'ID de page Instagram Business",
+            "accessToken": "Jeton d'accès",
+            "tokenPlaceholder": "Saisissez votre jeton Instagram Graph API"
+          },
+          "email": {
+            "smtpHost": "Hôte SMTP",
+            "smtpPort": "Port SMTP",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "passwordPlaceholder": "Saisissez votre mot de passe email"
+          },
+          "placeholders": {
+            "whatsappPhone": "+1234567890",
+            "whatsappWebhook": "https://votre-domaine.com/webhook/whatsapp",
+            "emailHost": "smtp.gmail.com",
+            "emailPort": "587",
+            "emailUsername": "support@votreentreprise.com"
+          },
+          "help": {
+            "title": "Besoin d'aide ?",
+            "description": "Consultez notre documentation pour des instructions détaillées",
+            "documentation": "Voir la documentation"
+          }
+        },
+        "quickSetup": {
+          "title": "Guide de configuration rapide",
+          "description": "Suivez ces étapes pour démarrer",
+          "step1": "Sélectionnez les canaux que vous souhaitez utiliser",
+          "step2": "Configurez chaque canal sélectionné",
+          "step3": "Testez vos connexions"
+        }
+      },
+      "ai": {
+        "title": "IA et automatisation",
+        "subtitle": "Configurez les fonctionnalités intelligentes",
+        "description": "Activez les fonctionnalités alimentées par l'IA pour automatiser et améliorer vos opérations de support client. Vous pouvez ajuster ces paramètres à tout moment.",
+        "features": {
+          "ticketClassification": {
+            "title": "Classification IA des tickets",
+            "description": "Catégorisez et priorisez automatiquement les tickets entrants"
+          },
+          "sentimentAnalysis": {
+            "title": "Analyse des sentiments",
+            "description": "Détectez les émotions des clients pour prioriser les problèmes urgents"
+          },
+          "autoResponse": {
+            "title": "Réponse automatique",
+            "description": "Générez des réponses intelligentes pour les demandes courantes"
+          },
+          "languageDetection": {
+            "title": "Détection de langue",
+            "description": "Détectez et routez automatiquement les tickets multilingues"
+          },
+          "knowledgeBaseSuggestions": {
+            "title": "Suggestions de base de connaissances",
+            "description": "Suggérez des articles pertinents aux agents et clients"
+          },
+          "workflowAutomation": {
+            "title": "Automatisation des flux de travail",
+            "description": "Automatisez le routage complexe et l'escalade des tickets"
+          }
+        },
+        "recommended": "Recommandé",
+        "aiTraining": {
+          "title": "Formation IA",
+          "description": "Vos modèles IA seront formés sur vos données spécifiques et s'amélioreront avec le temps. Plus vous traitez de tickets, plus l'IA devient précise."
+        },
+        "overview": {
+          "title": "Vue d'ensemble de l'IA",
+          "description": "Améliorez votre support avec l'automatisation intelligente et les insights",
+          "enabled": "fonctionnalités activées",
+          "premium": "fonctionnalités premium",
+          "coverage": "couverture IA"
+        },
+        "categories": {
+          "all": "Toutes les fonctionnalités",
+          "automation": "Automatisation",
+          "analysis": "Analyse",
+          "enhancement": "Amélioration"
+        },
+        "premium": "Premium",
+        "settings": {
+          "title": "Paramètres IA",
+          "description": "Configurez le fonctionnement des fonctionnalités IA",
+          "confidence": {
+            "title": "Seuil de confiance",
+            "low": "Faible",
+            "high": "Élevé",
+            "description": "Niveau de confiance minimum pour les décisions de l'IA"
+          },
+          "options": {
+            "title": "Options",
+            "autoTraining": "Activer l'entraînement automatique des modèles",
+            "fallbackToHuman": "Basculer vers un humain quand la confiance est faible",
+            "continuousLearning": "Activer l'apprentissage continu à partir des retours"
+          }
+        },
+        "benefits": {
+          "title": "Bénéfices attendus",
+          "description": "Avec les fonctionnalités IA sélectionnées, vous pouvez attendre :",
+          "efficiency": "Amélioration de 40% de l'efficacité de réponse",
+          "accuracy": "85% de précision dans la classification des tickets",
+          "satisfaction": "Satisfaction client plus élevée",
+          "insights": "Meilleures informations sur les besoins clients"
+        }
+      },
+      "knowledgeBase": {
+        "title": "Base de connaissances",
+        "subtitle": "Créez du contenu utile pour les clients",
+        "description": "Configurez votre base de connaissances pour aider les clients à trouver rapidement des réponses",
+        "defaultArticles": {
+          "welcome": {
+            "tags": {
+              "welcome": "bienvenue",
+              "introduction": "introduction"
+            }
+          }
+        }
+      },
+      "payment": {
+        "title": "Configuration des paiements",
+        "subtitle": "Configurez le traitement des paiements",
+        "description": "Configurez Stripe pour le traitement des paiements et l'automatisation de la facturation",
+        "recommended": "Recommandé",
+        "stripe": {
+          "currencies": {
+            "usd": "USD - Dollar américain",
+            "eur": "EUR - Euro",
+            "gbp": "GBP - Livre sterling",
+            "cad": "CAD - Dollar canadien"
+          },
+          "placeholders": {
+            "publishableKey": "pk_test_...",
+            "secretKey": "sk_test_...",
+            "webhookSecret": "whsec_..."
+          }
+        }
+      },
+      "team": {
+        "title": "Gestion d'équipe",
+        "subtitle": "Invitez votre équipe de support",
+        "description": "Invitez des agents et configurez les permissions d'équipe",
+        "saving": "Sauvegarde...",
+        "continue": "Continuer"
+      },
+      "workflows": {
+        "title": "Configuration des flux de travail",
+        "subtitle": "Automatisez vos processus",
+        "description": "Configurez les flux de travail des tickets et les règles SLA"
+      },
+      "portal": {
+        "title": "Portail client",
+        "subtitle": "Personnalisez l'expérience client",
+        "description": "Personnalisez votre portail de support orienté client",
+        "configuration": "Configuration du portail",
+        "configurationDescription": "Personnalisez votre portail de support client",
+        "preview": "Aperçu",
+        "livePreview": "Aperçu en direct",
+        "saving": "Sauvegarde...",
+        "saved": "Sauvegardé",
+        "saveError": "Erreur de sauvegarde",
+        "creating": "Création...",
+        "skip": "Ignorer",
+        "next": "Suivant",
+        "previous": "Précédent",
+        "fullPreview": "Aperçu complet",
+        "fullPreviewDescription": "Voyez à quoi ressemblera votre portail pour les clients",
+        "domainSuffix": ".support.com",
+        "tabs": {
+          "basic": "Basique",
+          "branding": "Image de marque",
+          "features": "Fonctionnalités",
+          "layout": "Mise en page"
+        },
+        "fields": {
+          "name": "Nom du portail",
+          "subdomain": "Sous-domaine",
+          "description": "Description",
+          "headerStyle": "Style d'en-tête",
+          "navigationStyle": "Style de navigation"
+        },
+        "headerStyles": {
+          "minimal": "Minimal",
+          "standard": "Standard",
+          "prominent": "Proéminent"
+        },
+        "navigationStyles": {
+          "horizontal": "Horizontal",
+          "vertical": "Vertical"
+        },
+        "colorNames": {
+          "primary": "Primaire",
+          "secondary": "Secondaire",
+          "accent": "Accent",
+          "background": "Arrière-plan",
+          "surface": "Surface"
+        },
+        "previewPortalName": "Mon portail de support",
+        "previewWelcome": "Bienvenue au support",
+        "previewDescription": "Comment pouvons-nous vous aider aujourd'hui ?",
+        "previewSubmitTicket": "Soumettre un ticket",
+        "previewKnowledgeBase": "Parcourir la base de connaissances",
+        "quickActions": "Actions rapides",
+        "uploadLogo": "Télécharger le logo",
+        "colorPresets": "Préréglages de couleurs",
+        "customDomain": "Domaine personnalisé",
+        "defaults": {
+          "portalName": "Portail Client",
+          "subdomain": "support",
+          "primaryColor": "#3B82F6",
+          "secondaryColor": "#1F2937",
+          "domainSuffix": ".votreentreprise.com"
+        },
+        "placeholders": {
+          "name": "Support de mon entreprise",
+          "subdomain": "monentreprise",
+          "description": "Obtenez de l'aide et du support de notre équipe",
+          "primaryColor": "#3B82F6",
+          "secondaryColor": "#1F2937"
+        }
+      },
+      "dataImport": {
+        "title": "Importation de données",
+        "subtitle": "Importez les données existantes",
+        "description": "Importez les données clients et tickets existantes",
+        "platforms": {
+          "zendesk": "Zendesk",
+          "freshdesk": "Freshdesk",
+          "intercom": "Intercom",
+          "helpScout": "Help Scout",
+          "custom": "Personnalisé/Autre"
+        },
+        "recommended": "Recommandé"
+      },
+      "analytics": {
+        "title": "Configuration des analytiques",
+        "subtitle": "Configurez les rapports",
+        "description": "Configurez les tableaux de bord d'analytiques et de rapports",
+        "defaults": {
+          "dashboardName": "Tableau de bord principal",
+          "kpiNames": {
+            "averageResponseTime": "Temps de réponse moyen",
+            "customerSatisfaction": "Satisfaction client",
+            "firstContactResolution": "Résolution au premier contact"
+          }
+        },
+        "placeholders": {
+          "googleAnalyticsId": "GA-XXXXXXXXX-X"
+        },
+        "overview": {
+          "title": "Vue d'ensemble des analytiques",
+          "description": "Configurez des tableaux de bord, rapports et indicateurs clés"
+        },
+        "features": {
+          "dashboard": { "title": "Tableau de bord", "description": "Métriques en temps réel et insights" },
+          "reporting": { "title": "Rapports automatisés", "description": "Rapports email planifiés" },
+          "surveys": { "title": "Enquêtes clients", "description": "Collectez les retours clients" },
+          "premium": "Premium"
+        },
+        "dashboard": {
+          "title": "Configuration du tableau de bord",
+          "description": "Choisissez les widgets à afficher sur votre tableau",
+          "enabled": "Activé"
+        },
+        "widgets": {
+          "ticketOverview": { "name": "Vue d'ensemble des tickets", "description": "Résumé de l'état et du volume" },
+          "responseTimes": { "name": "Temps de réponse", "description": "Temps de réponse et de résolution moyens" },
+          "customerSatisfaction": { "name": "Satisfaction client", "description": "Scores CSAT et tendances des retours" },
+          "agentPerformance": { "name": "Performance des agents", "description": "Métriques et classements par agent" }
+        },
+        "reporting": {
+          "title": "Rapports automatisés",
+          "description": "Configurez des rapports planifiés envoyés par email",
+          "fields": { "email": "Email de rapport", "frequency": "Fréquence du rapport" },
+          "placeholders": { "email": "manager@entreprise.com" },
+          "frequencies": { "daily": "Quotidien", "weekly": "Hebdomadaire", "monthly": "Mensuel" }
+        },
+        "integrations": {
+          "title": "Intégrations externes",
+          "description": "Connectez-vous à des plateformes analytiques externes",
+          "fields": { "googleAnalytics": "ID Google Analytics" },
+          "help": { "googleAnalytics": "Optionnel : Suivre l'utilisation du portail dans Google Analytics" }
+        },
+        "kpis": {
+          "title": "Indicateurs clés de performance",
+          "description": "Suivez ces métriques importantes",
+          "responseTime": { "name": "Temps de réponse moyen", "target": "Cible : 4 heures" },
+          "satisfaction": { "name": "Satisfaction client", "target": "Cible : 4.5/5" },
+          "resolution": { "name": "Résolution au premier contact", "target": "Cible : 80%" }
+        }
+      }
+    },
+    "completion": {
+      "title": "Configuration terminée !",
+      "subtitle": "Votre plateforme de tickets est prête à utiliser",
+      "description": "Félicitations ! Vous avez configuré avec succès votre plateforme de tickets Glavito. Vous pouvez maintenant commencer à gérer efficacement les tickets de support client.",
+      "summary": {
+        "title": "Résumé de la configuration",
+        "totalTime": "Temps total de configuration : {minutes} minutes",
+        "stepsCompleted": "Étapes terminées : {completed}",
+        "featuresEnabled": "Fonctionnalités activées :"
+      },
+      "nextSteps": {
+        "title": "Prochaines étapes ?",
+        "dashboard": "Aller au tableau de bord",
+        "inviteTeam": "Inviter les membres de l'équipe",
+        "createTicket": "Créer le premier ticket",
+        "documentation": "Voir la documentation"
+      }
+    },
+    "preview": {
+      "navigation": "NAVIGATION",
+      "welcomeOnboarding": "Aperçu de votre tableau de bord",
+      "welcomeCompletion": "Bienvenue sur votre tableau de bord !",
+      "descriptionOnboarding": "Voici à quoi ressemblera votre tableau de bord",
+      "descriptionCompletion": "Tout est configuré et prêt à fonctionner",
+      "recentTickets": "Tickets récents",
+      "quickActions": "Actions rapides",
+      "channels": "Canaux",
+      "newTicket": "Nouveau ticket",
+      "addCustomer": "Ajouter un client"
+    }
+  },
+  "workflowTemplates": {
+    "title": "Choisir les modèles de flux de travail",
+    "description": "Sélectionnez des flux de travail d'automatisation pré-construits pour rationaliser vos opérations de support",
+    "categories": {
+      "all": "Tous les modèles",
+      "ticketManagement": "Gestion des tickets",
+      "customerExperience": "Expérience client",
+      "automation": "Automatisation"
+    },
+    "labels": {
+      "category": "Catégorie :",
+      "complexity": "Complexité :",
+      "preview": "Aperçu",
+      "create": "Créer",
+      "creating": "Création en cours...",
+      "createWorkflow": "Créer le flux de travail",
+      "workflowSteps": "Étapes du flux de travail :",
+      "workflowDetailsNotAvailable": "Détails du flux de travail non disponibles"
+    },
+    "complexity": {
+      "beginner": "Débutant",
+      "intermediate": "Intermédiaire",
+      "advanced": "Avancé"
+    },
+    "noTemplatesFound": {
+      "title": "Aucun modèle trouvé",
+      "allMessage": "Aucun modèle de flux de travail n'est disponible pour le moment.",
+      "categoryMessage": "Aucun modèle trouvé dans la catégorie {category}."
+    }
+  },
+  "customers": {
+    "title": "Clients",
+    "subtitle": "Gérez et analysez vos relations clients",
+    "name": "Clients",
+    "description": "Importez les profils clients et les informations de contact",
+    "addCustomer": "Ajouter un Client",
+    "exportReport": "Exporter le Rapport",
+    "searchCustomers": "Rechercher des clients...",
+    "selectSegment": "Sélectionner un segment",
+    "allSegments": "Tous les Segments",
+    "filters": "Filtres",
+    "customers": "Clients",
+    "avgValue": "Valeur Moyenne",
+    "monthlyGrowth": "Croissance Mensuelle",
+    "segmentHealth": "Santé du Segment",
+    "excellent": "Excellent",
+    "good": "Bon",
+    "attention": "Attention",
+    "critical": "Critique",
+    "viewCustomers": "Voir les Clients",
+    "campaign": "Campagne",
+    "viewDetails": "Voir les Détails",
+    "sendCampaign": "Envoyer une Campagne",
+    "createAutomation": "Créer une Automatisation",
+    "exportData": "Exporter les Données",
+    "growth": "Croissance",
+    "edit": "Modifier",
+    "contact": "Contacter",
+    "overview": "Aperçu",
+    "healthScore": "Score de Santé",
+    "journey": "Parcours",
+    "interactions": "Interactions",
+    "insights": "Insights",
+    "lifetimeValue": "Valeur Vie Client",
+    "predicted": "Prédite",
+    "risk": "Risque",
+    "customerSince": "Client Depuis",
+    "recentActivity": "Activité Récente",
+    "keyInsights": "Insights Clés",
+    "opportunities": "Opportunités",
+    "nextBestActions": "Prochaines Meilleures Actions",
+    "execute": "Exécuter",
+    "reply": "Répondre",
+    "sentiment": "Sentiment",
+    "score": "Score",
+    "trend": "Tendance",
+    "confidence": "Confiance",
+    "channelPreference": "Préférence de Canal",
+    "loading": "Chargement...",
+    "refresh": "Actualiser",
+    "contactInformation": "Informations de Contact",
+    "companyDetails": "Détails de l'Entreprise",
+    "quickActions": "Actions Rapides",
+    "sendMessage": "Envoyer un Message",
+    "createTicket": "Créer un Ticket",
+    "scheduleCall": "Programmer un Appel",
+    "addToVIP": "Ajouter aux VIP",
+    "customerNotFound": "Client non trouvé",
+    "stats": {
+      "totalCustomers": "Total des Clients",
+      "activeCustomers": "Clients Actifs",
+      "avgLifetimeValue": "Valeur Vie Moyenne",
+      "churnRate": "Taux d'Attrition",
+      "thisMonth": "ce mois-ci",
+      "ofTotal": "du total",
+      "fromLastMonth": "du mois dernier"
+    },
+    "tabs": {
+      "overview": "Aperçu",
+      "segments": "Segments",
+      "analytics": "Analytiques",
+      "customers": "Clients",
+      "insights": "Insights"
+    },
+    "segments": {
+      "title": "Segments de Clients",
+      "description": "Organisez et analysez les groupes de clients",
+      "createTitle": "Créer un segment",
+      "editTitle": "Modifier le segment",
+      "name": "Nom",
+      "namePlaceholder": "Clients VIP",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez le segment...",
+      "create": "Créer un segment",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "newCustomers": "Nouveaux Clients",
+      "newCustomersDesc": "Clients récemment acquis",
+      "customers": "Clients",
+      "avgValue": "Valeur Moy.",
+      "monthlyGrowth": "Croissance Mensuelle",
+      "segmentHealth": "Santé du Segment",
+      "viewCustomers": "Voir les Clients",
+      "createCampaign": "Créer une Campagne"
+    },
+    "topCustomers": {
+      "title": "Meilleurs Clients"
+    },
+    "riskLevel": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "critical": "Critique"
+    },
+    "healthScore": {
+      "title": "Score de Santé",
+      "outOf100": "sur 100",
+      "factors": "Facteurs de Santé",
+      "ticketVolume": "Volume de Tickets",
+      "responseTime": "Temps de Réponse",
+      "satisfaction": "Satisfaction",
+      "engagement": "Engagement",
+      "churnRisk": "Risque d'Attrition",
+      "lowerIsBetter": "Plus bas est mieux",
+      "higherIsBetter": "Plus haut est mieux",
+      "recommendations": "Recommandations",
+      "trend": "Tendance du Score de Santé",
+      "last30Days": "30 Derniers Jours",
+      "trendDescription": "Tendance d'amélioration du score de santé",
+      "points": "points",
+      "contactCustomer": "Contacter le Client",
+      "viewHistory": "Voir l'Historique"
+    },
+    "analytics": {
+      "last7Days": "7 derniers jours",
+      "last30Days": "30 derniers jours",
+      "last90Days": "90 derniers jours",
+      "lastYear": "Dernière année",
+      "allMetrics": "Toutes les métriques",
+      "engagement": "Engagement",
+      "conversion": "Conversion",
+      "retention": "Rétention",
+      "refresh": "Actualiser",
+      "export": "Exporter",
+      "channelPreferences": "Préférences de Canal",
+      "peakHours": "Heures de Pointe",
+      "engagementMetrics": "Métriques d'Engagement",
+      "avgSessionDuration": "Durée Moyenne de Session",
+      "pagesPerSession": "Pages par Session",
+      "bounceRate": "Taux de Rebond",
+      "returnVisitorRate": "Taux de Visiteurs de Retour",
+      "emailOpenRate": "Taux d'Ouverture Email",
+      "clickThroughRate": "Taux de Clic",
+      "fromLastMonth": "{value} du mois dernier",
+      "conversionFunnel": "Entonnoir de Conversion",
+      "conversionRate": "{rate}% de conversion",
+      "cohortAnalysis": "Analyse de Cohorte",
+      "retentionRatesByMonth": "Taux de rétention par mois",
+      "retained": "{rate}% retenus",
+      "predictiveInsights": "Insights Prédictifs",
+      "churnPrediction": "Prédiction d'Attrition",
+      "highRisk": "Risque Élevé",
+      "mediumRisk": "Risque Moyen",
+      "lowRisk": "Risque Faible",
+      "predictedChurnRate": "Taux d'Attrition Prévu",
+      "lifetimeValueForecast": "Prévision de Valeur Vie",
+      "nextQuarter": "Prochain Trimestre",
+      "nextYear": "Prochaine Année",
+      "growth": "{rate} de croissance",
+      "upsellOpportunities": "Opportunités de Montée en Gamme",
+      "customersCount": "{count} clients",
+      "likely": "{probability}% probable",
+      "segments": {
+        "vipCustomers": "Clients VIP",
+        "engagedUsers": "Utilisateurs Engagés"
+      },
+      "funnelStages": {
+        "awareness": "Sensibilisation",
+        "interest": "Intérêt",
+        "consideration": "Considération",
+        "purchase": "Achat",
+        "retention": "Rétention"
+      },
+      "channels": {
+        "email": "Email",
+        "whatsapp": "WhatsApp",
+        "webChat": "Chat Web",
+        "instagram": "Instagram"
+      }
+    },
+    "insights": {
+      "opportunities": "Opportunités de Croissance",
+      "risks": "Alertes de Risque",
+      "vipGrowth": "Croissance des Clients VIP",
+      "vipGrowthDesc": "Votre segment VIP montre une forte croissance ce trimestre",
+      "expandProgram": "Étendre le Programme",
+      "newCustomerSuccess": "Succès des Nouveaux Clients",
+      "newCustomerSuccessDesc": "Taux de satisfaction élevé parmi les nouveaux clients",
+      "optimizeOnboarding": "Optimiser l'Intégration",
+      "atRiskIncrease": "Augmentation des Clients à Risque",
+      "atRiskIncreaseDesc": "Augmentation de 15% des clients montrant des signaux d'attrition",
+      "implementRetention": "Implémenter la Rétention",
+      "supportVolumeRising": "Volume de Support en Hausse",
+      "supportVolumeRisingDesc": "Demandes de support client en hausse de 25% ce mois-ci",
+      "reviewProcesses": "Réviser les Processus"
+    },
+    "createDialog": {
+      "title": "Créer un client",
+      "description": "Saisissez les informations du client pour l'ajouter à votre espace.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "company": "Société",
+      "phone": "Téléphone",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "creating": "Création...",
+      "required": "Requis"
+    },
+    "profile": {
+      "editProfile": "Modifier le Profil",
+      "sendMessage": "Envoyer un Message",
+      "callCustomer": "Appeler le Client",
+      "loading": "Chargement du profil client...",
+      "gatheringInsights": "Collecte d'insights client complets",
+      "notFound": "Client non trouvé",
+      "notFoundDescription": "Le profil client demandé n'a pas pu être chargé",
+      "unknown": "Inconnu",
+      "verified": "Vérifié",
+      "loyal": "Fidèle",
+      "enterpriseCustomer": "Client Entreprise",
+      "health": "Santé :",
+      "ltv": "VVC :",
+      "since": "Depuis :",
+      "edit": "Modifier",
+      "exportProfile": "Exporter le Profil",
+      "noCustomFields": "Aucun champ personnalisé",
+      "noRecentActivity": "Aucune activité récente",
+      "noRecentActivityDescription": "Ce client n'a eu aucune interaction récente",
+      "latestInteractions": "Dernières interactions client",
+      "aiInsights": "Insights IA",
+      "aiAnalysis": "Analyse client alimentée par l'IA",
+      "noInsightsAvailable": "Aucun insight disponible",
+      "insightsPlaceholder": "Les insights IA apparaîtront ici au fur et à mesure de l'analyse du comportement client",
+      "segments": {
+        "vipCustomer": "Client VIP",
+        "highlyEngaged": "Très Engagé"
+      },
+      "interactions": {
+        "featureRequestDiscussion": "Discussion de demande de fonctionnalité",
+        "loginIssueResolution": "Résolution de problème de connexion",
+        "loginIssuesWithMobileApp": "Problèmes de connexion avec l'application mobile"
+      },
+      "insights": {
+        "highEngagementEmail": "Le client montre un fort engagement avec le canal email",
+        "strongPurchaseHistory": "Historique d'achat solide avec des modèles saisonniers",
+        "excellentSatisfaction": "Excellents scores de satisfaction dans toutes les interactions",
+        "upsellPremiumFeatures": "Vendre des fonctionnalités premium basées sur les modèles d'utilisation",
+        "crossSellProducts": "Vendre des produits complémentaires",
+        "scheduleBusinessReview": "Programmer une revue d'affaires trimestrielle",
+        "sendPersonalizedRecommendations": "Envoyer des recommandations de produits personnalisées"
+      },
+      "tabs": {
+        "healthScore": "Score de Santé",
+        "journey": "Parcours"
+      }
+    },
+    "keyInsights": "Informations clés",
+    "opportunities": "Opportunités",
+    "nextBestActions": "Meilleures actions suivantes",
+    "execute": "Exécuter",
+    "refresh": "Rafraîchir",
+    "sentiment": "Sentiment",
+    "score": "Score",
+    "trend": "Tendance",
+    "confidence": "Confiance",
+    "recentActivity": "Activité récente",
+    "channelPreference": "Préférence de canal"
+  },
+  "coaching": {
+    "title": "Coaching commercial",
+    "viewLatest": "Voir le dernier",
+    "trends": "Tendances",
+    "recommendations": "Recommandations",
+    "summary": "Résumé",
+    "strengths": "Forces",
+    "improvements": "Améliorations",
+    "actions": "Actions recommandées",
+    "logAction": "Journaliser"
+  },
+  "landing": {
+    "loading": "Chargement...",
+    "nav": {
+      "features": "Fonctionnalités",
+      "solutions": "Solutions",
+      "pricing": "Tarifs",
+      "login": "Se connecter",
+      "getStarted": "Commencer"
+    },
+    "badges": {
+      "unifiedInbox": "Boîte de réception unifiée",
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "instagram": "Instagram",
+      "instagramDm": "Instagram DM"
+    },
+    "trusted": {
+      "title": "Plébiscité par des équipes orientées expérience client"
+    },
+    "stats": {
+      "csat": "CSAT",
+      "avgResponse": "Réponse moy.",
+      "channels": "Canaux",
+      "automations": "Automatisations"
+    },
+    "testimonials": {
+      "items": [
+        { "quote": "Glavito a transformé nos opérations de support.", "role": "Responsable Support, E‑commerce" },
+        { "quote": "Nos délais de réponse ont chuté, la satisfaction a grimpé.", "role": "Responsable CX, SaaS" },
+        { "quote": "L'automatisation nous fait gagner des heures chaque jour.", "role": "Ops Manager, Retail" }
+      ]
+    },
+    "faq": {
+      "items": [
+        { "q": "Combien de temps dure la mise en place ?", "a": "La plupart des équipes se connectent et passent en production en moins de 10 minutes." },
+        { "q": "Supportez‑vous WhatsApp ?", "a": "Oui — intégration WhatsApp Business API de premier plan incluse." },
+        { "q": "Puis‑je migrer depuis une autre plateforme ?", "a": "Oui — nous proposons des outils d'import et un accompagnement pour les plateformes courantes." }
+      ]
+    },
+    "hero": {
+      "title": "Plateforme multicanale",
+      "highlight": "survitaminée",
+      "subtitle": "WhatsApp, Email et Instagram au même endroit — avec Agent IA avancé, CRM complet et automatisation marketing.",
+      "primaryCta": "Commencer gratuitement",
+      "secondaryCta": "Se connecter"
+    },
+    "features": {
+      "title": "Tout pour scaler votre support",
+      "subtitle": "Outils modernes, UX soignée et automatisation puissante",
+      "items": {
+        "multiChannel": {"title": "Boîte multicanale", "desc": "Gérez WhatsApp, Email et messages Instagram au même endroit"},
+        "agentAI": {"title": "Agent IA", "desc": "Auto-triage, réponses suggérées, routage et insights"},
+        "crm": {"title": "CRM Complet", "desc": "Profils 360°, segments et analytics du cycle de vie"},
+        "marketing": {"title": "Automatisation Marketing", "desc": "Campagnes, diffusions et parcours conversationnels"},
+        "automations": {"title": "Workflows", "desc": "Routage intelligent, SLA, escalades et validations"},
+        "analytics": {"title": "Analytique & BI", "desc": "Tableaux de bord, KPI, impact revenu et prévisions"}
+      }
+    },
+    "integrations": {
+      "title": "Connectez vos canaux en quelques minutes",
+      "subtitle": "Centralisez chaque conversation et ne perdez plus le contexte",
+      "preview": "Aperçu des canaux"
+    },
+    "cta": {
+      "title": "Prêt à ravir vos clients ?",
+      "subtitle": "Lancez un support alimenté par l'IA en minutes et scalez sereinement",
+      "primary": "Créer un compte gratuit",
+      "secondary": "Se connecter"
+    }
+    ,
+    "solutions": {
+      "title": "Conçu pour l'échelle opérationnelle",
+      "subtitle": "Excellence opérationnelle, WhatsApp-first et automatisation sans code",
+      "operations": {"title": "Opérations", "desc": "Permissions granulaires, équilibrage de charge et traçabilité complète"},
+      "whatsapp": {"title": "WhatsApp", "desc": "Diffusions, boîte partagée et mises à jour commandes"},
+      "automation": {"title": "Automatisation", "desc": "Workflows en glisser-déposer, 30+ intégrations, règles no-code"}
+    },
+    "pricing": {
+      "title": "Tarification simple et transparente",
+      "subtitle": "Commencez gratuitement. Évoluez quand vous voulez.",
+      "cta": "Commencer",
+      "tiers": {
+        "starter": {
+          "name": "Débutant",
+          "price": "$29/mo",
+          "desc": "Pour se lancer",
+          "features": [
+            "1 500 conversations/mo",
+            "3 membres d'équipe",
+            "Rapports de base",
+            "Support email"
+          ]
+        },
+        "growth": {
+          "name": "Avancé",
+          "price": "$69/mo",
+          "desc": "Pour les marques en croissance",
+          "features": [
+            "5 000 conversations/mo",
+            "7 membres d'équipe",
+            "25 automatisations",
+            "Analyses avancées",
+            "Support prioritaire",
+            "Accès API"
+          ]
+        },
+        "pro": {
+          "name": "Professionnel",
+          "price": "$129/mo",
+          "desc": "Pour les marques ambitieuses",
+          "features": [
+            "20 000 conversations/mo",
+            "15 membres d'équipe",
+            "Automatisations illimitées",
+            "Rapports personnalisés",
+            "CSM dédié",
+            "API avancée"
+          ]
+        },
+        "enterprise": {
+          "name": "Entreprise",
+          "price": "$499/mo",
+          "desc": "Pour les organisations exigeantes",
+          "features": [
+            "90 000 conversations/mo",
+            "50 membres d'équipe",
+            "Automatisations illimitées",
+            "Rapports entreprise",
+            "Support premium",
+            "Accès API complet"
+          ]
+        }
+      }
+    },
+    "steps": {
+      "title": "Lancez votre support en 3 étapes",
+      "subtitle": "Rapide et intuitif",
+      "signup": {"title": "Inscription", "desc": "Créez votre compte en quelques minutes"},
+      "connect": {"title": "Connecter", "desc": "Reliez WhatsApp, Email et Instagram"},
+      "automate": {"title": "Automatiser", "desc": "Concevez vos workflows et lancez-vous"}
+    }
+  },
+  "collaboration": {
+    "startDM": "Démarrer un MP",
+    "searchUsersPlaceholder": "Rechercher des utilisateurs...",
+    "noShifts": "Aucun shift",
+    "shift": "Shift",
+    "shiftTitle": "Titre",
+    "selectChannel": "Sélectionnez un canal",
+    "participants": "Participants",
+    "dmShort": "MP",
+    "userIdPlaceholder": "ID utilisateur",
+    "writeWithMention": "Écrire @mention"
+  },
+  "flows": {
+    "title": "Flux",
+    "create": "Créer un flux",
+    "loading": "Chargement...",
+    "empty": "Aucun flux",
+    "publish": "Publier",
+    "builderTitle": "Concepteur de flux",
+    "builderComingSoon": "La zone XYFlow apparaîtra ici.",
+    "segments": {
+      "details": {
+        "title": "Détails du segment",
+        "metrics": "Métriques",
+        "preview": "Aperçu",
+        "actions": "Actions",
+        "totalCustomers": "Clients totaux",
+        "avgValue": "Valeur moyenne des affaires",
+        "monthlyGrowth": "Croissance mensuelle",
+        "summary": "Résumé des performances du segment",
+        "totalMatched": "Correspondances totales",
+        "sampleCount": "Taille de l'échantillon",
+        "noSample": "Aucun client dans l'échantillon",
+        "recalculate": "Recalculer",
+        "exportJson": "Exporter JSON",
+        "exportCsv": "Exporter CSV"
+      }
+    }
+  }
+  ,
+  "workflows": {
+    "title": "Workflows",
+    "subtitle": "Automatisations, routage, SLA et actions inter-départements",
+    "list": {
+      "filters": "Filtres",
+      "search": "Rechercher des workflows...",
+      "status": "Statut",
+      "category": "Catégorie",
+      "all": "Tous",
+      "active": "Actifs",
+      "inactive": "Inactifs",
+      "createWorkflow": "Créer un workflow",
+      "reload": "Rafraîchir",
+      "totalWorkflows": "Workflows totaux",
+      "totalExecutions": "Exécutions totales",
+      "today": "aujourd'hui",
+      "successRate": "Taux de réussite",
+      "avgExecutionTime": "Temps d'exécution moy.",
+      "executionActivity": "Activité d'exécution",
+      "thisWeek": "cette semaine",
+      "thisMonth": "ce mois",
+      "recentIssues": "Problèmes récents",
+      "viewAllIssues": "Voir tout"
+    },
+    "designer": {
+      "title": "Concepteur de workflow",
+      "definition": "Définition",
+      "designer": "Designer",
+      "metadata": "Métadonnées (JSON)",
+      "name": "Nom",
+      "type": "Type",
+      "priority": "Priorité",
+      "status": "Statut",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "executionHistory": "Historique d'exécution",
+      "noExecutions": "Aucune exécution"
+    },
+    "createDialog": {
+      "title": "Créer un workflow",
+      "chooseTemplate": "Choisir un modèle",
+      "searchPlaceholder": "Rechercher des modèles...",
+      "templatePlaceholder": "Sélectionner un modèle",
+      "none": "Aucun modèle trouvé",
+      "nameLabel": "Nom du workflow",
+      "categoryLabel": "Catégorie",
+      "descriptionLabel": "Description",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "creating": "Création..."
+    }
+  }
+  ,
+  "marketing": {
+    "title": "Campagnes marketing",
+    "subtitle": "Créez, planifiez et lancez des campagnes multicanales",
+    "create": "Nouvelle campagne",
+    "reload": "Rafraîchir",
+    "empty": "Aucune campagne",
+    "noDescription": "Aucune description",
+    "type": "Type",
+    "spent": "Dépensé",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "fields": {
+      "name": "Nom",
+      "type": "Type",
+      "subject": "Objet",
+      "description": "Description"
+    },
+    "actions": {
+      "launch": "Lancer",
+      "scheduleNow": "Planifier",
+      "manageWorkflows": "Gérer les workflows"
+    },
+    "metrics": {
+      "openRate": "Taux d'ouverture",
+      "clickRate": "Taux de clic"
+    }
+  }
+  ,
+  "integrations": {
+    "title": "Intégrations",
+    "subtitle": "Gérez les connexions de canaux et les intégrations système",
+    "reload": "Rafraîchir",
+    "loading": "Chargement des intégrations...",
+    "empty": "Aucune intégration",
+    "noErrors": "Aucune erreur",
+    "connectors": "Connecteurs",
+    "manualSync": "Synchronisation manuelle",
+    "disable": "Désactiver",
+    "actions": {
+      "connect": "Connecter",
+      "disable": "Désactiver"
+    }
+  },
+  "customers": {
+    "title": "Clients",
+    "subtitle": "Gérez et analysez vos relations clients",
+    "addCustomer": "Ajouter un Client",
+    "exportReport": "Exporter le Rapport",
+    "searchCustomers": "Rechercher des clients...",
+    "selectSegment": "Sélectionner un segment",
+    "allSegments": "Tous les Segments",
+    "filters": "Filtres",
+    "customers": "Clients",
+    "avgValue": "Valeur Moyenne",
+    "growth": "Croissance",
+    "healthScore": "Score de Santé",
+    "lifetimeValue": "Valeur Vie Client",
+    "rescoreHealth": "Recalculer la Santé",
+    "noJourneyData": "Aucune donnée de parcours disponible",
+    "allStages": "Toutes les Étapes",
+    "allChannels": "Tous les Canaux",
+    "moreFilters": "Plus de Filtres",
+    "journeyStages": "Étapes du Parcours",
+    "interactionTimeline": "Chronologie des Interactions",
+    "outcome": "Résultat",
+    "details": "Détails",
+    "conversionEvents": "Événements de Conversion",
+    "attribution": "Attribution",
+    "value": "Valeur",
+    "keyInsights": "Insights Clés",
+    "opportunities": "Opportunités",
+    "nextBestActions": "Prochaines Meilleures Actions",
+    "execute": "Exécuter",
+    "refresh": "Actualiser",
+    "sentiment": "Sentiment",
+    "score": "Score",
+    "trend": "Tendance",
+    "confidence": "Confiance",
+    "recentActivity": "Activité Récente",
+    "channelPreference": "Préférence de Canal",
+    "loading": "Chargement...",
+    "stats": {
+      "totalCustomers": "Total des Clients",
+      "activeCustomers": "Clients Actifs",
+      "avgLifetimeValue": "Valeur Vie Moyenne",
+      "churnRate": "Taux d'Attrition",
+      "thisMonth": "ce mois-ci",
+      "ofTotal": "du total",
+      "fromLastMonth": "du mois dernier"
+    },
+    "tabs": {
+      "overview": "Aperçu",
+      "segments": "Segments",
+      "analytics": "Analytiques",
+      "customers": "Clients",
+      "insights": "Insights"
+    },
+    "segments": {
+      "title": "Segments de Clients",
+      "newCustomers": "Nouveaux Clients",
+      "newCustomersDesc": "Clients récemment acquis"
+    },
+    "topCustomers": {
+      "title": "Meilleurs Clients"
+    },
+    "riskLevel": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "critical": "Critique"
+    },
+    "stages": {
+      "awareness": "Sensibilisation",
+      "interest": "Intérêt",
+      "consideration": "Considération",
+      "purchase": "Achat",
+      "onboarding": "Intégration",
+      "retention": "Rétention",
+      "expansion": "Expansion",
+      "advocacy": "Plaidoyer"
+    },
+    "channels": {
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "web": "Web",
+      "phone": "Téléphone",
+      "instagram": "Instagram"
+    },
+    "createDialog": {
+      "title": "Créer un client",
+      "description": "Saisissez les détails du client pour l'ajouter à votre espace de travail.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "company": "Société",
+      "phone": "Téléphone",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "creating": "Création...",
+      "required": "Requis"
+    },
+    "profile": {
+      "editProfile": "Modifier le profil",
+      "sendMessage": "Envoyer un message",
+      "callCustomer": "Appeler le client",
+      "loading": "Chargement du profil client...",
+      "gatheringInsights": "Collecte d'informations complètes sur le client",
+      "notFound": "Client non trouvé",
+      "notFoundDescription": "Le profil client demandé n'a pas pu être chargé",
+      "unknown": "Inconnu",
+      "verified": "Vérifié",
+      "loyal": "Fidèle",
+      "enterpriseCustomer": "Client Entreprise",
+      "health": "Santé :",
+      "ltv": "VVC :",
+      "since": "Depuis :",
+      "edit": "Modifier",
+      "exportProfile": "Exporter le profil",
+      "contactInformation": "Informations de contact",
+      "companyDetails": "Détails de l'entreprise",
+      "noCustomFields": "Aucun champ personnalisé",
+      "noRecentActivity": "Aucune activité récente",
+      "noRecentActivityDescription": "Ce client n'a eu aucune interaction récente",
+      "latestInteractions": "Dernières interactions client",
+      "aiInsights": "Insights IA",
+      "aiAnalysis": "Analyse client alimentée par l'IA",
+      "noInsightsAvailable": "Aucun insight disponible",
+      "insightsPlaceholder": "Les insights IA apparaîtront ici pendant l'analyse du comportement client",
+      "quickActions": "Actions rapides",
+      "createTicket": "Créer un ticket",
+      "scheduleCall": "Programmer un appel",
+      "addToVIP": "Ajouter aux VIP",
+      "segments": {
+        "vipCustomer": "Client VIP",
+        "highlyEngaged": "Très engagé"
+      },
+      "interactions": {
+        "featureRequestDiscussion": "Discussion sur demande de fonctionnalité",
+        "loginIssueResolution": "Résolution de problème de connexion",
+        "loginIssuesWithMobileApp": "Problèmes de connexion avec l'app mobile"
+      },
+      "insights": {
+        "highEngagementEmail": "Le client montre un fort engagement avec le canal email",
+        "strongPurchaseHistory": "Historique d'achat solide avec des modèles saisonniers",
+        "excellentSatisfaction": "Excellents scores de satisfaction sur toutes les interactions",
+        "upsellPremiumFeatures": "Vendre des fonctionnalités premium basées sur les modèles d'usage",
+        "crossSellProducts": "Vendre des produits complémentaires",
+        "scheduleBusinessReview": "Programmer une revue d'affaires trimestrielle",
+        "sendPersonalizedRecommendations": "Envoyer des recommandations de produits personnalisées"
+      },
+      "tabs": {
+        "healthScore": "Score de santé",
+        "journey": "Parcours"
+      }
+    },
+    "insights": {
+      "opportunities": "Opportunités",
+      "risks": "Risques",
+      "vipGrowth": "Croissance VIP",
+      "vipGrowthDesc": "Le segment de clients VIP montre une forte croissance",
+      "expandProgram": "Étendre le programme",
+      "newCustomerSuccess": "Succès des nouveaux clients",
+      "newCustomerSuccessDesc": "Taux de réussite élevé avec les nouveaux clients",
+      "optimizeOnboarding": "Optimiser l'intégration",
+      "atRiskIncrease": "Augmentation des risques",
+      "atRiskIncreaseDesc": "Augmentation des clients à risque",
+      "implementRetention": "Implémenter la rétention",
+      "supportVolumeRising": "Volume de support en hausse",
+      "supportVolumeRisingDesc": "Le volume de tickets de support augmente",
+      "reviewProcesses": "Revoir les processus"
+    },
+    "healthScore": {
+      "title": "Score de santé",
+      "outOf100": "sur 100",
+      "factors": "Facteurs",
+      "ticketVolume": "Volume de tickets",
+      "responseTime": "Temps de réponse",
+      "satisfaction": "Satisfaction",
+      "engagement": "Engagement",
+      "churnRisk": "Risque de désabonnement",
+      "lowerIsBetter": "Plus bas c'est mieux",
+      "higherIsBetter": "Plus haut c'est mieux",
+      "recommendations": "Recommandations",
+      "trend": "Tendance",
+      "last30Days": "30 derniers jours",
+      "trendDescription": "Description de la tendance",
+      "points": "points",
+      "contactCustomer": "Contacter le client",
+      "viewHistory": "Voir l'historique"
+    },
+    "viewDetails": "Voir les détails",
+    "exportData": "Exporter les données",
+    "sendCampaign": "Envoyer une campagne",
+    "createAutomation": "Créer une automatisation",
+    "predicted": "Prévu",
+    "customerSince": "Client depuis",
+    "risk": "risque",
+    "reply": "Répondre",
+    "excellent": "Excellent",
+    "good": "Bon",
+    "attention": "Attention",
+    "critical": "Critique"
+  },
+  "conversation": {
+    "actions": {
+      "snooze": "Reporter",
+      "aiCoach": "Coach IA",
+      "resolve": "Résoudre",
+      "aiAutopilot": "Pilote Automatique IA",
+      "useTemplate": "Utiliser un Modèle",
+      "sendGreeting": "Envoyer une Salutation",
+      "refreshAnalysis": "Actualiser l'Analyse",
+      "fullDashboard": "Tableau de Bord Complet",
+      "dismiss": "Ignorer",
+      "suggestResponse": "Suggérer une réponse",
+      "autoComplete": "Complétion automatique",
+      "knowledge": "Connaissances",
+      "skip": "Ignorer"
+    },
+    "status": {
+      "analyzing": "Analyse de la conversation pour proposer un brouillon…",
+      "loading": "Chargement de la conversation...",
+      "pleaseWait": "Veuillez patienter pendant que nous récupérons les messages",
+      "readyToStart": "Prêt à commencer la conversation",
+      "aiAssistantReady": "Assistant IA Prêt",
+      "customerOnline": "Client en ligne"
+    },
+    "messages": {
+      "beginningConversation": "Ceci est le début de votre conversation avec le client. Envoyez un message amical pour commencer.",
+      "placeholder": "Tapez votre message...",
+      "attachFile": "Joindre un fichier",
+      "templates": "Modèles",
+      "openGlavAI": "Ouvrir les Suggestions GlavAI",
+      "glavAI": "GlavAI"
+    },
+    "aiCoach": {
+      "title": "Coach de Performance IA",
+      "subtitle": "Insights de conversation en temps réel",
+      "summary": "Résumé de la Conversation",
+      "strengths": "Points Forts",
+      "improvements": "Axes d'Amélioration",
+      "metrics": {
+        "clarity": "Clarté",
+        "sentiment": "Sentiment",
+        "fillerWords": "Mots de Remplissage"
+      },
+      "summary": {
+        "title": "Résumé de la Conversation",
+        "strengthsImprovements": "Forces et Améliorations"
+      }
+    },
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram",
+      "email": "Email"
+    },
+    "quickActions": {
+      "title": "Actions Rapides",
+      "suggestResponse": "Suggérer une réponse",
+      "autoComplete": "Complétion automatique",
+      "knowledge": "Connaissances"
+    },
+    "knowledge": {
+      "suggestedArticles": "Articles suggérés",
+      "suggestedFaqs": "FAQ suggérées"
+    },
+    "aiSuggestions": {
+      "title": "Suggestions GlavAI",
+      "description": "Suggestions de réponses alimentées par l'IA, modèles et connaissances pour vous aider à répondre plus rapidement"
+    },
+    "satisfactionSurvey": {
+      "title": "Envoyer un Sondage de Satisfaction",
+      "description": "Le ticket a été résolu. Souhaitez-vous envoyer un sondage de satisfaction au client ?",
+      "sendViaEmail": "Envoyer par Email",
+      "sendViaWhatsApp": "Envoyer via WhatsApp Flow",
+      "surveyPreview": "Aperçu du Sondage",
+      "questions": {
+        "satisfaction": "• À quel point êtes-vous satisfait de la façon dont nous avons résolu votre problème ?",
+        "service": "• À quel point êtes-vous satisfait de notre service ?",
+        "recommendation": "• Dans quelle mesure êtes-vous susceptible de nous recommander à d'autres ?",
+        "feedback": "• Avez-vous des commentaires ou suggestions supplémentaires ?"
+      },
+      "question1": "À quel point êtes-vous satisfait de la façon dont nous avons résolu votre problème ?",
+      "question2": "À quel point êtes-vous satisfait de notre service ?",
+      "question3": "Dans quelle mesure êtes-vous susceptible de nous recommander à d'autres ?",
+      "question4": "Avez-vous des commentaires ou suggestions supplémentaires ?",
+      "preview": "Aperçu du Sondage",
+      "sending": "Envoi en cours...",
+      "sendButton": "Envoyer le Sondage",
+      "sendSurvey": "Envoyer le Sondage",
+      "sendSurveys": "Envoyer les Sondages",
+      "surveySent": "Sondage Envoyé !",
+      "sent": "Sondage Envoyé !",
+      "sentDescription": "Le client recevra le sondage de satisfaction sous peu.",
+      "surveyMessage": "Le client recevra le sondage de satisfaction sous peu."
+    }
+  },
+  "calls": {
+    "labels": {
+      "remote": "Distant",
+      "you": "Vous"
+    },
+    "controls": {
+      "mute": "Couper le micro",
+      "unmute": "Activer le micro",
+      "cameraOff": "Éteindre la caméra",
+      "cameraOn": "Allumer la caméra",
+      "shareScreen": "Partager l'écran",
+      "stopShare": "Arrêter le partage",
+      "sendFile": "Envoyer un fichier",
+      "end": "Terminer"
+    },
+    "files": {
+      "receivedFiles": "Fichiers reçus"
+    }
+  }
+}

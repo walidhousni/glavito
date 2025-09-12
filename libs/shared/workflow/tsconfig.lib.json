@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../../../dist/libs/shared/workflow",
+    "emitDeclarationOnly": false,
+    "declaration": true,
+    "types": ["node"],
+    "disableSourceOfProjectReferenceRedirect": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
+  "references": [
+    {
+      "path": "../kafka/tsconfig.lib.json"
+    },
+    {
+      "path": "../database/tsconfig.lib.json"
+    }
+  ]
+}

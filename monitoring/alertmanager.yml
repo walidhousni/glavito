@@ -1,0 +1,9 @@
+route:
+  receiver: 'default'
+
+receivers:
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://host.docker.internal:3001/webhooks/incoming'
+        send_resolved: true
+

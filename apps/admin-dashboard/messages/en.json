@@ -1,0 +1,2286 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close",
+    "allRightsReserved": "All rights reserved",
+    "tryAgain": "Try Again",
+    "goHome": "Go to Home",
+    "goBack": "Go Back",
+    "search": "Search...",
+    "create": "Create",
+    "today": "Today",
+    "coverage": "Coverage",
+    "write": "Write",
+    "send": "Send",
+    "sending": "Sending...",
+    "select": "Select",
+    "searchPlaceholder": "Search tickets, customers, knowledge...",
+    "newTicket": "New Ticket",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "notifications": "Notifications",
+    "new": "New",
+    "viewAll": "View All",
+    "settings": "Settings",
+    "help": "Help",
+    "logout": "Logout",
+    "processing": "Processing...",
+    "add": "Add",
+    "markAllRead": "Mark all read"
+  },
+  "whiteLabel": {
+    "assets": {
+      "title": "Brand Assets",
+      "uploadLogo": "Upload Logo",
+      "uploadFavicon": "Upload Favicon",
+      "remove": "Remove",
+      "loading": "Loading assets..."
+    },
+    "email": {
+      "templates": "Email Templates",
+      "builder": "Email Builder",
+      "preview": "Preview",
+      "multiClient": "Multi-client preview",
+      "gmail": "Gmail",
+      "outlook": "Outlook",
+      "appleMail": "Apple Mail",
+      "deliveries": "Recent deliveries",
+      "opens": "opens",
+      "clicks": "clicks"
+    }
+  },
+  "workflows": {
+    "title": "Workflow Automation",
+    "subtitle": "Manage and monitor N8N workflow automations",
+    "designer": {
+      "title": "Workflow Designer",
+      "definition": "Definition",
+      "name": "Name",
+      "type": "Type",
+      "priority": "Priority",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "designer": "Designer",
+      "metadata": "Metadata JSON",
+      "executionHistory": "Execution History",
+      "noExecutions": "No executions yet"
+    },
+    "list": {
+      "totalWorkflows": "Total Workflows",
+      "totalExecutions": "Total Executions",
+      "successRate": "Success Rate",
+      "avgExecutionTime": "Avg Execution Time",
+      "active": "active",
+      "inactive": "inactive",
+      "today": "Today",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "executionActivity": "Execution Activity",
+      "recentIssues": "Recent Issues",
+      "viewAllIssues": "View All Issues",
+      "filters": "Filters",
+      "search": "Search workflows...",
+      "status": "Status",
+      "category": "Category",
+      "all": "All",
+      "createWorkflow": "Create Workflow",
+      "reload": "Reload",
+      "save": "Save",
+      "noneFound": "No workflows found",
+      "noneMatch": "No workflows match your current filters.",
+      "getStarted": "Get started by creating your first workflow."
+    },
+    "createDialog": {
+      "title": "Create Workflow",
+      "chooseTemplate": "Choose a template (optional)",
+      "searchPlaceholder": "Search templates...",
+      "templatePlaceholder": "Select template",
+      "none": "No templates found",
+      "nameLabel": "Name",
+      "categoryLabel": "Category",
+      "descriptionLabel": "Description",
+      "cancel": "Cancel",
+      "create": "Create",
+      "creating": "Creating..."
+    }
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "search": "Search",
+    "searchPlaceholder": "Search integrations, workflows, themes...",
+    "install": "Install",
+    "installing": "Installing...",
+    "loadError": "Failed to load marketplace",
+    "category": "Category",
+    "type": "Type",
+    "all": "All",
+    "tagPlaceholder": "Filter by tag",
+    "sort": "Sort",
+    "sortUpdated": "Recently updated",
+    "sortPopular": "Most popular",
+    "sortRating": "Top rated",
+    "sortNewest": "Newest",
+    "premiumOnly": "Premium only",
+    "prev": "Prev",
+    "next": "Next",
+    "page": "Page {page}"
+  },
+  "ai": {
+    "title": "AI Intelligence",
+    "subtitle": "Advanced AI insights and analytics for customer interactions",
+    "buttons": {
+      "export": "Export Report",
+      "trainModel": "Train Model"
+    },
+    "autopilot": {
+      "title": "AI Autopilot & Insights",
+      "mode": "Mode",
+      "minConfidence": "Min conf",
+      "settings": "Settings",
+      "dialogTitle": "Autopilot Settings",
+      "dialogDesc": "Configure AI autopilot behavior for conversations.",
+      "modeLabel": "Mode",
+      "off": "Off",
+      "draft": "Draft (agent approves)",
+      "auto": "Auto-send",
+      "minConfidenceLabel": "Minimum confidence",
+      "maxRepliesLabel": "Max auto replies per hour",
+      "allowedChannelsLabel": "Allowed channels",
+      "channels": { "whatsapp": "WhatsApp", "instagram": "Instagram", "email": "Email", "web": "Web", "voice": "Voice" },
+      "close": "Close",
+      "save": "Save",
+      "saving": "Saving...",
+      "error": "Failed to save settings"
+    },
+    "metrics": {
+      "totalAnalyses": "Total Analyses",
+      "avgConfidence": "Avg Confidence",
+      "modelsActive": "Active Models",
+      "responseTime": "Response Time"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "sentiment": "Sentiment Analysis",
+      "intents": "Intent Classification",
+      "predictions": "Predictions",
+      "models": "Models"
+    },
+    "charts": {
+      "sentimentTrends": "Sentiment Trends",
+      "sentimentTrendsDesc": "Customer sentiment over time",
+      "topIntents": "Top Intents",
+      "topIntentsDesc": "Most common customer intents",
+      "aiPerformance": "AI Performance Metrics",
+      "accuracy": "Accuracy",
+      "successRate": "Success Rate"
+    },
+    "recentSentiment": "Recent Sentiment Analysis",
+    "intentResults": "Intent Classification Results",
+    "escalationPredictions": "Escalation Predictions",
+    "churnRiskAssessment": "Churn Risk Assessment",
+    "labels": {
+      "confidence": "confidence",
+      "probability": "probability",
+      "risk": "risk"
+    },
+    "models": {
+      "title": "AI Models Status",
+      "desc": "Overview of active AI models and their performance"
+    },
+    "suggestions": {
+      "title": "AI Response Suggestions",
+      "subtitle": "AI-powered suggestions based on customer message analysis",
+      "analyzing": "Analyzing...",
+      "regenerate": "Regenerate",
+      "customerMessage": "Customer Message",
+      "tabs": {
+        "responses": "AI Responses",
+        "templates": "Templates",
+        "knowledge": "Knowledge Base",
+        "faqs": "FAQs"
+      },
+      "labels": {
+        "confidence": "confidence",
+        "match": "match",
+        "relevant": "relevant",
+        "characters": "characters"
+      },
+      "buttons": {
+        "useTemplate": "Use Template",
+        "viewArticle": "View Article",
+        "saveAsTemplate": "Save as Template",
+        "sendResponse": "Send Response"
+      },
+      "yourResponse": "Your Response",
+      "yourResponseDesc": "Edit and customize your response before sending",
+      "placeholders": {
+        "writeHere": "Type your response here..."
+      }
+    }
+  },
+  "appErrors": {
+    "pageNotFound": "Page Not Found",
+    "pageNotFoundDescription": "The page you are looking for does not exist or has been moved.",
+    "contactSupport": "If you believe this is an error, please contact support.",
+    "somethingWentWrong": "Something went wrong!",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
+    "persistentProblem": "If this problem persists, please contact support.",
+    "errorId": "Error ID",
+    "loadingFailed": "Loading Failed"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to your account",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "errors": {
+        "invalidCredentials": "Invalid email or password",
+        "required": "This field is required",
+        "invalidEmail": "Please enter a valid email address"
+      }
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Join our platform today",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Create Account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errors": {
+        "passwordMismatch": "Passwords don't match",
+        "weakPassword": "Password must be at least 8 characters",
+        "emailExists": "Email already exists"
+      }
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email to receive reset instructions",
+      "email": "Email",
+      "submit": "Send Reset Email",
+      "backToLogin": "Back to login",
+      "success": "Password reset email sent successfully",
+      "errors": {
+        "required": "Email is required",
+        "invalidEmail": "Please enter a valid email address"
+      }
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "subtitle": "Enter your new password",
+      "password": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submit": "Reset Password",
+      "success": "Password reset successfully",
+      "errors": {
+        "required": "Both password fields are required",
+        "passwordMismatch": "Passwords do not match",
+        "weakPassword": "Password must be at least 8 characters long",
+        "invalidToken": "Invalid or expired reset token"
+      }
+    },
+    "verifyEmail": {
+      "title": "Verify Email",
+      "subtitle": "Check your email for verification link",
+      "resend": "Resend verification email",
+      "success": "Email verified successfully",
+      "errors": {
+        "invalidToken": "Invalid or expired verification token",
+        "alreadyVerified": "Email is already verified"
+      }
+    },
+    "invitation": {
+      "title": "Accept Invitation",
+      "subtitle": "Complete your account setup",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Accept Invitation & Create Account",
+      "invitedBy": "Invited by",
+      "role": "Role",
+      "errors": {
+        "required": "All fields are required",
+        "passwordMismatch": "Passwords do not match",
+        "weakPassword": "Password must be at least 8 characters long",
+        "invalidToken": "Invalid or expired invitation",
+        "expired": "This invitation has expired"
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Manage your admin dashboard efficiently",
+    "welcome": "Welcome back, {name}!",
+    "welcomeToGlavito": "Welcome to Glavito",
+    "systemReady": "Your multichannel support system is ready!",
+    "onboardingComplete": "Onboarding Complete",
+    "settings": "Settings",
+    "totalTickets": "Total Tickets",
+    "activeAgents": "Active Agents",
+    "avgResponseTime": "Avg Response Time",
+    "satisfaction": "Satisfaction",
+    "readyToReceive": "Ready to receive tickets",
+    "youreOnline": "You're online",
+    "noDataYet": "No data yet",
+    "noRatingsYet": "No ratings yet",
+    "gettingStarted": "Getting Started",
+    "gettingStartedDesc": "Complete these steps to make the most of your support system",
+    "completeOnboarding": "Complete Onboarding",
+    "completeOnboardingDesc": "Set up your organization and channels",
+    "done": "Done",
+    "testChannels": "Test Your Channels",
+    "testChannelsDesc": "Send a test message through your connected channels",
+    "testNow": "Test Now",
+    "inviteTeam": "Invite Team Members",
+    "inviteTeamDesc": "Add your support team to start collaborating",
+    "invite": "Invite",
+    "createFirstTicket": "Create Your First Ticket",
+    "createFirstTicketDesc": "Test the ticket creation and management flow",
+    "create": "Create",
+    "quickActions": "Quick Actions",
+    "quickActionsDesc": "Common tasks and shortcuts",
+    "viewAllTickets": "View All Tickets",
+    "manageTeam": "Manage Team",
+    "viewReports": "View Reports",
+    "systemSettings": "System Settings",
+    "needHelp": "Need Help?",
+    "needHelpDesc": "We're here to help you succeed",
+    "viewDocumentation": "View Documentation",
+    "contactSupport": "Contact Support",
+    "joinCommunity": "Join Community",
+    "createTicket": "Create Ticket",
+    "createTicketDesc": "Create a new support ticket",
+    "addCustomer": "Add Customer",
+    "addCustomerDesc": "Add a new customer to the system",
+    "sendEmail": "Send Email",
+    "sendEmailDesc": "Send an email to customers",
+    "overview": "Dashboard Overview",
+    "monitorPerformance": "Monitor your support performance and team metrics",
+    "searchPlaceholder": "Search tickets, agents, or customers...",
+    "newTicket": "New Ticket",
+    "reports": "Reports",
+    "totalTicketsLabel": "Total Tickets",
+    "avgResponseTimeLabel": "Avg Response Time",
+    "resolutionRate": "Resolution Rate",
+    "activeIssues": "Active Issues",
+    "vsLastMonth": "vs last month",
+    "fasterThanLastMonth": "15% faster",
+    "improvementThisMonth": "+8.2% improvement",
+    "thisMonth": "this month",
+    "urgentNeedAttention": "Urgent need attention",
+    "needAttention": "need attention",
+    "responseTimeAnalytics": "Response Time Analytics",
+    "performanceTrendsDescription": "Track response times and resolution trends over time",
+    "thisWeek": "This Week",
+    "firstResponse": "First Response",
+    "resolutionTime": "Resolution Time",
+    "avg": "Avg",
+    "commonTasks": "Common tasks and shortcuts",
+    "inviteAgent": "Invite Agent",
+    "settings": "Settings",
+    "aiInsights": "AI Insights",
+    "smartRecommendations": "Smart recommendations powered by AI",
+    "peakHoursDetected": "Peak Hours Detected",
+    "peakHoursRecommendation": "Consider adding more agents during 2-4 PM when ticket volume is highest.",
+    "highImpact": "High Impact",
+    "slaRiskAlert": "SLA Risk Alert",
+    "slaRiskDescription": "3 tickets are approaching SLA breach. Immediate attention required.",
+    "urgent": "Urgent",
+    "viewAllAiInsights": "View All AI Insights",
+    "customerSatisfaction": "Customer Satisfaction",
+    "averageRatingFeedback": "Average rating and feedback analysis",
+    "overallSatisfaction": "Overall Satisfaction",
+    "positiveFeedback": "Positive Feedback",
+    "neutralFeedback": "Neutral Feedback",
+    "negativeFeedback": "Negative Feedback",
+    "ticketStatus": "Ticket Status",
+    "currentDistributionStatuses": "Current distribution of ticket statuses",
+    "open": "Open",
+    "inProgress": "In Progress",
+    "waiting": "Waiting",
+    "resolved": "Resolved",
+    "closed": "Closed",
+    "tickets": "tickets",
+    "total": "Total",
+    "errorLoadingDashboard": "Error loading dashboard",
+    "resolutionTime": "Resolution Time",
+    "avgTime": "Avg: 2.4h",
+    "quickActionsTitle": "Quick Actions",
+    "quickActionsSubtitle": "Common tasks and shortcuts",
+    "createTicketAction": "Create Ticket",
+    "inviteAgent": "Invite Agent",
+    "viewReportsAction": "View Reports",
+    "settingsAction": "Settings",
+    "aiInsights": "AI Insights",
+    "aiInsightsSubtitle": "Smart recommendations powered by AI",
+    "peakHoursDetected": "Peak Hours Detected",
+    "peakHoursRecommendation": "Consider adding 2 more agents during 2-4 PM to reduce response times by 23%",
+    "highImpact": "High Impact",
+    "slaRiskAlert": "SLA Risk Alert",
+    "slaRiskMessage": "3 tickets are approaching SLA breach. Auto-escalate to senior agents?",
+    "urgent": "Urgent",
+    "viewAllAiInsights": "View All AI Insights",
+    "customerSatisfactionTicketStatus": "Customer Satisfaction & Ticket Status",
+    "customerSatisfactionTitle": "Customer Satisfaction",
+    "customerSatisfactionSubtitle": "Average rating based on ticket resolution feedback",
+    "overallSatisfaction": "Overall Satisfaction",
+    "positiveFeedback": "Positive Feedback",
+    "neutralFeedback": "Neutral Feedback",
+    "negativeFeedback": "Negative Feedback",
+    "ticketStatusTitle": "Ticket Status",
+    "ticketStatusSubtitle": "Current distribution of ticket statuses",
+    "open": "Open",
+    "inProgress": "In Progress",
+    "waiting": "Waiting",
+    "resolved": "Resolved",
+    "closed": "Closed",
+    "errorLoadingDashboard": "Error Loading Dashboard",
+    "viewAnalytics": "View Analytics",
+    "viewAnalyticsDesc": "View detailed analytics and reports",
+    "recentActivity": "Recent Activity",
+    "totalCustomers": "Total Customers",
+    "revenue": "Revenue",
+    "growth": "Growth",
+    "fromLastMonth": "from last month",
+    "performanceTrendsDescription": "Performance trends over the last 12 periods",
+    "avg": "Avg",
+    "commonTasks": "Common tasks and shortcuts",
+    "createTicket": "Create Ticket",
+    "viewReports": "View Reports",
+    "settings": "Settings",
+    "smartRecommendations": "Smart recommendations powered by AI",
+    "averageRatingFeedback": "Average rating based on ticket resolution feedback",
+    "currentDistributionStatuses": "Current distribution of ticket statuses",
+    "total": "Total",
+    "tickets": "tickets",
+    "activityFeed": {
+      "title": "Recent Activity",
+      "description": "Latest updates from your support platform",
+      "viewAll": "View All",
+      "priority": {
+        "urgent": "Urgent",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "remaining": "remaining",
+      "noActivity": {
+        "title": "No Recent Activity",
+        "description": "Activity will appear here as your team works on tickets and customers interact with your platform."
+      }
+    },
+    "search": {
+      "title": "Search Results",
+      "tickets": "Tickets",
+      "customers": "Customers",
+      "knowledge": "Knowledge",
+      "noResults": "No results found"
+    },
+    "metricCard": {
+      "vsLastMonth": "vs last month"
+    },
+    "performanceOverview": {
+      "title": "Top Performers",
+      "description": "Your best agents this month",
+      "badges": {
+        "topAgent": "Top Agent",
+        "secondPlace": "2nd Place",
+        "thirdPlace": "3rd Place"
+      },
+      "metrics": {
+        "tickets": "Tickets",
+        "rating": "Rating",
+        "response": "Response",
+        "resolutionRate": "Resolution Rate"
+      },
+      "emptyState": {
+        "title": "No agent data available",
+        "description": "Performance data will appear here once agents start resolving tickets"
+      }
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "actions": {
+        "newTicket": {
+          "title": "New Ticket",
+          "description": "Create a support ticket"
+        },
+        "addAgent": {
+          "title": "Add Agent",
+          "description": "Invite team member"
+        },
+        "liveChat": {
+          "title": "Live Chat",
+          "description": "Monitor conversations"
+        },
+        "analytics": {
+          "title": "Analytics",
+          "description": "View performance"
+        },
+        "workflows": {
+          "title": "Workflows",
+          "description": "Automate processes"
+        },
+        "reports": {
+          "title": "Reports",
+          "description": "Generate insights"
+        },
+        "emailSetup": {
+          "title": "Email Setup",
+          "description": "Configure channels"
+        },
+        "settings": {
+          "title": "Settings",
+          "description": "System configuration"
+        }
+      }
+    },
+    "activity": {
+      "newTicketCreated": "New support ticket created",
+      "billingInquiry": "Customer inquiry about billing",
+      "twoMinutesAgo": "2 minutes ago",
+      "fifteenMinutesAgo": "15 minutes ago",
+      "oneHourAgo": "1 hour ago",
+      "twoHoursAgo": "2 hours ago",
+      "ticketResolved": "Ticket resolved",
+      "technicalIssueFixed": "Technical issue fixed",
+      "profileUpdated": "Profile updated",
+      "sarahUpdatedContact": "Sarah updated contact information",
+      "newCustomerRegistered": "New customer registered",
+      "johnDoeJoined": "John Doe joined as a new customer"
+    },
+    "stats": {
+      "totalTickets": "Total Tickets",
+      "openTickets": "Open Tickets",
+      "resolvedTickets": "Resolved Tickets",
+      "responseTime": "Avg Response Time"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "agent_dashboard": "Unified Inbox",
+    "conversations": "Conversations",
+    "tickets": "Tickets",
+    "customers": "Customers",
+    "agents": "Agents",
+    "teams": "Teams",
+    "availability": "Availability",
+    "myPerformance": "My Performance",
+    "analytics": "Analytics",
+    "ai_intelligence": "AI Intelligence",
+    "callsAnalytics": "Calls Analytics",
+    "knowledge": "Knowledge",
+    "collaboration": "Collaboration",
+    "workflows": "Workflows",
+    "marketplace": "Marketplace",
+    "portal_kb_preview": "Portal KB Preview",
+    "customize_dashboard": "Customize Dashboard",
+    "permissions": "Permissions",
+    "admin_settings": "Admin Settings",
+    "crm": "CRM",
+    "marketing": "Marketing",
+    "coaching": "Coaching",
+    "integrations": "Integrations",
+    "flows": "Flows",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "newTicket": "New Ticket",
+    "supportPlatform": "Support Platform",
+    "groups": {
+      "main": "Main",
+      "manage": "Manage",
+      "insights": "Insights",
+      "automation": "Automation",
+      "settings": "Settings"
+    }
+  },
+  "coaching": {
+    "title": "Sales Coaching",
+    "viewLatest": "View Latest",
+    "trends": "Trends",
+    "recommendations": "Recommendations",
+    "summary": "Summary",
+    "strengths": "Strengths",
+    "improvements": "Improvements",
+    "actions": "Recommended Actions",
+    "logAction": "Log"
+  },
+  "landing": {
+    "loading": "Loading...",
+    "nav": {
+      "features": "Features",
+      "solutions": "Solutions",
+      "pricing": "Pricing",
+      "login": "Login",
+      "getStarted": "Get Started"
+    },
+    "badges": {
+      "unifiedInbox": "Unified Inbox",
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "instagram": "Instagram",
+      "instagramDm": "Instagram DM"
+    },
+    "trusted": {
+      "title": "Trusted by teams who care about customer experience"
+    },
+    "stats": {
+      "csat": "CSAT",
+      "avgResponse": "Avg Response",
+      "channels": "Channels",
+      "automations": "Automations"
+    },
+    "testimonials": {
+      "items": [
+        {
+          "quote": "Glavito transformed our support operations.",
+          "role": "Support Manager, E-commerce"
+        },
+        {
+          "quote": "Our response times dropped, satisfaction soared.",
+          "role": "CX Lead, SaaS"
+        },
+        {
+          "quote": "Automation saves us hours every day.",
+          "role": "Ops Manager, Retail"
+        }
+      ]
+    },
+    "faq": {
+      "items": [
+        {
+          "q": "How long does setup take?",
+          "a": "Most teams connect and go live in under 10 minutes."
+        },
+        {
+          "q": "Do you support WhatsApp?",
+          "a": "Yes — WhatsApp Business API integration included out of the box."
+        },
+        {
+          "q": "Can I migrate from another platform?",
+          "a": "Yes — we provide import tools and support for popular platforms."
+        }
+      ]
+    },
+    "hero": {
+      "title": "Multi-channel platform",
+      "highlight": "supercharged",
+      "subtitle": "WhatsApp, Email and Instagram in one place — with advanced AI Agent, complete CRM and marketing automation.",
+      "primaryCta": "Start for free",
+      "secondaryCta": "Login"
+    },
+    "features": {
+      "title": "Everything to scale your support",
+      "subtitle": "Modern tools, beautiful UX and powerful automation",
+      "items": {
+        "multiChannel": {
+          "title": "Multi-channel Inbox",
+          "desc": "Manage WhatsApp, Email and Instagram messages in one place"
+        },
+        "agentAI": {
+          "title": "AI Agent",
+          "desc": "Auto-triage, suggested responses, smart routing and insights"
+        },
+        "crm": {
+          "title": "Complete CRM",
+          "desc": "360° profiles, segments and lifecycle analytics"
+        },
+        "marketing": {
+          "title": "Marketing Automation",
+          "desc": "Campaigns, broadcasts and conversational journeys"
+        },
+        "automations": {
+          "title": "Workflows",
+          "desc": "Smart routing, SLAs, escalations and approvals"
+        },
+        "analytics": {
+          "title": "Analytics & BI",
+          "desc": "Dashboards, KPIs, revenue impact and forecasting"
+        }
+      }
+    },
+    "integrations": {
+      "title": "Connect your channels in minutes",
+      "subtitle": "Centralize every conversation and never lose context",
+      "preview": "Channel Preview"
+    },
+    "cta": {
+      "title": "Ready to delight your customers?",
+      "subtitle": "Launch AI-powered support in minutes and scale with confidence",
+      "primary": "Create free account",
+      "secondary": "Login"
+    },
+    "solutions": {
+      "title": "Built for operational scale",
+      "subtitle": "Operational excellence, WhatsApp-first and no-code automation",
+      "operations": {
+        "title": "Operations",
+        "desc": "Granular permissions, load balancing and complete traceability"
+      },
+      "whatsapp": {
+        "title": "WhatsApp",
+        "desc": "Broadcasts, shared inbox and order updates"
+      },
+      "automation": {
+        "title": "Automation",
+        "desc": "Drag-and-drop workflows, 30+ integrations, no-code rules"
+      }
+    },
+    "pricing": {
+      "title": "Simple, transparent pricing",
+      "subtitle": "Start free. Scale when you're ready.",
+      "cta": "Get Started",
+      "tiers": {
+        "starter": {
+          "name": "Starter",
+          "price": "$29/mo",
+          "desc": "For getting started",
+          "features": [
+            "1,500 conversations/mo",
+            "3 team members",
+            "Basic reports",
+            "Email support"
+          ]
+        },
+        "growth": {
+          "name": "Growth",
+          "price": "$69/mo",
+          "desc": "For growing brands",
+          "features": [
+            "5,000 conversations/mo",
+            "7 team members",
+            "25 automations",
+            "Advanced analytics",
+            "Priority support",
+            "API access"
+          ]
+        },
+        "pro": {
+          "name": "Professional",
+          "price": "$129/mo",
+          "desc": "For ambitious brands",
+          "features": [
+            "20,000 conversations/mo",
+            "15 team members",
+            "Unlimited automations",
+            "Custom reports",
+            "Dedicated CSM",
+            "Advanced API"
+          ]
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "price": "$499/mo",
+          "desc": "For demanding organizations",
+          "features": [
+            "90,000 conversations/mo",
+            "50 team members",
+            "Unlimited automations",
+            "Enterprise reports",
+            "Premium support",
+            "Full API access"
+          ]
+        }
+      }
+    },
+    "steps": {
+      "title": "Launch your support in 3 steps",
+      "subtitle": "Fast and intuitive",
+      "signup": {
+        "title": "Sign Up",
+        "desc": "Create your account in minutes"
+      },
+      "connect": {
+        "title": "Connect",
+        "desc": "Link WhatsApp, Email and Instagram"
+      },
+      "automate": {
+        "title": "Automate",
+        "desc": "Design your workflows and go live"
+      }
+    }
+  },
+  "collaboration": {
+    "startDM": "Start DM",
+    "searchUsersPlaceholder": "Search users...",
+    "noShifts": "No shifts",
+    "shift": "Shift",
+    "shiftTitle": "Title",
+    "selectChannel": "Select a channel",
+    "participants": "Participants",
+    "dmShort": "DM",
+    "userIdPlaceholder": "User ID",
+    "writeWithMention": "Write @mention"
+  },
+  "flows": {
+    "title": "Flows",
+    "create": "Create Flow",
+    "loading": "Loading...",
+    "empty": "No flows",
+    "publish": "Publish",
+    "builderTitle": "Flow Builder",
+    "builderComingSoon": "XYFlow canvas will appear here."
+  },
+  "crm": {
+    "title": "CRM Hub",
+    "subtitle": "Leads and pipeline in one place",
+    "tabs": {
+      "leads": "Leads",
+      "pipeline": "Pipeline",
+      "segments": "Segments",
+      "analytics": "Analytics"
+    },
+    "actions": {
+      "createLead": "Create Lead",
+      "createDeal": "Create Deal"
+    },
+    "searchLeadsPlaceholder": "Search leads...",
+    "empty": {
+      "leads": "No leads",
+      "deals": "No deals in this stage"
+    },
+    "stages": {
+      "new": "New",
+      "qualified": "Qualified",
+      "proposal": "Proposal",
+      "negotiation": "Negotiation",
+      "won": "Won",
+      "lost": "Lost"
+    },
+    "createLeadDialog": {
+      "title": "Create New Lead",
+      "description": "Add a new lead to your CRM pipeline and start tracking their journey.",
+      "sections": {
+        "personalInfo": "Personal Information",
+        "contactInfo": "Contact Information",
+        "companyInfo": "Company Information"
+      },
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "company": "Company",
+      "phone": "Phone Number",
+      "source": "Lead Source",
+      "placeholders": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john@company.com",
+        "company": "Acme Corporation",
+        "phone": "+1 (555) 123-4567",
+        "source": "Select lead source"
+      },
+      "sources": {
+        "website": "Website",
+        "referral": "Referral",
+        "socialMedia": "Social Media",
+        "emailCampaign": "Email Campaign",
+        "coldCall": "Cold Call",
+        "tradeShow": "Trade Show",
+        "partner": "Partner",
+        "other": "Other"
+      },
+      "cancel": "Cancel",
+      "create": "Create Lead",
+      "creating": "Creating Lead...",
+      "errors": {
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required",
+        "emailRequired": "Email address is required",
+        "emailInvalid": "Please enter a valid email address",
+        "companyRequired": "Company name is required",
+        "phoneInvalid": "Please enter a valid phone number"
+      }
+    },
+    "createDealDialog": {
+      "title": "Create New Deal",
+      "description": "Add a new deal to your pipeline.",
+      "sections": {
+        "dealInfo": "Deal Information",
+        "financialInfo": "Financial Information",
+        "pipelineInfo": "Pipeline & Stage",
+        "customFields": "Additional fields"
+      },
+      "fields": {
+        "name": "Deal Name",
+        "description": "Description",
+        "value": "Value",
+        "currency": "Currency",
+        "pipeline": "Pipeline",
+        "stage": "Stage"
+      },
+      "placeholders": {
+        "name": "e.g. Enterprise plan",
+        "description": "Optional details...",
+        "value": "5000",
+        "currency": "Select currency",
+        "pipeline": "Select pipeline",
+        "stage": "Select stage"
+      },
+      "errors": {
+        "nameRequired": "Deal name is required",
+        "valueRequired": "Deal value is required",
+        "valueInvalid": "Please enter a valid amount",
+        "pipelineRequired": "Pipeline is required"
+      },
+      "cancel": "Cancel",
+      "create": "Create Deal",
+      "creating": "Creating Deal..."
+    },
+    "segments": {
+      "createTitle": "Create segment",
+      "editTitle": "Edit segment",
+      "name": "Name",
+      "namePlaceholder": "VIP Customers",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe the segment...",
+      "create": "Create",
+      "save": "Save",
+      "cancel": "Cancel",
+      "membership": "Membership",
+      "preview": "Preview",
+      "recalculate": "Recalculate",
+      "totalMatched": "Total matched",
+      "sampleCount": "Sample"
+    }
+  },
+  "knowledge": {
+    "title": "Help Center",
+    "subtitle": "Find answers to common questions, get instant help from our AI assistant, or connect with our support team",
+    "searchPlaceholder": "Search for help articles, FAQs, or ask a question...",
+    "noResults": "No results found",
+    "tryDifferentSearch": "Try a different search term",
+    "articles": "Help Articles",
+    "articlesSubtitle": "Comprehensive guides and tutorials",
+    "articlesDescription": "Explore our comprehensive knowledge base",
+    "articlesCount": "150+ Articles",
+    "faqs": "Frequently Asked Questions",
+    "faqsSubtitle": "Quick answers to common questions",
+    "chat": "AI Assistant",
+    "chatSubtitle": "Get instant answers powered by AI",
+    "chatWithAI": "Chat with AI Assistant",
+    "chatDescription": "Get instant answers from our intelligent assistant",
+    "chatStart": "Start the conversation by asking a question.",
+    "chatPlaceholder": "Type your question...",
+    "suggestions": "Suggested articles:",
+    "continueWhatsapp": "Continue on WhatsApp",
+    "askByEmail": "Contact Support via Email",
+    "emailSubtitle": "Send us a message and we'll get back to you",
+    "emailAddress": "Email Address",
+    "message": "Message",
+    "messagePlaceholder": "Describe your question or issue in detail...",
+    "getResumeLink": "Get resume link",
+    "browseArticles": "Browse Articles",
+    "contactSupport": "Contact Support",
+    "supportDescription": "Reach out to our expert support team",
+    "aiPowered": "AI-Powered Support",
+    "avgResponseTime": "< 2min Response",
+    "helpedUsers": "10k+ Users Helped",
+    "fullArticle": "Complete article content",
+    "helpful": "Was this helpful?",
+    "backToSearch": "Back to Search",
+    "stillNeedHelp": "Still need help?",
+    "contactDescription": "Our support team is here to help you with any questions or issues you might have.",
+    "scheduleCall": "Schedule a Call",
+    "analyticsOverview": "Analytics Overview",
+    "totalViews": "Total Views",
+    "helpfulRate": "Helpful Rate",
+    "trending": "Trending",
+    "maintenance": "Maintenance",
+    "markReviewed": "Mark Reviewed",
+    "suggested": "Suggested Articles",
+    "tipSelectText": "Select text in messages to refine suggestions.",
+    "copied": "Copied",
+    "copySnippet": "Copy",
+    "copyArticle": "Copy Article",
+    "generateFromTicket": "Generate from Ticket"
+  },
+  "observability": {
+    "title": "Observability",
+    "healthSummary": "Health Summary"
+  },
+  "search": {
+    "noResults": "No results found",
+    "tryDifferent": "Try a different search term",
+    "searchIn": "Search in {count} results",
+    "resultTypes": {
+      "ticket": "Ticket",
+      "customer": "Customer", 
+      "knowledge": "Knowledge",
+      "user": "User",
+      "team": "Team"
+    }
+  },
+  "tickets": {
+    "aiAnalyze": "AI Analyze",
+    "aiAutoAssign": "AI Auto-Assign",
+    "bulkAnalyzeSuccess": "AI analyzed {count} ticket(s)",
+    "bulkAnalyzeError": "Failed to analyze selected tickets",
+    "bulkAssignSuccess": "Auto-assigned {count} ticket(s)",
+    "bulkAssignError": "Failed to auto-assign selected tickets",
+    "title": "Tickets",
+    "subtitle": "Manage and track support tickets",
+    "startVoiceCall": "Start Voice Call",
+    "startVideoCall": "Start Video Call",
+    "searchPlaceholder": "Search tickets...",
+    "saved": {
+      "button": "Saved",
+      "none": "No saved searches",
+      "saveAs": "Save search as...",
+      "semanticOn": "Semantic: ON",
+      "semanticOff": "Semantic: OFF"
+    },
+    "save": "Save",
+    "filtersLabel": "Filters",
+    "listView": "List",
+    "kanbanView": "Kanban",
+    "tableView": "Table",
+    "subject": "Subject",
+    "status": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "waiting": "Waiting",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent",
+      "critical": "Critical"
+    },
+    "urgent": "Urgent",
+    "cancel": "Cancel",
+    "optional": "Optional",
+    "statusLabel": "Status",
+    "priorityLabel": "Priority",
+    "assignee": "Assignee",
+    "created": "Created",
+    "unassigned": "Unassigned",
+    "view": "View",
+    "edit": "Edit",
+    "assign": "Assign",
+    "autoAssign": "Auto-assign",
+    "refresh": "Refresh",
+    "createTicket": "Create Ticket",
+    "showingResults": "Showing {start}-{end} of {total} results",
+    "previous": "Previous",
+    "next": "Next",
+    "overdue": "Overdue",
+    "slaRisk": "SLA Risk",
+    "aiInsights": "AI Insights",
+    "urgency": "Urgency",
+    "breaches": "breaches",
+    "justNow": "Just now",
+    "hoursAgo": "{hours} hours ago",
+    "daysAgo": "{days} days ago",
+    "sentiment": {
+      "positive": "Positive",
+      "negative": "Negative",
+      "neutral": "Neutral"
+    },
+    "filters": {
+      "title": "Filters",
+      "active": "active",
+      "clear": "Clear",
+      "status": "Status",
+      "priority": "Priority",
+      "assignee": "Assignee",
+      "selectAssignee": "Select assignee",
+      "allAssignees": "All Assignees",
+      "customer": "Customer",
+      "selectCustomer": "Select customer",
+      "allCustomers": "All Customers",
+      "channel": "Channel",
+      "selectChannel": "Select channel",
+      "allChannels": "All Channels",
+      "team": "Team",
+      "selectTeam": "Select team",
+      "allTeams": "All Teams",
+      "dateRange": "Date Range",
+      "from": "From",
+      "to": "To",
+      "special": "Special Filters",
+      "overdue": "Overdue",
+      "unassigned": "Unassigned",
+      "slaAtRisk": "SLA at Risk",
+      "tags": "Tags",
+      "activeFilters": "Active filters"
+    },
+    "suggestions": {
+      "subjects": "Subjects",
+      "tags": "Tags",
+      "customers": "Customers"
+    },
+    "details": "Details",
+    "conversation": "Conversation",
+    "reply": "Reply",
+    "typeMessage": "Type your message...",
+    "insertIntoReply": "Insert into reply",
+    "insertedIntoReply": "Inserted into reply",
+    "actions": "Actions",
+    "customer": "Customer",
+    "assignedAgent": "Assigned Agent",
+    "aiAnalysis": "AI Analysis",
+    "sentimentLabel": "Sentiment",
+    "confidence": "Confidence",
+    "suggestedActions": "Suggested Actions",
+    "timeline": "Timeline",
+    "workspace": {
+      "selectTicketPlaceholder": "Select a ticket to view the conversation",
+      "knowledgeBase": "Knowledge",
+      "searchKnowledge": "Search knowledge...",
+      "search": "Search",
+      "searching": "Searching...",
+      "kbEmpty": "No knowledge results",
+      "emptyConversation": "No messages yet"
+    },
+    "createNew": "Create New Ticket",
+    "createNewDescription": "Fill in the details below to create a ticket",
+    "basicInformation": "Basic Information",
+    "basicInformationDescription": "Provide the core details for this ticket",
+    "fields": {
+      "title": "Title",
+      "descriptionLabel": "Description",
+      "category": "Category",
+      "tags": "Tags"
+    },
+    "titlePlaceholder": "Enter a concise ticket title",
+    "descriptionPlaceholder": "Describe the issue in detail",
+    "selectCategory": "Select category",
+    "assignment": "Assignment",
+    "assignmentDescription": "Choose the customer and (optionally) an agent",
+    "selectCustomer": "Select customer",
+    "selectAgent": "Select agent",
+    "tagsDescription": "Add tags to help categorize this ticket",
+    "addTag": "Add tag",
+    "analyzingContent": "Analyzing content...",
+    "aiAnalysisDescription": "AI suggestions based on your title and description",
+    "suggestedPriority": "Suggested Priority",
+    "suggestedCategory": "Suggested Category",
+    "suggestedTags": "Suggested Tags",
+    "enterContentForAnalysis": "Enter some content to analyze",
+    "creating": "Creating...",
+    "newTicket": "New Ticket",
+    "ticketsList": "Tickets List",
+    "selectedCount": "{count} selected",
+    "selectAll": "Select All",
+    "allTickets": "All Tickets",
+    "export": "Export",
+    "sortBy": {
+      "created": "Created Date",
+      "updated": "Updated Date",
+      "priority": "Priority",
+      "status": "Status"
+    },
+    "bulkActions": {
+      "selected": "selected",
+      "chooseAction": "Choose an action",
+      "assign": "Assign",
+      "status": "Status",
+      "priority": "Priority",
+      "tags": "Tags",
+      "moreActions": "More Actions",
+      "removeTags": "Remove Tags",
+      "merge": "Merge",
+      "archive": "Archive",
+      "delete": "Delete",
+      "assignTitle": "Assign Tickets",
+      "assignDescription": "Assign {count} tickets to an agent",
+      "selectAgent": "Select Agent",
+      "chooseAgent": "Choose an agent",
+      "reason": "Reason",
+      "assignReason": "Reason for assignment (optional)",
+      "updateStatusTitle": "Update Status",
+      "updateStatusDescription": "Update status for {count} tickets",
+      "selectStatus": "Select Status",
+      "chooseStatus": "Choose a status",
+      "statusReason": "Reason for status change (optional)",
+      "updatePriorityTitle": "Update Priority",
+      "updatePriorityDescription": "Update priority for {count} tickets",
+      "selectPriority": "Select Priority",
+      "choosePriority": "Choose a priority",
+      "priorityReason": "Reason for priority change (optional)",
+      "addTagsTitle": "Add Tags",
+      "addTagsDescription": "Add tags to {count} tickets",
+      "enterTags": "Enter Tags",
+      "tagsPlaceholder": "Enter tags separated by commas",
+      "tagsHelp": "Separate multiple tags with commas",
+      "tagsPreview": "Tags Preview",
+      "deleteTitle": "Delete Tickets",
+      "deleteDescription": "Delete {count} tickets permanently",
+      "deleteWarning": "This action cannot be undone",
+      "deleteConfirmation": "Are you sure you want to delete these tickets?",
+      "deleteReason": "Reason for deletion",
+      "deleteReasonPlaceholder": "Please provide a reason for deleting these tickets"
+    },
+    "stats": {
+      "totalTickets": "Total Tickets",
+      "allTickets": "All tickets",
+      "openTickets": "Open Tickets",
+      "needsAttention": "Need attention",
+      "inProgress": "In Progress",
+      "beingWorked": "Being worked on",
+      "resolved": "Resolved",
+      "completedToday": "Completed today",
+      "overdue": "Overdue",
+      "pastDueDate": "Past due date",
+      "unassigned": "Unassigned",
+      "needsAssignment": "Needs assignment",
+      "slaAtRisk": "SLA at risk",
+      "approachingDeadline": "Approaching deadline",
+      "avgResolutionTime": "Avg Resolution Time",
+      "timeToResolve": "Time to resolve",
+      "ofTotal": "of total",
+      "statusDistribution": "Status distribution",
+      "performance": "Performance",
+      "avgFirstResponse": "Avg First Response",
+      "customerSatisfaction": "Customer Satisfaction",
+      "thisWeek": "This week",
+      "improving": "Improving",
+      "declining": "Declining",
+      "stable": "Stable",
+      "priorityBreakdown": "Priority breakdown"
+    },
+    "createDialog": {
+      "title": "Create Ticket",
+      "description": "Provide details to create a new ticket.",
+      "step": "Step",
+      "of": "of",
+      "subject": "Subject",
+      "subjectPlaceholder": "Enter a clear subject",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe the issue in detail",
+      "customer": "Customer",
+      "selectCustomer": "Select customer",
+      "searchCustomer": "Search customers...",
+      "noCustomerFound": "No customers found",
+      "channel": "Channel",
+      "priority": "Priority",
+      "assignee": "Assignee",
+      "selectAgent": "Select agent",
+      "unassigned": "Unassigned",
+      "team": "Team",
+      "selectTeam": "Select team",
+      "noTeam": "No team",
+      "tags": "Tags",
+      "addTag": "Add tag",
+      "suggestedTags": "Suggested Tags",
+      "selectedTags": "Selected Tags",
+      "dueDate": "Due Date",
+      "selectDueDate": "Select due date",
+      "summary": "Summary",
+      "additionalFields": "Additional Fields",
+      "back": "Back",
+      "next": "Next",
+      "creating": "Creating...",
+      "create": "Create"
+    },
+    "validation": {
+      "subjectRequired": "Subject is required",
+      "descriptionRequired": "Description is required",
+      "customerRequired": "Customer is required",
+      "channelRequired": "Channel is required",
+      "createFailed": "Failed to create ticket"
+    }
+  },
+  "agents": {
+    "title": "Agent Management",
+    "subtitle": "Manage your support agents and their performance",
+    "totalAgents": "Total Agents",
+    "availableAgents": "Available",
+    "avgResponseTime": "Avg Response Time",
+    "satisfaction": "Satisfaction",
+    "inviteAgent": "Invite Agent",
+    "searchAgents": "Search agents...",
+    "filterByStatus": "Filter by status",
+    "filterBySkill": "Filter by skill",
+    "allStatus": "All Status",
+    "allSkills": "All Skills",
+    "available": "Available",
+    "busy": "Busy",
+    "away": "Away",
+    "offline": "Offline",
+    "autoAssign": "Auto-assign",
+    "manual": "Manual",
+    "currentWorkload": "Current Workload",
+    "responseTime": "Response Time",
+    "resolutionRate": "Resolution Rate",
+    "resolved": "Resolved",
+    "skills": "Skills",
+    "teams": "Teams",
+    "editProfile": "Edit Profile",
+    "viewPerformance": "View Performance",
+    "noAgentsFound": "No agents found",
+    "tryAdjustingSearch": "Try adjusting your search criteria.",
+    "getStartedInviting": "Get started by inviting your first agent.",
+    "cards": {
+      "totalAgentsDesc": "Active support agents",
+      "availableDesc": "Ready for assignments",
+      "avgResponseDesc": "Average across all agents",
+      "satisfactionDesc": "Average rating"
+    },
+    "inviteDialog": {
+      "title": "Invite Agents",
+      "emailsLabel": "Email addresses",
+      "emailsPlaceholder": "Type emails and press Enter (comma or space to separate)",
+      "invalidNotice": "Invalid:",
+      "roleLabel": "Role",
+      "teamsLabel": "Assign to teams",
+      "noTeams": "No teams yet",
+      "messageLabel": "Custom message (optional)",
+      "messagePlaceholder": "Add a welcome note...",
+      "cancel": "Cancel",
+      "send": "Send Invitations",
+      "sending": "Sending...",
+      "successAll": "Invitations sent successfully",
+      "successPartial": "{success} of {total} invitations sent",
+      "failed": "Failed to send invitations"
+    },
+    "roles": {
+      "admin": "Admin",
+      "manager": "Manager",
+      "agent": "Agent"
+    }
+  },
+  "availability": {
+    "title": "My Availability",
+    "subtitle": "Manage your working hours and availability status",
+    "currentStatus": "Current Status",
+    "changeStatus": "Change Status",
+    "statusMessage": "Status Message",
+    "enterStatusMessage": "Enter status message",
+    "autoAssignment": "Auto Assignment",
+    "maxConcurrentTickets": "Max Concurrent Tickets",
+    "workingHours": "Working Hours",
+    "setRegularSchedule": "Set your regular working schedule",
+    "timezone": "Timezone",
+    "weeklySchedule": "Weekly Schedule",
+    "breakSchedule": "Break Schedule",
+    "enableBreaks": "Enable Breaks",
+    "outOfOffice": "Out of Office",
+    "outOfOfficeDesc": "Set up automatic messages when you're unavailable",
+    "outOfOfficeMessage": "Out of Office Message",
+    "enterOutOfOfficeMessage": "Enter message to display when you're out of office",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "scheduleOutOfOffice": "Schedule Out of Office",
+    "saveChanges": "Save Changes"
+  },
+  "performance": {
+    "title": "My Performance",
+    "subtitle": "Track your support metrics and achievements",
+    "ticketsResolved": "Tickets Resolved",
+    "responseTime": "Response Time",
+    "satisfaction": "Satisfaction",
+    "resolutionRate": "Resolution Rate",
+    "vsLastPeriod": "vs last period",
+    "overview": "Overview",
+    "goals": "Goals",
+    "feedback": "Feedback",
+    "achievements": "Achievements",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "thisQuarter": "This Quarter",
+    "thisYear": "This Year",
+    "assigned": "Assigned",
+    "inProgress": "In Progress",
+    "firstContactResolution": "First Contact Resolution",
+    "performanceOverview": "Performance Overview",
+    "currentPeriodMetrics": "Current period metrics",
+    "recentTrends": "Recent Trends",
+    "last7Days": "Last 7 days",
+    "dailyTicketVolume": "Daily Ticket Volume",
+    "responseTrend": "Response Time Trend",
+    "satisfactionTrend": "Satisfaction Trend",
+    "performanceGoals": "Performance Goals",
+    "trackProgress": "Track your progress against targets",
+    "responseTimeGoal": "Response Time Goal",
+    "resolutionRateGoal": "Resolution Rate Goal",
+    "satisfactionGoal": "Satisfaction Goal",
+    "goalAchieved": "Goal achieved!",
+    "goalExceeded": "Goal exceeded!",
+    "underTarget": "under target",
+    "aboveTarget": "above target",
+    "goalProgress": "Goal Progress",
+    "monthlyTargets": "Monthly targets and achievements",
+    "allGoalsMet": "All Goals Met!",
+    "exceedingTargets": "You're exceeding all performance targets this month",
+    "goalsMet": "Goals Met",
+    "avgProgress": "Avg Progress",
+    "recentFeedback": "Recent Customer Feedback",
+    "latestReviews": "Latest reviews and ratings from customers",
+    "earned": "Earned",
+    "complete": "Complete",
+    "keepGoing": "Keep going to unlock this achievement!",
+    "speedDemon": "Speed Demon",
+    "speedDemonDesc": "Maintained sub-15 minute response time for a week",
+    "customerChampion": "Customer Champion",
+    "customerChampionDesc": "Achieved 4.5+ satisfaction rating",
+    "resolutionMaster": "Resolution Master",
+    "resolutionMasterDesc": "Resolved 50+ tickets in a month"
+  },
+  "analytics": {
+    "pipelineOverview": "Pipeline Overview",
+    "weightedPipeline": "Weighted Pipeline",
+    "winRate": "Win Rate",
+    "avgCycle": "Avg Sales Cycle (days)",
+    "byStage": "Deals by Stage",
+    "salesForecast": "Sales Forecast (30d)",
+    "totalForecast": "Total Forecast",
+    "days": "Days",
+    "nextDays": "Next Days",
+    "ui": {
+      "title": "Analytics",
+      "subtitle": "Real-time KPIs and insights",
+      "loadingFailed": "Failed to load",
+      "retry": "Retry",
+      "time": {
+        "24h": "24h",
+        "7d": "7d",
+        "30d": "30d",
+        "90d": "90d"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "performance": "Performance",
+        "predictive": "Predictive",
+        "financial": "Financial",
+        "custom": "Custom"
+      },
+      "realtime": {
+        "activeTickets": "Active Tickets",
+        "avgResponseTime": "Avg Response",
+        "last24h": "Last 24h",
+        "customerSatisfaction": "Customer Satisfaction",
+        "outOf5": "out of 5",
+        "activeAgents": "Active Agents",
+        "onlineNow": "Online now",
+        "queue": "Queue"
+      },
+      "charts": {
+        "channelDistribution": "Channel Distribution",
+        "channelDistributionDesc": "Tickets by channel",
+        "priorityDistribution": "Priority Distribution",
+        "priorityDistributionDesc": "Tickets by priority",
+        "slaCompliance": "SLA Compliance",
+        "slaComplianceDesc": "Compliance vs breaches",
+        "complianceRate": "Compliance Rate",
+        "slaAboveThreshold": "SLA breach rate above threshold"
+      },
+      "kpi": {
+        "fromLastPeriod": "vs prev: {value}",
+        "target": "Target: {value}"
+      },
+      "predictive": {
+        "demandForecast": "Demand Forecast",
+        "demandForecastDesc": "Projected ticket volume",
+        "noForecast": "No forecast",
+        "capacityAnalysis": "Capacity Analysis",
+        "capacityAnalysisDesc": "Utilization and demand",
+        "currentCapacity": "Current Capacity",
+        "predictedDemand": "Predicted Demand",
+        "utilizationRate": "Utilization",
+        "highUtilization": "High utilization risk",
+        "churnRiskAnalysis": "Churn Risk",
+        "churnRiskAnalysisDesc": "Top at-risk customers",
+        "customer": "Customer {id}",
+        "riskLevel": "Risk:",
+        "days": "days",
+        "noChurn": "No churn risks"
+      },
+      "performance": {
+        "title": "Performance Analytics",
+        "desc": "Detailed metrics and leaderboards",
+        "topChannels": "Top Channels",
+        "topChannelsDesc": "Most productive support channels",
+        "agentLeaderboard": "Agent Leaderboard",
+        "agentLeaderboardDesc": "Top agents by resolved tickets and CSAT",
+        "resolved": "Resolved",
+        "csat": "CSAT",
+        "viewDetails": "View details",
+        "agentDetails": "Agent details",
+        "agentDetailsDesc": "Agent performance and quality metrics",
+        "agent": "Agent",
+        "ticketsHandled": "Tickets handled",
+        "avgResp": "Avg response",
+        "avgRes": "Avg resolution",
+        "channelDetails": "Channel details",
+        "channelDetailsDesc": "Channel performance metrics",
+        "channel": "Channel",
+        "tickets": "Tickets",
+        "trendPerformance": "Performance trend",
+        "trendSatisfaction": "Satisfaction trend",
+        "trendVolume": "Volume trend"
+      },
+      "financial": {
+        "title": "Financial Analytics",
+        "desc": "Revenue, cost and ROI",
+        "revenue": "Revenue",
+        "costs": "Costs",
+        "roi": "ROI",
+        "revenueByChannel": "Revenue by channel"
+      },
+      "loading": "Loading...",
+      "noData": "No data"
+    },
+    "revenue": {
+      "byChannel": "Revenue by channel",
+      "title": "Revenue Analytics",
+      "subtitle": "Track revenue attribution across channels"
+    },
+    "calls": {
+      "totalCalls": "Total Calls",
+      "activeCalls": "Active",
+      "endedCalls": "Ended",
+      "totalMinutes": "Total Minutes",
+      "byType": "By Type",
+      "byDirection": "By Direction",
+      "quality24h": "Quality (24h)",
+      "trend7d": "Last 7 days (minutes)",
+      "noData": "No data"
+    },
+    "satisfaction": {
+      "title": "Customer Satisfaction",
+      "subtitle": "Track and analyze customer feedback across all channels",
+      "error": "Failed to load satisfaction analytics",
+      "export": "Export",
+      "timeRanges": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "90d": "90 days"
+      },
+      "metrics": {
+        "surveysSent": "Surveys Sent",
+        "responseRate": "Response Rate",
+        "averageRating": "Average Rating",
+        "totalResponses": "Total Responses",
+        "activeCampaign": "Active campaign",
+        "noSurveys": "No surveys sent",
+        "of": "of",
+        "responded": "responded",
+        "valuableFeedback": "Valuable feedback collected"
+      },
+      "charts": {
+        "ratingDistribution": "Rating Distribution",
+        "ratingDistributionDesc": "Customer satisfaction ratings breakdown",
+        "channelPerformance": "Channel Performance",
+        "channelPerformanceDesc": "Survey distribution across communication channels"
+      },
+      "recentFeedback": {
+        "title": "Recent Feedback",
+        "subtitle": "Latest customer satisfaction responses and comments",
+        "noResponses": "No survey responses yet"
+      }
+    },
+    "noData": "No data"
+  },
+  "marketing": {
+    "title": "Marketing Campaigns",
+    "subtitle": "Create, schedule and launch multi-channel campaigns",
+    "create": "New Campaign",
+    "reload": "Reload",
+    "empty": "No campaigns yet",
+    "noDescription": "No description",
+    "type": "Type",
+    "spent": "Spent",
+    "cancel": "Cancel",
+    "save": "Save",
+    "fields": {
+      "name": "Name",
+      "type": "Type",
+      "subject": "Subject",
+      "description": "Description"
+    },
+    "actions": {
+      "launch": "Launch",
+      "scheduleNow": "Schedule",
+      "manageWorkflows": "Manage Workflows"
+    },
+    "metrics": {
+      "openRate": "Open rate",
+      "clickRate": "Click rate"
+    }
+  },
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Manage channel connections and system integrations",
+    "reload": "Reload",
+    "loading": "Loading integrations...",
+    "empty": "No integrations yet",
+    "noErrors": "No errors",
+    "connectors": "Connectors",
+    "manualSync": "Manual Sync",
+    "disable": "Disable",
+    "actions": {
+      "connect": "Connect",
+      "disable": "Disable"
+    }
+  },
+  "localization": {
+    "title": "Localization",
+    "subtitle": "Preferred locale and currency",
+    "locale": "Locale",
+    "currency": "Currency",
+    "save": "Save",
+    "saved": "Localization saved"
+  },
+  "customers": {
+    "title": "Customers",
+    "subtitle": "Manage and analyze your customer relationships",
+    "addCustomer": "Add Customer",
+    "exportReport": "Export Report",
+    "searchCustomers": "Search customers...",
+    "selectSegment": "Select segment",
+    "allSegments": "All Segments",
+    "filters": "Filters",
+    "customers": "Customers",
+    "avgValue": "Avg Value",
+    "growth": "Growth",
+    "healthScore": "Health Score",
+    "lifetimeValue": "Lifetime Value",
+    "rescoreHealth": "Rescore Health",
+    "noJourneyData": "No journey data available",
+    "allStages": "All Stages",
+    "allChannels": "All Channels",
+    "moreFilters": "More Filters",
+    "journeyStages": "Journey Stages",
+    "interactionTimeline": "Interaction Timeline",
+    "outcome": "Outcome",
+    "details": "Details",
+    "conversionEvents": "Conversion Events",
+    "attribution": "Attribution",
+    "value": "Value",
+    "keyInsights": "Key Insights",
+    "opportunities": "Opportunities",
+    "nextBestActions": "Next Best Actions",
+    "execute": "Execute",
+    "predicted": "Predicted",
+    "customerSince": "Customer Since",
+    "refresh": "Refresh",
+    "sentiment": "Sentiment",
+    "score": "Score",
+    "trend": "Trend",
+    "confidence": "Confidence",
+    "recentActivity": "Recent Activity",
+    "channelPreference": "Channel Preference",
+    "loading": "Loading...",
+    "excellent": "Excellent",
+    "good": "Good",
+    "attention": "Attention",
+    "critical": "Critical",
+    "stats": {
+      "totalCustomers": "Total Customers",
+      "activeCustomers": "Active Customers",
+      "avgLifetimeValue": "Avg Lifetime Value",
+      "churnRate": "Churn Rate",
+      "thisMonth": "this month",
+      "ofTotal": "of total",
+      "fromLastMonth": "from last month"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "segments": "Segments",
+      "analytics": "Analytics",
+      "customers": "Customers",
+      "insights": "Insights"
+    },
+    "segments": {
+      "title": "Customer Segments",
+      "description": "Organize and analyze customer groups",
+      "newCustomers": "New Customers",
+      "newCustomersDesc": "Recently acquired customers",
+      "vipCustomers": "VIP Customers",
+      "engagedUsers": "Engaged Users",
+      "customers": "Customers",
+      "avgValue": "Avg Value",
+      "monthlyGrowth": "Monthly Growth",
+      "segmentHealth": "Segment Health",
+      "viewCustomers": "View Customers",
+      "createCampaign": "Create Campaign"
+    },
+    "topCustomers": {
+      "title": "Top Customers"
+    },
+    "riskLevel": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "stages": {
+      "awareness": "Awareness",
+      "interest": "Interest",
+      "consideration": "Consideration",
+      "purchase": "Purchase",
+      "onboarding": "Onboarding",
+      "retention": "Retention",
+      "expansion": "Expansion",
+      "advocacy": "Advocacy"
+    },
+    "channels": {
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "webChat": "Web Chat",
+      "web": "Web",
+      "phone": "Phone",
+      "instagram": "Instagram"
+    },
+    "analytics": {
+      "last7Days": "Last 7 Days",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "lastYear": "Last Year",
+      "allMetrics": "All Metrics",
+      "engagement": "Engagement",
+      "conversion": "Conversion",
+      "retention": "Retention",
+      "refresh": "Refresh",
+      "export": "Export",
+      "channelPreferences": "Channel Preferences",
+      "peakHours": "Peak Hours",
+      "engagementMetrics": "Engagement Metrics",
+      "avgSessionDuration": "Avg Session Duration",
+      "pagesPerSession": "Pages Per Session",
+      "bounceRate": "Bounce Rate",
+      "returnVisitorRate": "Return Visitor Rate",
+      "emailOpenRate": "Email Open Rate",
+      "clickThroughRate": "Click Through Rate",
+      "fromLastMonth": "from last month",
+      "conversionFunnel": "Conversion Funnel",
+      "conversionRate": "Conversion Rate: {rate}%",
+      "cohortAnalysis": "Cohort Analysis",
+      "retentionRatesByMonth": "Retention rates by month",
+      "retained": "Retained: {rate}%",
+      "predictiveInsights": "Predictive Insights",
+      "churnPrediction": "Churn Prediction",
+      "highRisk": "High Risk",
+      "mediumRisk": "Medium Risk",
+      "lowRisk": "Low Risk",
+      "predictedChurnRate": "Predicted Churn Rate",
+      "lifetimeValueForecast": "Lifetime Value Forecast",
+      "nextQuarter": "Next Quarter",
+      "nextYear": "Next Year",
+      "growth": "Growth: {rate}",
+      "upsellOpportunities": "Upsell Opportunities",
+      "customersCount": "Customers: {count}",
+      "likely": "Likely: {probability}%",
+      "funnelStages": {
+        "awareness": "Awareness",
+        "interest": "Interest",
+        "consideration": "Consideration",
+        "purchase": "Purchase",
+        "retention": "Retention"
+      }
+    },
+    "healthScore": {
+      "title": "Health Score",
+      "outOf100": "out of 100",
+      "factors": "Factors",
+      "ticketVolume": "Ticket Volume",
+      "responseTime": "Response Time",
+      "satisfaction": "Satisfaction",
+      "engagement": "Engagement",
+      "churnRisk": "Churn Risk",
+      "lowerIsBetter": "Lower is better",
+      "higherIsBetter": "Higher is better",
+      "recommendations": "Recommendations",
+      "trend": "Trend",
+      "last30Days": "Last 30 Days",
+      "trendDescription": "Trend description",
+      "points": "points",
+      "contactCustomer": "Contact Customer",
+      "viewHistory": "View History"
+    },
+    "createDialog": {
+      "title": "Create Customer",
+      "description": "Enter customer details to add them to your workspace.",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "company": "Company",
+      "phone": "Phone",
+      "cancel": "Cancel",
+      "create": "Create",
+      "creating": "Creating...",
+      "required": "Required"
+    },
+    "profile": {
+      "editProfile": "Edit Profile",
+      "sendMessage": "Send Message",
+      "callCustomer": "Call Customer",
+      "loading": "Loading customer profile...",
+      "gatheringInsights": "Gathering comprehensive customer insights",
+      "notFound": "Customer not found",
+      "notFoundDescription": "The requested customer profile could not be loaded",
+      "unknown": "Unknown",
+      "verified": "Verified",
+      "loyal": "Loyal",
+      "enterpriseCustomer": "Enterprise Customer",
+      "health": "Health:",
+      "ltv": "LTV:",
+      "since": "Since:",
+      "edit": "Edit",
+      "exportProfile": "Export Profile",
+      "contactInformation": "Contact Information",
+      "companyDetails": "Company Details",
+      "noCustomFields": "No custom fields",
+      "noRecentActivity": "No recent activity",
+      "noRecentActivityDescription": "This customer hasn't had any recent interactions",
+      "latestInteractions": "Latest customer interactions",
+      "aiInsights": "AI Insights",
+      "aiAnalysis": "AI-powered customer analysis",
+      "noInsightsAvailable": "No insights available",
+      "insightsPlaceholder": "AI insights will appear here as we analyze customer behavior",
+      "segments": {
+        "vipCustomer": "VIP Customer",
+        "highlyEngaged": "Highly Engaged"
+      },
+      "interactions": {
+        "featureRequestDiscussion": "Feature request discussion",
+        "loginIssueResolution": "Login issue resolution",
+        "loginIssuesWithMobileApp": "Login issues with mobile app"
+      },
+      "insights": {
+        "highEngagementEmail": "Customer shows high engagement with email channel",
+        "strongPurchaseHistory": "Strong purchase history with seasonal patterns",
+        "excellentSatisfaction": "Excellent satisfaction scores across all interactions",
+        "upsellPremiumFeatures": "Upsell premium features based on usage patterns",
+        "crossSellProducts": "Cross-sell complementary products",
+        "scheduleBusinessReview": "Schedule quarterly business review",
+        "sendPersonalizedRecommendations": "Send personalized product recommendations"
+      },
+      "tabs": {
+        "healthScore": "Health Score",
+        "journey": "Journey"
+      }
+    },
+    "insights": {
+      "opportunities": "Opportunities",
+      "risks": "Risks",
+      "vipGrowth": "VIP Growth",
+      "vipGrowthDesc": "VIP customer segment showing strong growth",
+      "expandProgram": "Expand Program",
+      "newCustomerSuccess": "New Customer Success",
+      "newCustomerSuccessDesc": "High success rate with new customers",
+      "optimizeOnboarding": "Optimize Onboarding",
+      "atRiskIncrease": "At-Risk Increase",
+      "atRiskIncreaseDesc": "Increase in at-risk customers",
+      "implementRetention": "Implement Retention",
+      "supportVolumeRising": "Support Volume Rising",
+      "supportVolumeRisingDesc": "Support ticket volume increasing",
+      "reviewProcesses": "Review Processes"
+    },
+    "viewDetails": "View details",
+    "exportData": "Export data",
+    "sendCampaign": "Send campaign",
+    "createAutomation": "Create automation"
+  },
+  "onboarding": {
+    "title": "Setup Your Ticketing Platform",
+    "subtitle": "Get started with your comprehensive support system",
+    "wizardTitle": "Onboarding Wizard",
+    "progressDescription": "Step {completed} of {total} completed",
+    "loading": {
+      "initializing": "Initializing your onboarding experience...",
+      "saving": "Saving...",
+      "completing": "Completing setup..."
+    },
+    "errors": {
+      "loadingFailed": "Failed to load onboarding"
+    },
+    "role": {
+      "admin": "Administrator",
+      "agent": "Agent"
+    },
+    "progress": {
+      "step": "Step {current} of {total}",
+      "estimatedTime": "Estimated time remaining: {minutes} minutes",
+      "completed": "Completed",
+      "current": "Current",
+      "pending": "Pending"
+    },
+    "navigation": {
+      "previous": "Previous",
+      "next": "Continue",
+      "skip": "Skip for now",
+      "complete": "Complete Setup",
+      "save": "Save & Continue",
+      "finishOnboarding": "Finish Onboarding"
+    },
+    "common": {
+      "next": "Next",
+      "back": "Back",
+      "skip": "Skip",
+      "complete": "Complete",
+      "unknownStep": "Unknown step: {stepId}",
+      "genericStepDescription": "Please complete this step to continue.",
+      "unknownOnboardingType": "Unknown onboarding type",
+      "contactSupport": "Please contact support for assistance."
+    },
+    "tenantSetup": {
+      "welcome": {
+        "title": "Welcome to Glavito",
+        "description": "Let's set up your ticketing platform for your organization."
+      },
+      "organizationSetup": {
+        "title": "Organization Setup",
+        "description": "Configure your company details and branding."
+      },
+      "channelConfiguration": {
+        "title": "Channel Configuration",
+        "description": "Set up your communication channels (WhatsApp, Instagram, Email)."
+      },
+      "aiConfiguration": {
+        "title": "AI Configuration",
+        "description": "Configure AI features and automation rules."
+      },
+      "knowledgeBase": {
+        "title": "Knowledge Base",
+        "description": "Set up your knowledge base and help articles."
+      },
+      "paymentSetup": {
+        "title": "Payment Setup",
+        "description": "Configure billing and payment settings."
+      },
+      "teamManagement": {
+        "title": "Team Management",
+        "description": "Create teams and invite your agents."
+      },
+      "workflowConfiguration": {
+        "title": "Workflow Configuration",
+        "description": "Set up automated workflows and templates."
+      },
+      "customerPortal": {
+        "title": "Customer Portal",
+        "description": "Configure your customer self-service portal."
+      },
+      "dataImport": {
+        "title": "Data Import",
+        "description": "Import existing customer data and tickets."
+      },
+      "analyticsSetup": {
+        "title": "Analytics Setup",
+        "description": "Configure reporting and analytics dashboards."
+      },
+      "analytics_setup": {
+        "title": "Analytics Setup",
+        "description": "Configure reporting and analytics dashboards."
+      }
+    },
+    "agentWelcome": {
+      "welcome": {
+        "title": "Welcome to the Team!",
+        "description": "You've been invited to join the support team. Let's get you set up."
+      },
+      "profileSetup": {
+        "title": "Profile Setup",
+        "description": "Complete your profile and preferences."
+      },
+      "teamAssignment": {
+        "title": "Team Assignment",
+        "description": "You've been assigned to a team. Learn about your role."
+      },
+      "permissionsOverview": {
+        "title": "Permissions Overview",
+        "description": "Understand what you can access and do."
+      },
+      "featureTour": {
+        "title": "Feature Tour",
+        "description": "Take a quick tour of the platform features."
+      },
+      "testTicket": {
+        "title": "Test Ticket",
+        "description": "Practice with a test ticket to get familiar."
+      },
+      "notificationPreferences": {
+        "title": "Notification Preferences",
+        "description": "Set up how you want to be notified."
+      },
+      "quickStart": {
+        "title": "Quick Start",
+        "description": "You're all set! Here are some quick actions to get started."
+      }
+    },
+    "steps": {
+      "welcome": {
+        "title": "Welcome to Glavito",
+        "subtitle": "Transform your customer support with AI-powered ticketing",
+        "description": "You're about to set up a powerful ticketing and CRM platform that will transform how you handle customer support. Let's get you up and running in just a few minutes.",
+        "getStarted": "Let's Get Started",
+        "features": {
+          "multiChannel": {
+            "title": "Multi-Channel Support",
+            "description": "WhatsApp, Instagram, Email, and more in one unified inbox"
+          },
+          "aiPowered": {
+            "title": "AI-Powered Automation",
+            "description": "Smart ticket routing, auto-responses, and sentiment analysis"
+          },
+          "teamCollaboration": {
+            "title": "Team Collaboration",
+            "description": "Invite agents, set permissions, and track performance"
+          },
+          "analytics": {
+            "title": "Advanced Analytics",
+            "description": "Real-time insights and comprehensive reporting"
+          }
+        },
+        "expectations": {
+          "title": "What to expect",
+          "time": "5-10 minutes to complete the basic setup",
+          "guidance": "Step-by-step guidance for each configuration",
+          "optional": "Skip optional steps and configure them later",
+          "progress": "Save progress and resume anytime"
+        }
+      },
+      "analytics": {
+        "overview": {
+          "title": "Analytics Overview",
+          "description": "Set up dashboards, reports, and key performance indicators"
+        },
+        "features": {
+          "dashboard": {
+            "title": "Dashboard",
+            "description": "Real-time metrics and insights"
+          },
+          "reporting": {
+            "title": "Automated Reports",
+            "description": "Scheduled email reports"
+          },
+          "surveys": {
+            "title": "Customer Surveys",
+            "description": "Collect customer feedback"
+          },
+          "premium": "Premium"
+        },
+        "dashboard": {
+          "title": "Dashboard Configuration",
+          "description": "Choose which widgets to display on your dashboard",
+          "enabled": "Enabled"
+        },
+        "reporting": {
+          "title": "Automated Reporting",
+          "description": "Set up scheduled reports to be sent via email",
+          "fields": {
+            "email": "Report Email",
+            "frequency": "Report Frequency"
+          },
+          "placeholders": {
+            "email": "manager@company.com"
+          },
+          "frequencies": {
+            "daily": "Daily",
+            "weekly": "Weekly",
+            "monthly": "Monthly"
+          }
+        },
+        "integrations": {
+          "title": "External Integrations",
+          "description": "Connect with external analytics platforms",
+          "fields": {
+            "googleAnalytics": "Google Analytics ID"
+          },
+          "help": {
+            "googleAnalytics": "Optional: Track portal usage in Google Analytics"
+          }
+        },
+        "placeholders": {
+          "googleAnalyticsId": "GA-XXXXXXXXX-X"
+        },
+        "kpis": {
+          "title": "Key Performance Indicators",
+          "description": "Track these important metrics",
+          "responseTime": {
+            "name": "Avg Response Time",
+            "target": "Target: 4 hours"
+          },
+          "satisfaction": {
+            "name": "Customer Satisfaction",
+            "target": "Target: 4.5/5"
+          },
+          "resolution": {
+            "name": "First Contact Resolution",
+            "target": "Target: 80%"
+          }
+        },
+        "widgets": {
+          "ticketOverview": {
+            "name": "Ticket Overview",
+            "description": "Summary of ticket status and volume"
+          },
+          "responseTimes": {
+            "name": "Response Times",
+            "description": "Average response and resolution times"
+          },
+          "customerSatisfaction": {
+            "name": "Customer Satisfaction",
+            "description": "CSAT scores and feedback trends"
+          },
+          "agentPerformance": {
+            "name": "Agent Performance",
+            "description": "Individual agent metrics and rankings"
+          }
+        },
+        "defaults": {
+          "dashboardName": "Main Dashboard",
+          "kpiNames": {
+            "averageResponseTime": "Average Response Time",
+            "customerSatisfaction": "Customer Satisfaction",
+            "firstContactResolution": "First Contact Resolution"
+          }
+        }
+      }
+    },
+    "preview": {
+      "navigation": "NAVIGATION",
+      "welcomeOnboarding": "Your dashboard preview",
+      "welcomeCompletion": "Welcome to your dashboard!",
+      "descriptionOnboarding": "This is what your dashboard will look like",
+      "descriptionCompletion": "Everything is set up and ready to go",
+      "recentTickets": "Recent Tickets",
+      "quickActions": "Quick Actions",
+      "channels": "Channels",
+      "newTicket": "New Ticket",
+      "addCustomer": "Add Customer"
+    }
+  },
+  "conversation": {
+    "actions": {
+      "snooze": "Snooze",
+      "aiCoach": "AI Coach",
+      "resolve": "Resolve",
+      "aiAutopilot": "AI Autopilot",
+      "useTemplate": "Use Template",
+      "sendGreeting": "Send Greeting",
+      "refreshAnalysis": "Refresh Analysis",
+      "fullDashboard": "Full Dashboard",
+      "dismiss": "Dismiss",
+      "suggestResponse": "Suggest response",
+      "autoComplete": "Auto-complete",
+      "knowledge": "Knowledge",
+      "skip": "Skip"
+    },
+    "status": {
+      "analyzing": "Analyzing conversation to propose a draft…",
+      "loading": "Loading conversation...",
+      "pleaseWait": "Please wait while we fetch the messages",
+      "readyToStart": "Ready to start the conversation",
+      "aiAssistantReady": "AI Assistant Ready",
+      "customerOnline": "Customer online"
+    },
+    "messages": {
+      "beginningConversation": "This is the beginning of your conversation with the customer. Send a friendly message to get started.",
+      "placeholder": "Type your message...",
+      "attachFile": "Attach file",
+      "templates": "Templates",
+      "openGlavAI": "Open GlavAI Suggestions",
+      "glavAI": "GlavAI"
+    },
+    "aiCoach": {
+      "title": "AI Performance Coach",
+      "subtitle": "Real-time conversation insights",
+      "summary": "Conversation Summary",
+      "strengths": "Strengths",
+      "improvements": "Areas for Improvement",
+      "metrics": {
+        "clarity": "Clarity",
+        "sentiment": "Sentiment",
+        "fillerWords": "Filler Words"
+      },
+      "summary": {
+        "title": "Conversation Summary",
+        "strengthsImprovements": "Strengths & Improvements"
+      }
+    },
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram",
+      "email": "Email"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "suggestResponse": "Suggest response",
+      "autoComplete": "Auto-complete",
+      "knowledge": "Knowledge"
+    },
+    "knowledge": {
+      "suggestedArticles": "Suggested articles",
+      "suggestedFaqs": "Suggested FAQs"
+    },
+    "aiSuggestions": {
+      "title": "GlavAI Suggestions",
+      "description": "AI-powered response suggestions, templates, and knowledge to help you reply faster"
+    },
+    "satisfactionSurvey": {
+      "title": "Send Satisfaction Survey",
+      "description": "The ticket has been resolved. Would you like to send a satisfaction survey to the customer?",
+      "sendViaEmail": "Send via Email",
+      "sendViaWhatsApp": "Send via WhatsApp Flow",
+      "surveyPreview": "Survey Preview",
+      "questions": {
+        "satisfaction": "• How satisfied are you with how we resolved your issue?",
+        "service": "• How satisfied are you with our service?",
+        "recommendation": "• How likely are you to recommend us to others?",
+        "feedback": "• Any additional feedback or suggestions?"
+      },
+      "question1": "How satisfied are you with how we resolved your issue?",
+      "question2": "How satisfied are you with our service?",
+      "question3": "How likely are you to recommend us to others?",
+      "question4": "Any additional feedback or suggestions?",
+      "preview": "Survey Preview",
+      "sending": "Sending...",
+      "sendButton": "Send Survey",
+      "sendSurvey": "Send Survey",
+      "sendSurveys": "Send Surveys",
+      "surveySent": "Survey Sent!",
+      "sent": "Survey Sent!",
+      "sentDescription": "The customer will receive the satisfaction survey shortly.",
+      "surveyMessage": "The customer will receive the satisfaction survey shortly."
+    }
+  },
+  "calls": {
+    "labels": {
+      "remote": "Remote",
+      "you": "You"
+    },
+    "controls": {
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "cameraOff": "Camera Off",
+      "cameraOn": "Camera On",
+      "shareScreen": "Share Screen",
+      "stopShare": "Stop Share",
+      "sendFile": "Send File",
+      "end": "End"
+    },
+    "files": {
+      "receivedFiles": "Received Files"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+groups:
+  - name: channel-alerts
+    rules:
+      - alert: HighWebhookFailures
+        expr: sum by (tenant,event) (increase(webhook_deliveries_total{status="failed"}[5m])) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High webhook failures for {{ $labels.tenant }} {{ $labels.event }}"
+          description: "More than 5 failed webhook deliveries in 5m"
+
+      - alert: WhatsAppRateLimitSpikes
+        expr: increase(channel_whatsapp_rate_limit_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WhatsApp API 429 spikes"
+          description: "More than 10 429s in 5 minutes"
+

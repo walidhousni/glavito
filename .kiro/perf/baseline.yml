@@ -1,0 +1,27 @@
+config:
+  target: "http://localhost:3001/api"
+  phases:
+    - duration: 120
+      arrivalRate: 20
+      rampTo: 60
+    - duration: 180
+      arrivalRate: 60
+  defaults:
+    headers:
+      Content-Type: application/json
+scenarios:
+  - name: Mix tickets/customers/search
+    flow:
+      - get:
+          url: "/tickets?limit=20"
+      - get:
+          url: "/customers?limit=20"
+      - get:
+          url: "/search/federated?q=payment"
+      - get:
+          url: "/tickets/search/advanced?q=refund&limit=10&semantic=false"
+      - think: 1
+      - get:
+          url: "/tickets/search/suggest?q=pay"
+
+

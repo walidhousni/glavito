@@ -1,0 +1,1 @@
+export { routing } from './src/i18n.config';

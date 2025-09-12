@@ -1,0 +1,13 @@
+{
+  "name": "@glavito/shared-workflow",
+  "version": "0.0.1",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/axios": "^4.0.0"
+  }
+}
+

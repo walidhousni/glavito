@@ -1,0 +1,424 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    --primary: 220 14% 10%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 46%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71% 4%;
+    --radius: 0.75rem;
+    
+    /* Custom customer variables */
+    --success: 142 71% 45%;
+    --success-foreground: 144 61% 20%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 89%;
+    --info: 199 89% 48%;
+    --info-foreground: 210 20% 98%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 20% 98%;
+    --card: 224 71% 4%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 210 20% 98%;
+    --primary-foreground: 220 14% 10%;
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 10% 65%;
+    --accent: 215 28% 17%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 216 12% 84%;
+    
+    /* Custom customer variables - dark mode */
+    --success: 142 71% 45%;
+    --success-foreground: 144 61% 20%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 89%;
+    --info: 199 89% 48%;
+    --info-foreground: 210 20% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+/* ==========================================================================
+   Clean Customer Management Design System
+   ========================================================================== */
+
+/* Base Card Components */
+.customer-card {
+  @apply bg-card border border-border rounded-xl shadow-sm hover:shadow-md transition-all duration-200;
+}
+
+.customer-card-elevated {
+  @apply bg-card border border-border rounded-xl shadow-md hover:shadow-lg transition-all duration-200;
+}
+
+/* Metric Cards with Status Colors */
+.metric-card {
+  @apply bg-card border border-border rounded-lg p-6 hover:shadow-sm transition-shadow duration-200;
+}
+
+.metric-card-success {
+  @apply bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800;
+}
+
+.metric-card-warning {
+  @apply bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800;
+}
+
+.metric-card-danger {
+  @apply bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800;
+}
+
+.metric-card-info {
+  @apply bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800;
+}
+
+/* Status Indicators */
+.status-dot {
+  @apply inline-block w-2 h-2 rounded-full;
+}
+
+.status-success { @apply bg-emerald-500; }
+.status-warning { @apply bg-amber-500; }
+.status-danger { @apply bg-red-500; }
+.status-info { @apply bg-blue-500; }
+.status-neutral { @apply bg-slate-400; }
+
+/* Badge Variants */
+.badge-success {
+  @apply bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800;
+}
+
+.badge-warning {
+  @apply bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800;
+}
+
+.badge-danger {
+  @apply bg-red-100 text-red-800 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800;
+}
+
+/* Clean Timeline */
+.timeline-item {
+  @apply relative pl-8 pb-6 last:pb-0;
+  @apply before:absolute before:left-0 before:top-2 before:w-2 before:h-2;
+  @apply before:bg-slate-300 before:rounded-full before:ring-4 before:ring-background;
+  @apply after:absolute after:left-0.5 after:top-4 after:w-0.5 after:-bottom-2;
+  @apply after:bg-slate-200 dark:after:bg-slate-700 last:after:hidden;
+}
+
+.timeline-item-active {
+  @apply before:bg-primary;
+}
+
+/* Typography Scales */
+.text-display { @apply text-3xl font-bold tracking-tight; }
+.text-title { @apply text-xl font-semibold; }
+.text-subtitle { @apply text-sm font-medium text-muted-foreground; }
+.text-body { @apply text-sm; }
+.text-caption { @apply text-xs text-muted-foreground; }
+
+/* Health Score Indicators */
+.health-excellent { @apply text-emerald-600 dark:text-emerald-400; }
+.health-good { @apply text-blue-600 dark:text-blue-400; }
+.health-fair { @apply text-amber-600 dark:text-amber-400; }
+.health-poor { @apply text-red-600 dark:text-red-400; }
+
+html {
+  box-sizing: border-box;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* RTL helpers */
+[dir='rtl'] .text-left { text-align: right; }
+[dir='rtl'] .text-right { text-align: left; }
+[dir='rtl'] .ml-2 { margin-left: 0; margin-right: 0.5rem; }
+[dir='rtl'] .mr-2 { margin-right: 0; margin-left: 0.5rem; }
+[dir='rtl'] .pl-4 { padding-left: 0; padding-right: 1rem; }
+[dir='rtl'] .pr-4 { padding-right: 0; padding-left: 1rem; }
+[dir='rtl'] .space-x-2 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 1; margin-right: calc(0.5rem * var(--tw-space-x-reverse)); margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse))); }
+
+/* ==========================================================================
+   Accessibility & Interaction Styles
+   ========================================================================== */
+
+/* Clean scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Selection styles */
+::selection {
+  background: hsl(var(--primary) / 0.2);
+  color: hsl(var(--foreground));
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+/* Avatar stack */
+.avatar-stack {
+  @apply flex -space-x-2 items-center;
+}
+
+.avatar-stack .avatar {
+  @apply inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-muted text-xs font-medium;
+}
+
+/* Section layouts */
+.section {
+  @apply rounded-lg border bg-card p-6;
+}
+
+.section-header {
+  @apply border-b pb-4 mb-4;
+}
+
+.section-title {
+  @apply text-title;
+}
+
+.section-description {
+  @apply text-subtitle mt-1;
+}
+
+/* Simple animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+/* Premium card and gradient button helpers */
+.premium-card {
+  @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-xl;
+}
+
+.btn-gradient {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700;
+}
+
+/* Workflow UI helpers */
+.template-card {
+  @apply border border-slate-200/60 dark:border-slate-700/60 rounded-xl p-3 bg-white/80 dark:bg-slate-800/60 hover:shadow-md transition-all duration-200 hover:border-blue-300/60 dark:hover:border-blue-600/60;
+}
+.toolbar-sticky {
+  @apply sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-200/60 dark:border-slate-800/60;
+}
+
+/* Knowledge Base Components */
+.knowledge-card {
+  @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300;
+}
+
+.knowledge-header {
+  @apply bg-gradient-to-r from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 rounded-2xl p-8 border border-slate-200/60 dark:border-slate-700/60 shadow-xl;
+}
+
+.knowledge-section {
+  @apply bg-white/90 dark:bg-slate-900/90 rounded-2xl overflow-hidden border-slate-200/60 dark:border-slate-700/60 shadow-xl;
+}
+
+.knowledge-item {
+  @apply p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-300/60 dark:hover:border-blue-600/60 hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800;
+}
+
+.knowledge-metric {
+  @apply p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/60 dark:border-blue-800/60;
+}
+
+.knowledge-trending {
+  @apply flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors;
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Chip components */
+.chip {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.chip-primary {
+  @apply bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300;
+}
+
+.chip-muted {
+  @apply bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400;
+}
+
+/* Focus ring utility */
+.focus-ring {
+  @apply focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400;
+}
+
+/* Analytics Components */
+.analytics-card {
+  @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300;
+}
+
+.analytics-header {
+  @apply bg-gradient-to-r from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 rounded-2xl p-8 border border-slate-200/60 dark:border-slate-700/60 shadow-xl;
+}
+
+.analytics-metric {
+  @apply p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/60 dark:border-blue-800/60;
+}
+
+.analytics-trend {
+  @apply flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors;
+}
+
+/* Analytics Chart Containers */
+.analytics-chart {
+  @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border border-slate-200/60 dark:border-slate-700/60 shadow-lg;
+}
+
+.analytics-stat {
+  @apply text-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200/60 dark:border-slate-700/60;
+}
+
+/* Analytics Progress Bars */
+.analytics-progress {
+  @apply w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden;
+}
+
+.analytics-progress-fill {
+  @apply bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500;
+}
+
+/* Analytics Badges */
+.analytics-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.analytics-badge-success {
+  @apply bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300;
+}
+
+.analytics-badge-warning {
+  @apply bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300;
+}
+
+.analytics-badge-error {
+  @apply bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300;
+}
+
+.analytics-badge-info {
+  @apply bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300;
+}
+
+/* Integrations */
+.connector-card {
+  @apply hover:shadow-lg transition-all duration-200;
+}
+
+
+/* Accessibility support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+  }
+  
+  .skeleton {
+    animation: none;
+  }
+  
+  .analytics-card {
+    transition: none;
+  }
+  
+  .analytics-progress-fill {
+    transition: none;
+  }
+}

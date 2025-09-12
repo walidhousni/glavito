@@ -1,0 +1,31 @@
+{
+  "extends": "../tsconfig.base.json",
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "../libs/shared/workflow"
+    },
+    {
+      "path": "../libs/shared/conversation"
+    },
+    {
+      "path": "../libs/shared/analytics"
+    },
+    {
+      "path": "../libs/shared/auth"
+    },
+    {
+      "path": "../libs/shared/ai"
+    },
+    {
+      "path": "../libs/shared/types"
+    },
+    {
+      "path": "../libs/shared/database"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ]
+}
