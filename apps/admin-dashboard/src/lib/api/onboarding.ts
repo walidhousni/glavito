@@ -39,8 +39,6 @@ import {
   OnboardingRole,
   TenantSetupStatus,
   AgentWelcomeStatus,
-  TenantSetupStep,
-  AgentWelcomeStep,
   AgentInvitationContext
 } from '@glavito/shared-types';
 import { api as axiosApi } from '@/lib/api/config';
@@ -54,21 +52,11 @@ class OnboardingAPI {
     const url = `${API_BASE_URL}${endpoint}`;
 
     try {
-      const tenantHeader = (typeof window !== 'undefined' && window.location?.host)
-        ? { 'x-tenant-host': window.location.host }
-        : undefined;
-      const method = (options.method || 'GET').toUpperCase();
-      const needsContentType = method === 'POST' || method === 'PUT' || method === 'PATCH';
-      const headers = {
-        Accept: 'application/json',
-        ...(needsContentType ? { 'Content-Type': 'application/json' } : {}),
-        ...(tenantHeader || {}),
-      } as Record<string, string>;
+      // Use the shared axios instance which has authentication interceptors
       const response = await axiosApi.request({
         url,
         method: options.method || 'GET',
         data: options.data,
-        headers,
       });
 
       const payload = (response as any)?.data?.data ?? response?.data;
@@ -131,6 +119,13 @@ class OnboardingAPI {
     });
   }
 
+  async skipStep(sessionId: string, stepId: string): Promise<{ success: boolean; session: OnboardingSession }> {
+    return this.request<{ success: boolean; session: OnboardingSession }>(`/onboarding/skip/${sessionId}/${stepId}`, {
+      method: 'PUT',
+      data: {},
+    });
+  }
+
   async resumeOnboarding(sessionId: string): Promise<OnboardingSession> {
     return this.request<OnboardingSession>(`/onboarding/resume/${sessionId}`, {
       method: 'PUT',
@@ -147,9 +142,9 @@ class OnboardingAPI {
     });
   }
 
-  async getStepConfiguration(stepId: OnboardingStep): Promise<StepConfiguration> {
-    return this.request<StepConfiguration>(`/onboarding/step/${stepId}/config`);
-  }
+  // async getStepConfiguration(stepId: OnboardingStep): Promise<StepConfiguration> {
+  //   return this.request<StepConfiguration>(`/onboarding/step/${stepId}/config`);
+  // }
 
   // Channel Integration Methods
 
@@ -392,13 +387,15 @@ class OnboardingAPI {
     role: OnboardingRole, 
     request?: StartOnboardingRequest
   ): Promise<OnboardingSession> {
+    const payload = {
+      type,
+      role,
+      ...request
+    };
+    console.log('[OnboardingAPI] Sending start request with payload:', payload);
     return this.request('/onboarding/start', {
       method: 'POST',
-      data: {
-        type,
-        role,
-        ...request
-      },
+      data: payload,
     });
   }
 }

@@ -1,0 +1,206 @@
+/**
+ * Conversation Design Tokens - SleekFlow Style
+ * 
+ * This file contains design tokens for the conversation system,
+ * inspired by SleekFlow's clean and modern aesthetic.
+ */
+
+:root {
+  /* ==================== MESSAGE BUBBLES ==================== */
+  
+  /* Agent messages (outgoing) */
+  --message-bubble-agent-bg: hsl(221, 83%, 53%);
+  --message-bubble-agent-text: hsl(0, 0%, 100%);
+  --message-bubble-agent-radius: 16px;
+  --message-bubble-agent-radius-corner: 4px; /* Reduced corner radius for tail effect */
+  
+  /* Customer messages (incoming) */
+  --message-bubble-customer-bg: hsl(210, 40%, 96%);
+  --message-bubble-customer-text: hsl(222, 47%, 11%);
+  --message-bubble-customer-radius: 16px;
+  --message-bubble-customer-radius-corner: 4px;
+  
+  /* System messages */
+  --message-bubble-system-bg: hsl(210, 20%, 98%);
+  --message-bubble-system-text: hsl(215, 16%, 47%);
+  
+  /* Internal notes */
+  --message-bubble-note-bg: hsl(45, 100%, 96%);
+  --message-bubble-note-border: hsl(45, 93%, 75%);
+  --message-bubble-note-text: hsl(45, 29%, 20%);
+  
+  /* Message bubble sizing */
+  --message-bubble-padding: 12px 16px;
+  --message-bubble-max-width: 70%;
+  --message-bubble-min-width: 80px;
+  
+  /* ==================== SPACING ==================== */
+  
+  /* Conversation spacing */
+  --conversation-gap: 12px;
+  --message-group-gap: 24px;
+  --conversation-padding: 16px;
+  
+  /* Message spacing */
+  --message-avatar-gap: 12px;
+  --message-meta-gap: 8px;
+  
+  /* ==================== SHADOWS ==================== */
+  
+  /* Message shadows */
+  --message-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --message-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  /* Card shadows */
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+  
+  /* ==================== TRANSITIONS ==================== */
+  
+  /* Smooth transitions */
+  --transition-smooth: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ==================== COLORS ==================== */
+  
+  /* Status colors */
+  --status-open-bg: hsl(142, 76%, 96%);
+  --status-open-text: hsl(142, 71%, 45%);
+  --status-open-border: hsl(142, 76%, 85%);
+  
+  --status-waiting-bg: hsl(48, 96%, 95%);
+  --status-waiting-text: hsl(48, 96%, 45%);
+  --status-waiting-border: hsl(48, 96%, 80%);
+  
+  --status-resolved-bg: hsl(262, 83%, 96%);
+  --status-resolved-text: hsl(262, 83%, 58%);
+  --status-resolved-border: hsl(262, 83%, 85%);
+  
+  --status-overdue-bg: hsl(0, 86%, 96%);
+  --status-overdue-text: hsl(0, 86%, 55%);
+  --status-overdue-border: hsl(0, 86%, 85%);
+  
+  /* Channel colors */
+  --channel-whatsapp: hsl(142, 70%, 49%);
+  --channel-messenger: hsl(214, 89%, 52%);
+  --channel-instagram: hsl(326, 82%, 57%);
+  --channel-email: hsl(262, 52%, 47%);
+  --channel-sms: hsl(24, 95%, 53%);
+  
+  /* ==================== TYPOGRAPHY ==================== */
+  
+  /* Message text */
+  --message-font-size: 14px;
+  --message-line-height: 1.5;
+  --message-font-weight: 400;
+  
+  /* Meta text (timestamps, names) */
+  --meta-font-size: 12px;
+  --meta-line-height: 1.4;
+  --meta-font-weight: 500;
+  
+  /* ==================== REACTIONS ==================== */
+  
+  /* Emoji reactions */
+  --reaction-bg: hsl(210, 40%, 96%);
+  --reaction-bg-hover: hsl(210, 40%, 92%);
+  --reaction-border: hsl(210, 20%, 88%);
+  --reaction-size: 24px;
+  --reaction-padding: 4px 8px;
+  --reaction-radius: 12px;
+  
+  /* ==================== COMPOSER ==================== */
+  
+  /* Message composer */
+  --composer-bg: hsl(0, 0%, 100%);
+  --composer-border: hsl(210, 20%, 90%);
+  --composer-min-height: 100px;
+  --composer-max-height: 300px;
+  --composer-padding: 16px;
+  
+  /* ==================== AVATARS ==================== */
+  
+  /* Avatar sizing */
+  --avatar-size-sm: 32px;
+  --avatar-size-md: 40px;
+  --avatar-size-lg: 48px;
+  
+  /* ==================== BORDERS ==================== */
+  
+  /* Border radii */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 20px;
+  --border-radius-full: 9999px;
+  
+  /* Border widths */
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  
+  /* ==================== Z-INDEX ==================== */
+  
+  /* Layering */
+  --z-message-actions: 10;
+  --z-composer: 20;
+  --z-header: 30;
+  --z-dropdown: 40;
+  --z-modal: 50;
+  --z-tooltip: 60;
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Agent messages */
+    --message-bubble-agent-bg: hsl(221, 83%, 48%);
+    --message-bubble-agent-text: hsl(0, 0%, 100%);
+    
+    /* Customer messages */
+    --message-bubble-customer-bg: hsl(215, 28%, 17%);
+    --message-bubble-customer-text: hsl(210, 40%, 98%);
+    
+    /* System messages */
+    --message-bubble-system-bg: hsl(215, 28%, 12%);
+    --message-bubble-system-text: hsl(215, 16%, 65%);
+    
+    /* Internal notes */
+    --message-bubble-note-bg: hsl(45, 35%, 15%);
+    --message-bubble-note-border: hsl(45, 35%, 25%);
+    --message-bubble-note-text: hsl(45, 80%, 85%);
+    
+    /* Shadows */
+    --message-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --message-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.5);
+    
+    /* Status colors (dark mode) */
+    --status-open-bg: hsl(142, 71%, 15%);
+    --status-open-text: hsl(142, 71%, 75%);
+    --status-open-border: hsl(142, 71%, 25%);
+    
+    --status-waiting-bg: hsl(48, 96%, 15%);
+    --status-waiting-text: hsl(48, 96%, 75%);
+    --status-waiting-border: hsl(48, 96%, 25%);
+    
+    --status-resolved-bg: hsl(262, 83%, 15%);
+    --status-resolved-text: hsl(262, 83%, 75%);
+    --status-resolved-border: hsl(262, 83%, 25%);
+    
+    --status-overdue-bg: hsl(0, 86%, 15%);
+    --status-overdue-text: hsl(0, 86%, 75%);
+    --status-overdue-border: hsl(0, 86%, 25%);
+    
+    /* Reactions */
+    --reaction-bg: hsl(215, 28%, 17%);
+    --reaction-bg-hover: hsl(215, 28%, 22%);
+    --reaction-border: hsl(215, 20%, 25%);
+    
+    /* Composer */
+    --composer-bg: hsl(222, 47%, 11%);
+    --composer-border: hsl(215, 20%, 20%);
+  }
+}
+

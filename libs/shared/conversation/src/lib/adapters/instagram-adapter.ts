@@ -27,6 +27,7 @@ export class InstagramAdapter implements ChannelAdapter {
   private readonly pageId: string;
   // private readonly appSecret: string; // Unused
   private readonly verifyToken: string;
+  private idempotencyCache: Map<string, { result: MessageDeliveryResult; expiresAt: number }> = new Map();
   
   constructor(
     private readonly configService: ConfigService,
@@ -149,6 +150,33 @@ export class InstagramAdapter implements ChannelAdapter {
     } else if (message.quick_reply) {
       content = message.quick_reply.payload;
       messageType = 'quick_reply';
+      // Detect CSAT quick reply pattern: csat_<surveyId>_<rating>
+      try {
+        const payload: string = String(message.quick_reply.payload || '');
+        const m = payload.match(/^csat_(?<surveyId>[^_]+)_(?<rating>[1-5])$/i) as (RegExpMatchArray & { groups?: Record<string, string> }) | null;
+        if (m && m.groups && m.groups['surveyId'] && m.groups['rating']) {
+          const surveyId = m.groups['surveyId'];
+          const rating = parseInt(m.groups['rating'], 10);
+          const base =
+            this.configService.get<string>('APP_INTERNAL_URL') ||
+            this.configService.get<string>('APP_URL') ||
+            'http://localhost:3000';
+          try {
+            await firstValueFrom(
+              this.httpService.post(
+                `${base.replace(/\/$/, '')}/satisfaction/surveys/${encodeURIComponent(surveyId)}/response`,
+                { rating },
+                { headers: { 'Content-Type': 'application/json' } }
+              )
+            );
+            this.logger.log(`Instagram CSAT received for survey ${surveyId}: rating ${rating}`);
+          } catch (err) {
+            this.logger.error('Failed to POST Instagram CSAT to backend', err as any);
+          }
+        }
+      } catch (e) {
+        this.logger.debug('quick_reply CSAT parse failed', (e as any)?.message);
+      }
     }
     
     const instagramMessage: InstagramMessage = {
@@ -228,6 +256,10 @@ export class InstagramAdapter implements ChannelAdapter {
   
   async sendMessage(_conversationId: string, message: OutgoingMessage): Promise<MessageDeliveryResult> {
     try {
+      if (!message.recipientId) {
+        throw new Error('Recipient ID (Instagram ID) is required for Instagram messages');
+      }
+      
       // Determine if this is a DM or comment reply
       const isComment = (message.metadata as any)?.['isComment'] || message.replyToMessageId?.includes('comment');
       
@@ -250,14 +282,45 @@ export class InstagramAdapter implements ChannelAdapter {
   }
   
   private async sendDirectMessage(message: OutgoingMessage): Promise<MessageDeliveryResult> {
+    if (!message.recipientId) {
+      throw new Error('Recipient ID (Instagram ID) is required for Instagram direct messages');
+    }
+    
     const url = `${this.baseUrl}/me/messages`;
+    // Enforce 24-hour window for customer service messaging
+    if (!this.isWithin24hWindow(message)) {
+      throw new Error('Outside 24-hour window for Instagram messaging');
+    }
+
+    // Idempotency
+    const idempotencyKey = this.getIdempotencyKey(message)
+    if (idempotencyKey) {
+      const cached = this.idempotencyCache.get(idempotencyKey)
+      if (cached && cached.expiresAt > Date.now()) {
+        this.logger.debug(`Idempotent send suppressed (instagram): ${idempotencyKey}`)
+        return cached.result
+      }
+    }
     const payload: Record<string, unknown> = {
-      recipient: { id: message.recipientId },
+      recipient: { id: String(message.recipientId) },
       message: {}
     };
 
     if (message.messageType === 'text') {
       (payload as any)['message']['text'] = message.content;
+    } else if (message.messageType === 'interactive') {
+      // Quick replies (ice breakers) like buttons
+      const interactive = (message.metadata as any)?.interactive as { quick_replies?: Array<{ title: string; payload?: string }> } | undefined
+      if (interactive?.quick_replies && interactive.quick_replies.length) {
+        (payload as any)['message']['text'] = message.content || 'Choose an option'
+        ;(payload as any)['message']['quick_replies'] = interactive.quick_replies.slice(0, 3).map((q: any) => ({
+          content_type: 'text',
+          title: q.title?.slice(0, 20) || 'Option',
+          payload: q.payload?.slice(0, 100) || q.title?.toLowerCase().replace(/\s+/g, '_') || 'option'
+        }))
+      } else {
+        (payload as any)['message']['text'] = message.content
+      }
     } else if (message.attachments?.[0]) {
       const attachment = message.attachments[0];
       (payload as any)['message']['attachment'] = {
@@ -284,12 +347,17 @@ export class InstagramAdapter implements ChannelAdapter {
       } catch (metricErr) {
         this.logger.debug('Metrics observe error', (metricErr as any)?.message);
       }
-      return {
+      const result: MessageDeliveryResult = {
         messageId: this.generateId(),
         status: 'sent',
         timestamp: new Date(),
         channelMessageId: response.data.message_id
       };
+      if (idempotencyKey) {
+        const ttlMs = 5 * 60 * 1000
+        this.idempotencyCache.set(idempotencyKey, { result, expiresAt: Date.now() + ttlMs })
+      }
+      return result;
     } catch (err: any) {
       if (err?.response?.status === 429) {
         try { this.metricApi429Total?.inc(); } catch (metricErr) { this.logger.debug('Metrics 429 inc error', (metricErr as any)?.message); }
@@ -339,35 +407,34 @@ export class InstagramAdapter implements ChannelAdapter {
       })
     );
 
-    try {
-      const start = Date.now();
-      const response = await doRequest();
+    let attempt = 0
+    const maxAttempts = 3
+    while (attempt < maxAttempts) {
       try {
-        this.metricSentTotal?.inc({ status: 'success' });
-        this.metricSendLatencyMs?.observe(Date.now() - start);
-      } catch (metricErr) { this.logger.debug('Metrics observe error', (metricErr as any)?.message); }
-      return { messageId: this.generateId(), status: 'sent', timestamp: new Date(), channelMessageId: response.data.id };
-    } catch (err: any) {
-      if (err?.response?.status === 429) {
-        try { this.metricApi429Total?.inc(); } catch (metricErr) { this.logger.debug('Metrics 429 inc error', (metricErr as any)?.message); }
-        const retryAfter = parseInt(err.response.headers?.['retry-after'] || '2', 10) * 1000;
-        await new Promise((r) => setTimeout(r, isNaN(retryAfter) ? 2000 : retryAfter));
+        const start = Date.now();
+        const response = await doRequest();
         try {
-          const start2 = Date.now();
-          const response = await doRequest();
-          try {
-            this.metricSentTotal?.inc({ status: 'success' });
-            this.metricSendLatencyMs?.observe(Date.now() - start2);
-          } catch (metricErr) { this.logger.debug('Metrics retry observe error', (metricErr as any)?.message); }
-          return { messageId: this.generateId(), status: 'sent', timestamp: new Date(), channelMessageId: response.data.id };
-        } catch (e2: any) {
-          this.logger.warn(`Instagram comment reply retry failed: ${e2?.message}`);
+          this.metricSentTotal?.inc({ status: 'success' });
+          this.metricSendLatencyMs?.observe(Date.now() - start);
+        } catch (metricErr) { this.logger.debug('Metrics observe error', (metricErr as any)?.message); }
+        const result: MessageDeliveryResult = { messageId: this.generateId(), status: 'sent', timestamp: new Date(), channelMessageId: response.data.id };
+        return result;
+      } catch (err: any) {
+        attempt += 1
+        const status = err?.response?.status
+        if (attempt >= maxAttempts || !(status === 429 || (status >= 500 && status < 600))) {
+          this.logger.error('Failed to send Instagram comment reply:', err);
+          try { this.metricSentTotal?.inc({ status: 'failed' }); } catch (metricErr) { this.logger.debug('Metrics failed inc error', (metricErr as any)?.message); }
+          return { messageId: this.generateId(), status: 'failed', timestamp: new Date(), error: err?.message || 'Unknown error' };
         }
+        try { this.metricApi429Total?.inc(); } catch (metricErr) { this.logger.debug('Metrics 429 inc error', (metricErr as any)?.message); }
+        const retryAfter = parseInt(err?.response?.headers?.['retry-after'] || '0', 10)
+        const base = retryAfter > 0 ? retryAfter * 1000 : Math.min(5000, 500 * Math.pow(2, attempt))
+        const jitter = Math.floor(Math.random() * 250)
+        await new Promise((r) => setTimeout(r, base + jitter))
       }
-      this.logger.error('Failed to send Instagram comment reply:', err);
-      try { this.metricSentTotal?.inc({ status: 'failed' }); } catch (metricErr) { this.logger.debug('Metrics failed inc error', (metricErr as any)?.message); }
-      return { messageId: this.generateId(), status: 'failed', timestamp: new Date(), error: err?.message || 'Unknown error' };
     }
+    return { messageId: this.generateId(), status: 'failed', timestamp: new Date(), error: 'comment reply failed' }
   }
   
   async downloadMedia(mediaId: string): Promise<MediaFile> {
@@ -415,7 +482,7 @@ export class InstagramAdapter implements ChannelAdapter {
       const url = `${this.baseUrl}/${this.pageId}/media`;
       
       const formData = new (globalThis as any).FormData();
-      formData.append('source', new Blob([file.data], { type: file.mimeType }), file.filename);
+      formData.append('source', new Blob([new Uint8Array(file.data)], { type: file.mimeType }), file.filename);
       
       const response = await firstValueFrom(
         this.httpService.post(url, formData, {
@@ -471,10 +538,16 @@ export class InstagramAdapter implements ChannelAdapter {
     }
     
     // Validate Instagram user ID format
-    if (!/^\d+$/.test(message.recipientId)) {
+    if (!message.recipientId) {
       results.push({
         isValid: false,
-        errors: ['Invalid Instagram user ID format'],
+        errors: ['Recipient ID (Instagram ID) is required for Instagram messages'],
+        warnings: []
+      });
+    } else if (!/^\d+$/.test(String(message.recipientId))) {
+      results.push({
+        isValid: false,
+        errors: [`Invalid Instagram user ID format: ${message.recipientId}`],
         warnings: []
       });
     }
@@ -594,6 +667,44 @@ export class InstagramAdapter implements ChannelAdapter {
   }
   
   // Webhook verification for Instagram
+  /**
+   * Get Instagram account balance/credits from Meta Business API
+   * Note: Meta doesn't provide direct balance API, so we check account status
+   */
+  async getBalance(): Promise<{ balance: number; currency: string; metadata?: Record<string, unknown> }> {
+    try {
+      if (!this.pageId || !this.accessToken) {
+        throw new Error('Instagram configuration incomplete');
+      }
+
+      // Try to get page info and account status
+      const url = `${this.baseUrl}/${this.pageId}?fields=instagram_business_account,is_verified`;
+      const response = await firstValueFrom(
+        this.httpService.get(url, {
+          headers: { Authorization: `Bearer ${this.accessToken}` },
+        })
+      );
+
+      const igAccount = (response.data as any)?.instagram_business_account;
+      const isVerified = (response.data as any)?.is_verified || false;
+
+      // Meta doesn't expose balance directly for Instagram
+      // Balance would need to be tracked via webhook events or billing API
+      return {
+        balance: igAccount ? 1000 : 0, // Placeholder - actual balance should come from billing webhooks
+        currency: 'USD',
+        metadata: {
+          pageId: this.pageId,
+          hasInstagramAccount: !!igAccount,
+          isVerified,
+        },
+      };
+    } catch (err: any) {
+      this.logger.error('Failed to get Instagram balance', err?.message || String(err));
+      throw err;
+    }
+  }
+
   verifyWebhook(mode: string, token: string, challenge: string): string | null {
     if (mode === 'subscribe' && token === this.verifyToken) {
       this.logger.log('Instagram webhook verified successfully');
@@ -606,5 +717,35 @@ export class InstagramAdapter implements ChannelAdapter {
 
   private generateId(): string {
     return `ig_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private isWithin24hWindow(message: OutgoingMessage): boolean {
+    try {
+      const meta = (message.metadata || {}) as Record<string, unknown>
+      const now = Date.now()
+      // Accept several common keys; if none provided, allow (upstream should enforce)
+      const tsLike = meta['lastCustomerMessageAt'] || meta['lastInboundAt'] || meta['lastIncomingAt']
+      if (!tsLike) return true
+      const ts = typeof tsLike === 'string' || typeof tsLike === 'number' ? new Date(tsLike).getTime() : (tsLike as Date).getTime()
+      if (!Number.isFinite(ts)) return true
+      const hours = (now - ts) / (1000 * 60 * 60)
+      // Allow override flag for testing/admin
+      const override = Boolean(meta['allowOutsideWindow'])
+      return override ? true : hours <= 24
+    } catch {
+      return true
+    }
+  }
+
+  private getIdempotencyKey(message: OutgoingMessage): string | null {
+    try {
+      const explicit = (message.metadata as any)?.idempotencyKey as string | undefined
+      if (explicit && explicit.length > 0) return `ig:${explicit}`
+      const base = [message.messageType, String(message.recipientId || ''), message.content || '', message.replyToMessageId || ''].join('|')
+      const crypto = require('crypto') as typeof import('crypto')
+      return `ig:auto:${crypto.createHash('sha256').update(base).digest('hex')}`
+    } catch {
+      return null
+    }
   }
 }

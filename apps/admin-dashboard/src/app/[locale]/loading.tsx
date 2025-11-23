@@ -17,7 +17,7 @@ export default function LocaleLoading() {
             {t('common.loading', { defaultValue: 'Loading...' })}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Please wait while we load your content
+            {t('common.loadingContent')}
           </p>
         </div>
       </div>

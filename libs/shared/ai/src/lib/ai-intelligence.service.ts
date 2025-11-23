@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@glavito/shared-database';
 import { AdvancedEventBusService } from '@glavito/shared-kafka';
 import OpenAI from 'openai';
+import { buildPrompt } from './prompt-templates';
 import Anthropic from '@anthropic-ai/sdk';
+import axios, { AxiosInstance } from 'axios';
 
 export interface AIAnalysisRequest {
   content: string;
@@ -185,14 +187,17 @@ export class AIIntelligenceService {
   private readonly logger = new Logger(AIIntelligenceService.name);
   private openai!: OpenAI;
   private anthropic!: Anthropic;
-  private readonly aiProvider: 'openai' | 'anthropic' | 'both';
+  private dashscopeClient!: AxiosInstance;
+  private readonly aiProvider: 'openai' | 'anthropic' | 'dashscope' | 'both';
+  private readonly dashscopeModel: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly eventBus: AdvancedEventBusService
   ) {
-    this.aiProvider = this.configService.get<'openai' | 'anthropic' | 'both'>('AI_PROVIDER', 'openai');
+    this.aiProvider = this.configService.get<'openai' | 'anthropic' | 'dashscope' | 'both'>('AI_PROVIDER', 'dashscope');
+    this.dashscopeModel = this.configService.get<string>('DASHSCOPE_MODEL', 'qwen-turbo');
     
     // Initialize OpenAI
     const openaiKey = this.configService.get<string>('OPENAI_API_KEY');
@@ -208,6 +213,20 @@ export class AIIntelligenceService {
       this.anthropic = new Anthropic({
         apiKey: anthropicKey,
       });
+    }
+
+    // Initialize DashScope (Alibaba Cloud)
+    const dashscopeKey = this.configService.get<string>('DASHSCOPE_API_KEY');
+    if (dashscopeKey) {
+      this.dashscopeClient = axios.create({
+        baseURL: 'https://dashscope.aliyuncs.com/api/v1',
+        headers: {
+          'Authorization': `Bearer ${dashscopeKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      });
+      this.logger.log(`DashScope client initialized with model: ${this.dashscopeModel}`);
     }
 
     this.logger.log(`AI Intelligence Service initialized with provider: ${this.aiProvider}`);
@@ -367,6 +386,145 @@ export class AIIntelligenceService {
     }
   }
 
+  /**
+   * Comprehensive triage analysis for tickets/messages using DashScope LLM.
+   * Returns structured predictions: intent, category, priority, urgency, entities, language.
+   */
+  async performTriage(params: {
+    content: string;
+    subject?: string;
+    channel?: string;
+    customerHistory?: { ticketCount?: number; lastInteractionDays?: number };
+  }): Promise<{
+    intent: string;
+    category: string;
+    subcategory?: string;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+    entities: Array<{ type: string; value: string; confidence: number }>;
+    language: string;
+    confidence: number;
+    reasoning: string;
+  }> {
+    const startTime = Date.now();
+    try {
+      // Redact PII before sending to LLM
+      const { redacted, mappings } = this.redactPII(params.content);
+      const subjectText = params.subject ? `Subject: ${params.subject}\n` : '';
+      const channelText = params.channel ? `Channel: ${params.channel}\n` : '';
+      const historyText = params.customerHistory
+        ? `Customer History: ${params.customerHistory.ticketCount || 0} tickets, last interaction ${params.customerHistory.lastInteractionDays || 'unknown'} days ago\n`
+        : '';
+
+      const prompt = `${subjectText}${channelText}${historyText}
+Content: ${redacted}
+
+Analyze this customer message and provide a structured JSON response with the following fields:
+{
+  "intent": "primary intent (e.g., billing_question, technical_issue, refund_request, complaint, praise, feature_request)",
+  "category": "main category (e.g., billing, technical, shipping, product_info, account_management)",
+  "subcategory": "optional subcategory for more granularity",
+  "priority": "one of: low, medium, high, urgent",
+  "urgencyLevel": "one of: low, medium, high, critical",
+  "entities": [{"type": "order_id|email|phone|product|date", "value": "extracted value", "confidence": 0.0-1.0}],
+  "language": "ISO 639-1 language code (e.g., en, fr, ar, zh)",
+  "confidence": 0.0-1.0,
+  "reasoning": "brief explanation of the classification"
+}
+
+Respond ONLY with valid JSON, no markdown or additional text.`;
+
+      const response = await this.callAI(prompt);
+      const parsed = JSON.parse(response);
+
+      // Restore PII in entities if present
+      if (parsed.entities && Array.isArray(parsed.entities)) {
+        parsed.entities = parsed.entities.map((e: any) => ({
+          ...e,
+          value: this.restorePII(e.value, mappings),
+        }));
+      }
+
+      const processingTime = Date.now() - startTime;
+      this.logger.log(`Triage completed in ${processingTime}ms with confidence ${parsed.confidence}`);
+
+      return {
+        intent: parsed.intent || 'unknown',
+        category: parsed.category || 'general',
+        subcategory: parsed.subcategory,
+        priority: parsed.priority || 'medium',
+        urgencyLevel: parsed.urgencyLevel || 'medium',
+        entities: parsed.entities || [],
+        language: parsed.language || 'en',
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.5,
+        reasoning: parsed.reasoning || 'Automated triage analysis',
+      };
+    } catch (error) {
+      this.logger.error('Triage analysis failed:', error);
+      // Fallback to heuristic
+      return {
+        intent: 'unknown',
+        category: 'general',
+        priority: this.detectUrgencyHeuristic(params.content),
+        urgencyLevel: 'medium',
+        entities: [],
+        language: 'en',
+        confidence: 0.3,
+        reasoning: 'Fallback heuristic due to AI provider error',
+      };
+    }
+  }
+
+  /** Simple PII redaction: replace emails, phones, order IDs with placeholders */
+  private redactPII(text: string): { redacted: string; mappings: Map<string, string> } {
+    const mappings = new Map<string, string>();
+    let redacted = text;
+    let counter = 0;
+
+    // Email
+    redacted = redacted.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, (match) => {
+      const placeholder = `EMAIL_${++counter}`;
+      mappings.set(placeholder, match);
+      return placeholder;
+    });
+
+    // Phone (simple patterns)
+    redacted = redacted.replace(/\b(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, (match) => {
+      const placeholder = `PHONE_${++counter}`;
+      mappings.set(placeholder, match);
+      return placeholder;
+    });
+
+    // Order IDs (pattern: #ORD123456 or ORD-123456)
+    redacted = redacted.replace(/\b(#?ORD-?[A-Z0-9]{6,})\b/gi, (match) => {
+      const placeholder = `ORDER_${++counter}`;
+      mappings.set(placeholder, match);
+      return placeholder;
+    });
+
+    return { redacted, mappings };
+  }
+
+  /** Restore PII placeholders with original values */
+  private restorePII(text: string, mappings: Map<string, string>): string {
+    let restored = text;
+    mappings.forEach((original, placeholder) => {
+      restored = restored.replace(new RegExp(placeholder, 'g'), original);
+    });
+    return restored;
+  }
+
+  /** Heuristic priority detection based on keywords */
+  private detectUrgencyHeuristic(content: string): 'low' | 'medium' | 'high' | 'urgent' {
+    const lower = content.toLowerCase();
+    const urgentKeywords = ['urgent', 'asap', 'emergency', 'immediately', 'critical', 'down', 'broken', 'not working'];
+    const highKeywords = ['soon', 'important', 'issue', 'problem', 'error', 'failed', 'cannot', 'can\'t'];
+
+    if (urgentKeywords.some((kw) => lower.includes(kw))) return 'urgent';
+    if (highKeywords.some((kw) => lower.includes(kw))) return 'high';
+    return 'medium';
+  }
+
   async analyzeContent(request: AIAnalysisRequest): Promise<AIAnalysisResult> {
     const startTime = Date.now();
     const analysisId = this.generateAnalysisId();
@@ -449,27 +607,77 @@ export class AIIntelligenceService {
     }
   }
 
+  /** Generate an autopilot reply with optional actions/templates for channels */
+  public async generateAutoReply(params: { content: string; previousMessages?: string[]; context?: { tenantId?: string; conversationId?: string; channelType?: string } }): Promise<{ intent?: string; answer: string; confidence: number; messageType?: 'text' | 'template'; templateId?: string; templateParams?: Record<string, string>; actions?: Array<{ type: string; payload?: Record<string, unknown>; summary?: string }>; language?: string }> {
+    const start = Date.now();
+    try {
+      const analysis = await this.analyzeContent({
+        content: params.content,
+        context: {
+          ...params.context,
+          previousMessages: params.previousMessages || [],
+        },
+        analysisTypes: ['intent_classification','response_generation','language_detection'] as any,
+      });
+      const intent = analysis.results.intentClassification?.primaryIntent || 'general';
+      const lang = analysis.results.languageDetection?.language || 'en';
+      const suggestions = analysis.results.responseGeneration?.suggestedResponses || [];
+      const best = suggestions[0]?.response || params.content; // fall back to echo
+      const confidence = Number(analysis.confidence || 0.7);
+      // Minimal template hinting: prefer template for WhatsApp if available in suggestions.templates
+      const templates = analysis.results.responseGeneration?.templates || [];
+      const template = templates[0];
+      const messageType = template ? 'template' : 'text';
+      const templateId = template?.templateId;
+      const templateParams = template ? { ...this.pickTemplateParams(template.content, params.content) } : undefined;
+      // Very light action extraction heuristic (replace with LLM tool-calls later)
+      const actions: Array<{ type: string; payload?: Record<string, unknown>; summary?: string }> = [];
+      const lower = params.content.toLowerCase();
+      if (/track.*order/.test(lower)) {
+        const m = params.content.match(/(\d{6,})/);
+        actions.push({ type: 'order.track', payload: { trackingNumber: m?.[1] } });
+      }
+      if (/place.*order/.test(lower)) {
+        const skuMatch = params.content.match(/sku[:\s]?([a-z0-9\-]+)/i);
+        const qtyMatch = params.content.match(/(\d+)\s*(pcs|pieces|units)?/i);
+        actions.push({ type: 'order.place', payload: { sku: skuMatch?.[1], quantity: Number(qtyMatch?.[1] || 1) } });
+      }
+      return {
+        intent,
+        answer: best,
+        confidence,
+        messageType,
+        templateId,
+        templateParams,
+        actions,
+        language: lang,
+      };
+    } catch (error) {
+      this.logger.error('generateAutoReply failed:', error);
+      return { intent: 'general', answer: params.content, confidence: 0.5, messageType: 'text' };
+    } finally {
+      void start;
+    }
+  }
+
+  private pickTemplateParams(templateContent: string, userText: string): Record<string, string> {
+    try {
+      const matches = Array.from(String(templateContent || '').matchAll(/\{\{(\d+)\}\}/g));
+      if (!matches.length) return {};
+      const values = (userText || '').split(/[,.;\n]/).map(s => s.trim()).filter(Boolean);
+      const params: Record<string, string> = {};
+      for (let i = 0; i < matches.length; i++) params[matches[i][1]] = values[i] || '';
+      return params;
+    } catch { return {}; }
+  }
+
   private async classifyIntent(content: string, context?: any): Promise<IntentClassificationResult> {
     try {
-      const prompt = `
-        Analyze the following customer message and classify its intent.
-        
-        Message: "${content}"
-        ${context?.previousMessages ? `Previous messages: ${context.previousMessages.join(', ')}` : ''}
-        
-        Classify the primary intent and provide confidence scores. Common intents include:
-        - support_request, billing_inquiry, feature_request, complaint, compliment, 
-        - technical_issue, account_management, product_information, cancellation_request, etc.
-        
-        Respond in JSON format:
-        {
-          "primaryIntent": "intent_name",
-          "confidence": 0.95,
-          "secondaryIntents": [{"intent": "secondary_intent", "confidence": 0.3}],
-          "category": "support|sales|billing|technical",
-          "subcategory": "specific_subcategory"
-        }
-      `;
+      const prompt = buildPrompt('intentClassification', {
+        content,
+        previousMessages: context?.previousMessages,
+        locale: context?.locale,
+      });
 
       const response = await this.callAI(prompt);
       return JSON.parse(response);
@@ -621,41 +829,59 @@ export class AIIntelligenceService {
     }
   }
 
+  /** Summarize a conversation thread */
+  public async summarizeThread(params: { messages: Array<{ content: string; senderType?: string }>; maxBullets?: number }): Promise<{ short: string; bullets: string[] }> {
+    try {
+      const normalized = (params.messages || []).slice(-30).map(m => ({
+        role: (m.senderType || 'user'),
+        text: m.content || ''
+      }));
+      const prompt = buildPrompt('threadSummary', { messages: normalized, maxBullets: params.maxBullets || 5 });
+      const response = await this.callAI(prompt);
+      const parsed = JSON.parse(response);
+      return {
+        short: String(parsed.short || '').slice(0, 200),
+        bullets: Array.isArray(parsed.bullets) ? parsed.bullets.slice(0, 8) : []
+      };
+    } catch (error) {
+      this.logger.error('summarizeThread failed:', error);
+      return { short: 'Summary unavailable.', bullets: [] };
+    }
+  }
+
+  /** Rewrite content with target tone/format */
+  public async rewriteText(params: { content: string; tone?: string; format?: 'paragraph' | 'bullets' | 'email' | 'whatsapp' }): Promise<{ text: string }> {
+    try {
+      const prompt = buildPrompt('rewriteTone', { content: params.content, tone: params.tone, format: params.format });
+      const response = await this.callAI(prompt);
+      const parsed = JSON.parse(response);
+      return { text: String(parsed.text || params.content) };
+    } catch (error) {
+      this.logger.error('rewriteText failed:', error);
+      return { text: params.content };
+    }
+  }
+
+  /** Grammar and clarity fix */
+  public async fixGrammar(params: { content: string; language?: string }): Promise<{ text: string }> {
+    try {
+      const prompt = buildPrompt('grammarFix', { content: params.content, language: params.language });
+      const response = await this.callAI(prompt);
+      const parsed = JSON.parse(response);
+      return { text: String(parsed.text || params.content) };
+    } catch (error) {
+      this.logger.error('fixGrammar failed:', error);
+      return { text: params.content };
+    }
+  }
+
   private async generateResponses(content: string, context?: any): Promise<ResponseGenerationResult> {
     try {
-      const prompt = `
-        Generate helpful response suggestions for this customer message:
-        
-        Customer message: "${content}"
-        ${context?.conversationId ? `Conversation context available` : ''}
-        
-        Generate 3 different response suggestions with different tones:
-        1. Professional and formal
-        2. Friendly and conversational  
-        3. Empathetic and understanding
-        
-        Also suggest relevant templates if applicable.
-        
-        Respond in JSON format:
-        {
-          "suggestedResponses": [
-            {
-              "response": "Thank you for contacting us. I understand your concern...",
-              "tone": "professional",
-              "confidence": 0.9,
-              "reasoning": "Addresses the issue directly with professional tone"
-            }
-          ],
-          "templates": [
-            {
-              "templateId": "login_help_001",
-              "title": "Login Troubleshooting",
-              "content": "I can help you with login issues...",
-              "relevanceScore": 0.85
-            }
-          ]
-        }
-      `;
+      const prompt = buildPrompt('responseSuggestions', {
+        content,
+        toneHints: context?.toneHints,
+        contextNote: context?.contextNote,
+      });
 
       const response = await this.callAI(prompt);
       return JSON.parse(response);
@@ -670,8 +896,8 @@ export class AIIntelligenceService {
 
   private async suggestKnowledge(content: string, context?: any): Promise<KnowledgeSuggestionsResult> {
     try {
-      // Get relevant knowledge base articles
-      const articles = await this.prisma['knowledgeBase'].findMany({
+      // Text prefilter
+      const pre = await this.prisma['knowledgeBase'].findMany({
         where: {
           tenantId: context?.tenantId,
           isPublished: true,
@@ -681,7 +907,7 @@ export class AIIntelligenceService {
             { tags: { hasSome: content.split(' ').slice(0, 5) } }
           ]
         },
-        take: 5,
+        take: 20,
         orderBy: { viewCount: 'desc' }
       });
 
@@ -699,12 +925,36 @@ export class AIIntelligenceService {
         orderBy: { viewCount: 'desc' }
       });
 
+      // Optional vector ranking (best-effort)
+      let ranked = pre;
+      try {
+        const queryVec = await this.computeEmbedding(content);
+        if (Array.isArray(queryVec) && queryVec.length) {
+          const withScore = pre.map((a: any) => {
+            const vec = Array.isArray(a.aiEmbedding) ? a.aiEmbedding : undefined;
+            let score = 0;
+            if (Array.isArray(vec) && vec.length === queryVec.length) {
+              // cosine similarity
+              let dot = 0, ql = 0, al = 0;
+              for (let i = 0; i < vec.length; i++) { const v = Number(vec[i] || 0); const q = Number(queryVec[i] || 0); dot += v*q; ql += q*q; al += v*v; }
+              score = (dot / (Math.sqrt(ql) * Math.sqrt(al) || 1)) || 0;
+            }
+            return { ...a, _score: score };
+          });
+          ranked = withScore.sort((a: any, b: any) => (b._score || 0) - (a._score || 0)).slice(0, 5);
+        } else {
+          ranked = pre.slice(0, 5);
+        }
+      } catch (e) {
+        ranked = pre.slice(0, 5);
+      }
+
       return {
-        articles: articles.map((article: any) => ({
+        articles: ranked.map((article: any) => ({
           id: article.id,
           title: article.title,
           snippet: article.content.substring(0, 200) + '...',
-          relevanceScore: 0.8, // TODO: Implement proper relevance scoring
+          relevanceScore: typeof article._score === 'number' ? Math.max(0, Math.min(1, Number(article._score.toFixed(3)))) : 0.8,
         })),
         faqs: faqs.map((faq: any) => ({
           id: faq.id,
@@ -941,8 +1191,33 @@ export class AIIntelligenceService {
       };
     }
   }
-  private async callAI(prompt: string): Promise<string> {
+  public async callAI(prompt: string): Promise<string> {
     try {
+      if ((this.aiProvider === 'dashscope' || this.aiProvider === 'both') && this.dashscopeClient) {
+        const response = await this.dashscopeClient.post('/services/aigc/text-generation/generation', {
+          model: this.dashscopeModel,
+          input: {
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an AI assistant specialized in customer service analysis. Always respond with valid JSON.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ]
+          },
+          parameters: {
+            result_format: 'message',
+            temperature: 0.3,
+            max_tokens: 1000
+          }
+        });
+
+        return response.data?.output?.choices?.[0]?.message?.content || '{}';
+      }
+
       if (this.aiProvider === 'openai' && this.openai) {
         const response = await this.openai.chat.completions.create({
           model: 'gpt-4',

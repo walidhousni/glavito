@@ -282,4 +282,73 @@ export class TenantsService {
     await this.databaseService.apiKey.delete({ where: { id } });
     return { success: true } as const;
   }
+
+  // AI Token Wallet Management
+  async getOrCreateAITokenWallet(tenantId: string) {
+    let wallet = await (this.databaseService as any).aITokenWallet.findUnique({
+      where: { tenantId },
+    });
+
+    if (!wallet) {
+      wallet = await (this.databaseService as any).aITokenWallet.create({
+        data: {
+          tenantId,
+          balance: 0,
+          currency: 'USD',
+          lastSyncedAt: new Date(),
+          metadata: {},
+        },
+      });
+    }
+
+    return wallet;
+  }
+
+  async getAITokenBalance(tenantId: string): Promise<{ balance: number; currency: string }> {
+    const wallet = await this.getOrCreateAITokenWallet(tenantId);
+    return {
+      balance: Number(wallet.balance),
+      currency: wallet.currency,
+    };
+  }
+
+  async addAITokens(
+    tenantId: string,
+    amount: number,
+    type: 'purchase' | 'refund' | 'bonus' | 'adjustment',
+    description?: string,
+    referenceId?: string,
+  ): Promise<{ balance: number; transactionId: string }> {
+    const wallet = await this.getOrCreateAITokenWallet(tenantId);
+
+    // Create transaction
+    const transaction = await (this.databaseService as any).aITokenTransaction.create({
+      data: {
+        walletId: wallet.id,
+        tenantId,
+        type,
+        amount,
+        currency: wallet.currency,
+        description: description || `AI tokens ${type}`,
+        referenceId,
+        metadata: {},
+      },
+    });
+
+    // Update balance
+    const updated = await (this.databaseService as any).aITokenWallet.update({
+      where: { id: wallet.id },
+      data: {
+        balance: {
+          increment: amount,
+        },
+        lastSyncedAt: new Date(),
+      },
+    });
+
+    return {
+      balance: Number(updated.balance),
+      transactionId: transaction.id,
+    };
+  }
 }

@@ -13,13 +13,14 @@ type TicketEvents =
   | 'ticket.note_added'
   | 'ticket.watcher_added'
   | 'ticket.watcher_removed'
-  | 'ticket.typing';
+  | 'ticket.typing'
+  | 'presence.agents';
 
 interface UseTicketsWebSocketOptions {
   tenantId?: string;
   ticketId?: string;
   autoConnect?: boolean;
-  onEvent?: (event: { type: TicketEvents; payload: any }) => void;
+  onEvent?: (event: { type: TicketEvents; payload: unknown }) => void;
 }
 
 export function useTicketsWebSocket(options: UseTicketsWebSocketOptions = {}) {
@@ -66,6 +67,7 @@ export function useTicketsWebSocket(options: UseTicketsWebSocketOptions = {}) {
       'ticket.watcher_added',
       'ticket.watcher_removed',
       'ticket.typing',
+      'presence.agents',
     ];
     handlers.forEach((evt) => {
       socket.on(evt, (payload) => {

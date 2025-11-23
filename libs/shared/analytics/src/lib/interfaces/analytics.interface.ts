@@ -1,7 +1,7 @@
 export interface AnalyticsServiceInterface {
   // Real-time Analytics
   getRealTimeMetrics(tenantId: string, timeframe?: string): Promise<RealTimeMetrics>
-  getCustomKPIs(tenantId: string, kpiIds: string[]): Promise<KPIMetric[]>
+  getCustomKPIs(tenantId: string, kpiIds: string[], timeRange?: DateRange): Promise<KPIMetric[]>
   
   // Predictive Analytics
   getDemandForecast(tenantId: string, forecastPeriod: number): Promise<DemandForecast>
@@ -25,6 +25,8 @@ export interface AnalyticsServiceInterface {
   getBusinessImpactAnalytics(tenantId: string, dateRange: DateRange): Promise<BusinessImpactAnalytics>
   getRevenueAttribution(tenantId: string, dateRange: DateRange): Promise<RevenueAttribution>
   getCostAnalysis(tenantId: string, dateRange: DateRange): Promise<CostAnalysis>
+  // Business Insights (orders, confirmations, deliveries, earnings)
+  getBusinessInsights(tenantId: string, dateRange: DateRange): Promise<BusinessInsights>
   
   // Custom Reports
   createCustomReport(tenantId: string, reportDefinition: ReportDefinition): Promise<CustomReport>
@@ -463,6 +465,41 @@ export interface BusinessImpactAnalytics {
     revenuePerAgent: number
     costPerTicket: number
     efficiencyScore: number
+  }
+}
+
+// Business Insights: high-level commerce-like KPIs derived from CRM Deals and Payments
+export interface BusinessInsights {
+  summary: {
+    orders: number
+    confirmations: number
+    deliveries: number
+    earnings: number
+  }
+  trends: {
+    daily: Array<{
+      date: string
+      orders: number
+      confirmations: number
+      deliveries: number
+      earnings: number
+    }>
+  }
+  customers?: {
+    newCustomers: number
+    activeCustomers: number
+    revenuePerCustomer: number
+    averageOrderValue: number
+    repeatPurchaseRate: number
+  }
+  segments?: Array<{
+    segment: string
+    revenue: number
+    customers: number
+  }>
+  csat?: {
+    averageRating: number
+    totalResponses: number
   }
 }
 

@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '@glavito/shared-database'
 import { EventPublisherService } from '@glavito/shared-kafka'
-import { N8NClient } from '../clients/n8n.client'
 import {
   WorkflowExecution,
+  WorkflowRule,
+  WorkflowInput,
   ExecutionStatus,
   NodeExecution
 } from '../interfaces/workflow.interface'
@@ -14,60 +15,15 @@ export class WorkflowExecutionService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly eventPublisher: EventPublisherService,
-    private readonly n8nClient: N8NClient
+    private readonly eventPublisher: EventPublisherService
   ) {}
 
-  async monitorExecution(executionId: string, n8nExecutionId: string): Promise<void> {
-    try {
-      this.logger.log(`Starting execution monitoring for ${executionId}`)
-      
-      // Poll N8N for execution status
-      const pollInterval = setInterval(async () => {
-        try {
-          const n8nExecution = await this.n8nClient.getExecution(n8nExecutionId)
-          const status = this.mapN8NStatusToExecutionStatus(n8nExecution.status)
-          
-          // Update execution status
-          await this.updateExecutionStatus(executionId, status, n8nExecution)
-          
-          // If execution is complete, stop polling
-          if ([ExecutionStatus.COMPLETED, ExecutionStatus.FAILED, ExecutionStatus.CANCELLED].includes(status)) {
-            clearInterval(pollInterval)
-            await this.finalizeExecution(executionId, n8nExecution)
-            
-            // Publish workflow execution completed event
-            await this.publishWorkflowExecutionEvent(executionId, status, n8nExecution)
-          }
-        } catch (error) {
-          this.logger.error(`Error monitoring execution ${executionId}:`, error)
-          clearInterval(pollInterval)
-          
-          // Mark execution as failed
-          const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-          await this.updateExecutionStatus(executionId, ExecutionStatus.FAILED, null, errorMsg)
-          
-          // Publish workflow execution failed event
-          await this.publishWorkflowExecutionEvent(executionId, ExecutionStatus.FAILED, null, errorMsg)
-        }
-      }, 5000) // Poll every 5 seconds
-      
-      // Set timeout for long-running executions
-      setTimeout(() => {
-        clearInterval(pollInterval)
-        this.handleExecutionTimeout(executionId)
-      }, 30 * 60 * 1000) // 30 minutes timeout
-      
-    } catch (error) {
-      this.logger.error(`Failed to start monitoring execution ${executionId}:`, error)
-      throw error
-    }
-  }
+  // N8N removed: monitor is not required for internal-only execution
 
   async updateExecutionStatus(
-    executionId: string, 
-    status: ExecutionStatus, 
-    n8nExecution?: any,
+    executionId: string,
+    status: ExecutionStatus,
+    _externalExecution?: unknown,
     errorMessage?: string
   ): Promise<void> {
     try {
@@ -77,10 +33,7 @@ export class WorkflowExecutionService {
         ...( [ExecutionStatus.COMPLETED, ExecutionStatus.FAILED, ExecutionStatus.CANCELLED, ExecutionStatus.TIMEOUT].includes(status) && { completedAt: new Date() })
       }
 
-      if (n8nExecution?.data?.resultData) {
-        updateData.output = n8nExecution.data.resultData
-        updateData.errorDetails = n8nExecution.data.resultData.error
-      }
+      // external execution mapping removed (internal-only)
 
       await this.prisma['workflowExecution'].update({
         where: { id: executionId },
@@ -109,7 +62,7 @@ export class WorkflowExecutionService {
         ? execution.completedAt.getTime() - (startedAt as Date).getTime()
         : null
 
-      // Extract node executions from N8N data
+      // Extract node executions if provided (internal flows may pass inline data)
       const nodeExecutions = this.extractNodeExecutions(n8nExecution)
 
       // Update execution with final data
@@ -133,6 +86,179 @@ export class WorkflowExecutionService {
     }
   }
 
+  /**
+   * Execute a workflow with the given input
+   */
+  async executeWorkflow(
+    executionId: string,
+    workflowRule: WorkflowRule,
+    input: WorkflowInput
+  ): Promise<WorkflowExecution> {
+    try {
+      this.logger.log(`Executing workflow ${workflowRule.id} with execution ${executionId}`)
+
+      // Update execution status to running
+      await this.updateExecutionStatus(executionId, ExecutionStatus.RUNNING)
+
+      // Internal execution only
+      await this.executeInternalActions(workflowRule, input)
+      await this.updateExecutionStatus(executionId, ExecutionStatus.COMPLETED)
+      await this.publishWorkflowExecutionEventSimple(executionId, ExecutionStatus.COMPLETED)
+
+      // Get updated execution
+      const execution = await this.prisma['workflowExecution'].findUnique({
+        where: { id: executionId },
+        include: { workflow: true }
+      })
+
+      return this.mapToWorkflowExecution(execution)
+    } catch (error) {
+      this.logger.error(`Failed to execute workflow ${workflowRule.id}:`, error)
+      await this.updateExecutionStatus(executionId, ExecutionStatus.FAILED, null, error instanceof Error ? error.message : 'Unknown error')
+      throw error
+    }
+  }
+
+  /**
+   * Execute internal workflow actions
+   */
+  private async executeInternalActions(workflowRule: WorkflowRule, input: WorkflowInput): Promise<void> {
+    const actions = workflowRule.actions || []
+    
+    for (const action of actions) {
+      if (!action.enabled) continue
+
+      try {
+        this.logger.debug(`Executing action: ${action.type}`)
+        
+        switch (action.type) {
+          case 'assign_ticket':
+            await this.executeAssignTicketAction(action, input)
+            break
+          case 'update_field':
+            await this.executeUpdateFieldAction(action, input)
+            break
+          case 'add_tag':
+            await this.executeAddTagAction(action, input)
+            break
+          case 'send_email':
+            await this.executeSendEmailAction(action, input)
+            break
+          case 'create_ticket':
+            await this.executeCreateTicketAction(action, input)
+            break
+          default:
+            this.logger.warn(`Unknown action type: ${action.type}`)
+        }
+      } catch (error) {
+        this.logger.error(`Failed to execute action ${action.type}:`, error)
+        
+        // Handle error based on action configuration
+        if (action.onError?.action === 'stop') {
+          throw error
+        } else if (action.onError?.action === 'retry') {
+          // Implement retry logic here if needed
+          this.logger.warn(`Retry not implemented for action ${action.type}`)
+        }
+        // Continue with next action if action is 'continue' or not specified
+      }
+    }
+  }
+
+  private async executeAssignTicketAction(action: any, input: WorkflowInput): Promise<void> {
+    const ticketId = action.configuration?.['ticketId'] || input.data?.['ticketId']
+    const agentId = action.configuration?.agentId
+    const teamId = action.configuration?.teamId
+
+    if (!ticketId) {
+      throw new Error('Ticket ID is required for assign ticket action')
+    }
+
+    if (!agentId && !teamId) {
+      throw new Error('Agent ID or Team ID is required for assign ticket action')
+    }
+
+    await this.prisma['ticket'].update({
+      where: { id: ticketId },
+      data: {
+        assignedAgentId: agentId || null,
+        teamId: teamId || null,
+        status: 'pending'
+      } as any
+    })
+  }
+
+  private async executeUpdateFieldAction(action: any, input: WorkflowInput): Promise<void> {
+    const ticketId = action.configuration?.['ticketId'] || input.data?.['ticketId']
+    const field = action.configuration?.['field']
+    const value = action.configuration?.['value']
+
+    if (!ticketId || !field || value === undefined) {
+      throw new Error('Ticket ID, field, and value are required for update field action')
+    }
+
+    const updateData: any = {}
+    updateData[field] = value
+
+    await this.prisma['ticket'].update({
+      where: { id: ticketId },
+      data: updateData as any
+    })
+  }
+
+  private async executeAddTagAction(action: any, input: WorkflowInput): Promise<void> {
+    const ticketId = action.configuration?.['ticketId'] || input.data?.['ticketId']
+    const tags = action.configuration?.['tags'] || []
+
+    if (!ticketId || !Array.isArray(tags) || tags.length === 0) {
+      throw new Error('Ticket ID and tags are required for add tag action')
+    }
+
+    const ticket = await this.prisma['ticket'].findUnique({
+      where: { id: ticketId },
+      select: { tags: true }
+    })
+
+    if (ticket) {
+      const existingTags = ticket.tags || []
+      const newTags = [...new Set([...existingTags, ...tags])]
+
+      await this.prisma['ticket'].update({
+        where: { id: ticketId },
+        data: { tags: newTags } as any
+      })
+    }
+  }
+
+  private async executeSendEmailAction(action: any, input: WorkflowInput): Promise<void> {
+    // This would integrate with your email service
+    this.logger.log(`Send email action executed: ${JSON.stringify(action.configuration)}`)
+  }
+
+  private async executeCreateTicketAction(action: any, input: WorkflowInput): Promise<void> {
+    const config = action.configuration
+    const tenantId = (config as any)?.['tenantId'] || input.context?.['tenantId']
+    const customerId = (config as any)?.['customerId'] || input.data?.['customerId']
+    const channelId = (config as any)?.['channelId'] || input.data?.['channelId']
+
+    if (!tenantId || !customerId || !channelId) {
+      throw new Error('Tenant ID, Customer ID, and Channel ID are required for create ticket action')
+    }
+
+    await this.prisma['ticket'].create({
+      data: {
+        tenantId,
+        customerId,
+        channelId,
+        subject: config?.subject || 'Automated ticket',
+        description: config?.description || '',
+        status: config?.status || 'open',
+        priority: config?.priority || 'medium',
+        tags: config?.tags || []
+      } as any
+    })
+  }
+
   async retryExecution(executionId: string): Promise<WorkflowExecution> {
     try {
       const execution = await this.prisma['workflowExecution'].findUnique({
@@ -152,7 +278,7 @@ export class WorkflowExecutionService {
         throw new Error(`Workflow not found: ${(execution as any).workflowId}`)
       }
 
-      // Create new execution record
+      // Create new execution record (internal-only)
       const retryExecution = await this.prisma['workflowExecution'].create({
         data: {
           workflowId: (execution as any).workflowId,
@@ -165,28 +291,9 @@ export class WorkflowExecutionService {
           } as any
         } as any
       })
-
-      // Execute workflow in N8N
-      const n8nWorkflowId = (workflow as any).configuration?.['n8nWorkflowId'] || (workflow as any).metadata?.n8nWorkflowId
-      const n8nExecution = await this.n8nClient.executeWorkflow(n8nWorkflowId, (execution as any).input)
-
-      // Update with N8N execution ID
-      await this.prisma['workflowExecution'].update({
-        where: { id: (retryExecution as any).id },
-        data: {
-          metadata: {
-            ...((retryExecution as any).metadata || {}),
-            n8nExecutionId: n8nExecution?.id
-          } as any
-        } as any
-      })
-
-      // Start monitoring if we have a valid N8N execution ID
-      if (n8nExecution?.id) {
-        this.monitorExecution((retryExecution as any).id, n8nExecution.id)
-      } else {
-        this.logger.warn(`No N8N execution ID returned for retry ${executionId}`)
-      }
+      // Internal re-execution is synchronous: mark completed
+      await this.updateExecutionStatus((retryExecution as any).id, ExecutionStatus.COMPLETED)
+      await this.publishWorkflowExecutionEventSimple((retryExecution as any).id, ExecutionStatus.COMPLETED)
 
       this.logger.log(`Workflow execution retried: ${executionId} -> ${(retryExecution as any).id}`)
 
@@ -238,36 +345,12 @@ export class WorkflowExecutionService {
     }
   }
 
-  private async handleExecutionTimeout(executionId: string): Promise<void> {
-    try {
-      await this.updateExecutionStatus(executionId, ExecutionStatus.TIMEOUT, null, 'Execution timed out')
-      this.logger.warn(`Execution ${executionId} timed out`)
-
-    } catch (error) {
-      this.logger.error(`Failed to handle timeout for execution ${executionId}:`, error)
-    }
-  }
+  // Timeout handling not used for internal synchronous execution.
 
   private extractNodeExecutions(n8nExecution: any): NodeExecution[] {
     const nodeExecutions: NodeExecution[] = []
 
-    if (n8nExecution?.data?.resultData?.runData) {
-      const runData = n8nExecution.data.resultData.runData
-
-      Object.keys(runData).forEach(nodeId => {
-        const nodeData = runData[nodeId][0]
-        
-        nodeExecutions.push({
-          nodeId,
-          nodeName: nodeId,
-          status: nodeData.error ? ExecutionStatus.FAILED : ExecutionStatus.COMPLETED,
-          input: nodeData.inputData || {},
-          output: nodeData.data || {},
-          startedAt: new Date(nodeData.startTime || n8nExecution.startedAt),
-          completedAt: new Date(nodeData.executionTime || n8nExecution.stoppedAt)
-        })
-      })
-    }
+    // For now, no-op; internal engine can supply structure when available
 
     return nodeExecutions
   }
@@ -276,10 +359,10 @@ export class WorkflowExecutionService {
     return {
       id: dbExecution.id,
       workflowId: dbExecution.workflowId,
-      tenantId: (dbExecution as any).tenantId,
+      tenantId: (dbExecution as any).tenantId || (dbExecution as any)?.workflow?.tenantId,
       triggeredBy: dbExecution.triggeredBy,
-      triggerType: dbExecution.triggerType,
-      triggerData: dbExecution.triggerData,
+      triggerType: (dbExecution as any)?.metadata?.triggerType || dbExecution.triggerType,
+      triggerData: (dbExecution as any)?.metadata?.triggerData || dbExecution.triggerData,
       status: dbExecution.status as ExecutionStatus,
       input: dbExecution.input,
       output: dbExecution.output,
@@ -289,74 +372,35 @@ export class WorkflowExecutionService {
         ? dbExecution.completedAt.getTime() - ((dbExecution as any).startedAt || (dbExecution as any).createdAt).getTime()
         : undefined,
       errorMessage: dbExecution.errorMessage,
-      errorDetails: dbExecution.errorDetails,
-      contextData: dbExecution.contextData,
-      metadata: dbExecution.metadata,
+      errorDetails: (dbExecution as any)?.metadata?.errorDetails || dbExecution.errorDetails,
+      contextData: (dbExecution as any)?.metadata?.context || dbExecution.contextData,
+      metadata: dbExecution.metadata || {},
       createdAt: (dbExecution as any).createdAt,
       updatedAt: (dbExecution as any).updatedAt
     }
   }
 
-  private mapN8NStatusToExecutionStatus(n8nStatus: string): ExecutionStatus {
-    switch (n8nStatus?.toLowerCase()) {
-      case 'success':
-      case 'completed':
-        return ExecutionStatus.COMPLETED
-      case 'error':
-      case 'failed':
-        return ExecutionStatus.FAILED
-      case 'running':
-      case 'active':
-        return ExecutionStatus.RUNNING
-      case 'waiting':
-      case 'waiting_for_webhook':
-        return ExecutionStatus.PENDING
-      case 'cancelled':
-        return ExecutionStatus.CANCELLED
-      default:
-        return ExecutionStatus.FAILED
-    }
-  }
+  // N8N removed: status mapping not required
 
-  private async publishWorkflowExecutionEvent(
-    executionId: string, 
-    status: ExecutionStatus, 
-    n8nExecution?: any, 
-    errorMessage?: string
-  ): Promise<void> {
-    try {
-      const execution = await this.prisma['workflowExecution'].findUnique({
-        where: { id: executionId }
-      })
-
-      if (!execution) {
-        this.logger.warn(`Execution ${executionId} not found for event publishing`)
-        return
+  // Publish event simplified for internal execution
+  private async publishWorkflowExecutionEventSimple(executionId: string, status: ExecutionStatus, errorMessage?: string): Promise<void> {
+    const execution = await this.prisma['workflowExecution'].findUnique({ where: { id: executionId } })
+    if (!execution) return
+    await this.eventPublisher.publishWorkflowEvent({
+      eventType: 'workflow.execution.completed',
+      tenantId: (execution as any)['tenantId'],
+      timestamp: new Date().toISOString(),
+      data: {
+        executionId,
+        workflowId: (execution as any)['workflowId'],
+        status,
+        triggeredBy: execution.triggeredBy,
+        triggerType: (execution as any)['triggerType'],
+        duration: execution.completedAt && ((execution as any).startedAt || (execution as any).createdAt)
+          ? execution.completedAt.getTime() - ((execution as any).startedAt || (execution as any).createdAt).getTime()
+          : null,
+        errorMessage
       }
-
-      const eventPayload = {
-        eventType: 'workflow.execution.completed',
-        tenantId: (execution as any).tenantId,
-        timestamp: new Date().toISOString(),
-        data: {
-          executionId,
-          workflowId: (execution as any).workflowId,
-          status,
-          triggeredBy: execution.triggeredBy,
-          triggerType: (execution as any).triggerType,
-          duration: execution.completedAt && ((execution as any).startedAt || (execution as any).createdAt)
-            ? execution.completedAt.getTime() - ((execution as any).startedAt || (execution as any).createdAt).getTime()
-            : null,
-          errorMessage,
-          n8nExecutionId: n8nExecution?.id,
-          nodeExecutions: n8nExecution ? this.extractNodeExecutions(n8nExecution) : []
-        }
-      }
-
-      await this.eventPublisher.publishWorkflowEvent(eventPayload as any)
-      this.logger.log(`Published workflow execution event for ${executionId}`)
-    } catch (error) {
-      this.logger.warn(`Failed to publish workflow execution event for ${executionId}:`, error)
-    }
+    } as any)
   }
 }

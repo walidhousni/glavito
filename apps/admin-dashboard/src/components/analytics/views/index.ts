@@ -1,0 +1,13 @@
+export { OverviewView } from './overview-view'
+export { ConversationsView } from './conversations-view'
+export { SalesView } from './sales-view'
+export { ConversionView } from './conversion-view'
+export { CampaignView } from './campaign-view'
+export { PerformanceView } from './performance-view'
+export { CallsView } from './calls-view'
+export { FinancialView } from './financial-view'
+export { PredictiveView } from './predictive-view'
+export { SatisfactionView } from './satisfaction-view'
+export { ReportsView } from './reports-view'
+export { DashboardsView } from './dashboards-view'
+

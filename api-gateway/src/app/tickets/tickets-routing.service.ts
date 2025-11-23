@@ -1,6 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import { DatabaseService } from '@glavito/shared-database';
-import { AIIntelligenceService } from '@glavito/shared-ai';
 
 interface RoutingContext {
   tenantId: string;
@@ -31,7 +30,7 @@ export class TicketsRoutingService {
 
   constructor(
     private readonly database: DatabaseService,
-    private readonly ai: AIIntelligenceService,
+    @Optional() @Inject('AI_INTELLIGENCE_SERVICE') private readonly ai?: { analyzeContent: (args: any) => Promise<any> },
   ) {}
 
   async suggestAgent(context: RoutingContext): Promise<string | null> {
@@ -166,19 +165,22 @@ export class TicketsRoutingService {
 
   private async getAISignalsSafe(params: { tenantId: string; content?: string; channelType?: string; languageHint?: string }): Promise<{ language?: string; urgencyLevel?: 'low'|'medium'|'high'|'critical'; inferredSkills?: string[] } | undefined> {
     try {
+      if (!this.ai || typeof this.ai.analyzeContent !== 'function') {
+        return undefined;
+      }
       const text = (params.content || '').trim();
       if (!text) return undefined;
       const result = await this.ai.analyzeContent({
         content: text,
         context: { tenantId: params.tenantId, channelType: params.channelType },
-        analysisTypes: ['language_detection', 'urgency_detection', 'intent_classification'] as any,
+        analysisTypes: ['language_detection', 'urgency_detection', 'intent_classification'] as unknown as string[],
       });
-      const lang = (result.results as any)?.languageDetection?.language as string | undefined;
-      const urgency = (result.results as any)?.urgencyDetection?.urgencyLevel as 'low'|'medium'|'high'|'critical' | undefined;
-      const intent = (result.results as any)?.intentClassification?.primaryIntent as string | undefined;
-      const inferredSkills = this.mapIntentToSkills(intent);
-      return { language: lang, urgencyLevel: urgency, inferredSkills };
-    } catch (_e) {
+      const lang = (result.results as Record<string, unknown>)?.languageDetection as { language?: string } | undefined;
+      const urgency = (result.results as Record<string, unknown>)?.urgencyDetection as { urgencyLevel?: 'low'|'medium'|'high'|'critical' } | undefined;
+      const intent = (result.results as Record<string, unknown>)?.intentClassification as { primaryIntent?: string } | undefined;
+      const inferredSkills = this.mapIntentToSkills(intent?.primaryIntent);
+      return { language: lang?.language, urgencyLevel: urgency?.urgencyLevel, inferredSkills };
+    } catch {
       return undefined;
     }
   }
@@ -192,6 +194,228 @@ export class TicketsRoutingService {
     if (/(bug|error|technical|issue|login)/.test(key)) return ['technical'];
     if (/(cancel|refund|downgrade)/.test(key)) return ['billing','retention'];
     return [];
+  }
+
+  /**
+   * Recommend agent assignment based on triage predictions.
+   * This is called after triage analysis to auto-assign tickets based on AI predictions.
+   */
+  async recommendAssignment(params: {
+    tenantId: string;
+    intent?: string;
+    category?: string;
+    priority?: string;
+    urgencyLevel?: string;
+    language?: string;
+    entities?: Array<{ type: string; value: string }>;
+    customerId?: string;
+    teamId?: string;
+  }): Promise<string | null> {
+    try {
+      const inferredSkills = this.mapIntentToSkills(params.intent);
+      
+      // Map category to additional skills
+      if (params.category) {
+        const categorySkills = this.mapCategoryToSkills(params.category);
+        inferredSkills.push(...categorySkills);
+      }
+
+      return await this.suggestAgent({
+        tenantId: params.tenantId,
+        customerId: params.customerId,
+        teamId: params.teamId,
+        priority: params.priority,
+        requiredSkills: Array.from(new Set(inferredSkills)),
+        languageHint: params.language,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to recommend assignment: ${String(error)}`);
+      return null;
+    }
+  }
+
+  private mapCategoryToSkills(category: string): string[] {
+    const key = category.toLowerCase();
+    if (/(billing|payment|invoice)/.test(key)) return ['billing'];
+    if (/(technical|tech|integration)/.test(key)) return ['technical'];
+    if (/(shipping|delivery|logistics)/.test(key)) return ['logistics'];
+    if (/(product|catalog)/.test(key)) return ['product'];
+    if (/(account|profile|settings)/.test(key)) return ['account'];
+    return [];
+  }
+
+  /**
+   * Get routing suggestions with detailed explanations for a ticket.
+   * Returns top N agents with scores and reasoning.
+   */
+  async getRoutingSuggestions(
+    context: RoutingContext,
+    limit = 5
+  ): Promise<Array<{
+    agentId: string;
+    score: number;
+    reasoning: {
+      capacityScore: number;
+      skillMatch: number;
+      languageMatch: number;
+      teamAlign: number;
+      performanceScore: number;
+      matchedSkills: string[];
+      missingSkills: string[];
+      currentLoad: number;
+      maxCapacity: number;
+      languageMatchDetails?: string;
+      teamMatchDetails?: string;
+    };
+  }>> {
+    try {
+      const { tenantId, teamId, requiredSkills = [], customerId } = context;
+      const content = `${context.subject || ''} ${context.description || ''}`.trim();
+
+      // Get AI signals
+      const aiSignals = await this.getAISignalsSafe({
+        tenantId,
+        content,
+        channelType: context.channelType,
+        languageHint: context.languageHint,
+      });
+      const detectedLanguage = aiSignals?.language || context.languageHint || undefined;
+      const inferredSkills = aiSignals?.inferredSkills || [];
+      const urgencyLevel = aiSignals?.urgencyLevel || 'medium';
+      const mergedSkills = Array.from(new Set([...(requiredSkills || []), ...inferredSkills]));
+
+      // Check VIP status
+      let isVip = false;
+      if (customerId) {
+        try {
+          const advDb = this.database as unknown as {
+            customerAdvanced?: {
+              findUnique: (args: { where: { id: string } }) => Promise<{ isVip?: boolean } | null>;
+            };
+          };
+          const customer = await advDb.customerAdvanced?.findUnique({
+            where: { id: customerId },
+          });
+          isVip = !!customer?.isVip;
+        } catch (err) {
+          this.logger.debug(`VIP check failed for customer ${customerId}: ${String(err)}`);
+        }
+      }
+
+      // Load agents with user details
+      const agents = await this.database.user.findMany({
+        where: {
+          tenantId,
+          agentProfile: {
+            is: {
+              autoAssign: true,
+            },
+            isNot: null,
+          },
+          status: 'active',
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          avatar: true,
+          agentProfile: {
+            select: {
+              maxConcurrentTickets: true,
+              skills: true,
+              languages: true,
+            },
+          },
+          teamMemberships: {
+            select: { teamId: true },
+          },
+          assignedTickets: {
+            where: { status: { in: ['open', 'pending', 'in_progress', 'waiting'] } },
+            select: { id: true },
+          },
+        },
+      });
+
+      if (!agents.length) {
+        return [];
+      }
+
+      const weights = this.getWeights({ urgencyLevel, isVip });
+
+      const scored = agents
+        .filter((a) => {
+          if (teamId && !a.teamMemberships?.some((m) => m.teamId === teamId)) return false;
+          const current = a.assignedTickets?.length || 0;
+          const max = a.agentProfile?.maxConcurrentTickets ?? 5;
+          return current < max;
+        })
+        .map((a) => {
+          const current = a.assignedTickets?.length || 0;
+          const max = a.agentProfile?.maxConcurrentTickets ?? 5;
+          const skills = (a.agentProfile?.skills as string[]) || [];
+          const languages = (a.agentProfile?.languages as string[]) || [];
+
+          const capacityScore = 1 - Math.min(1, current / Math.max(1, max));
+          const matchedSkills = mergedSkills.filter((s) => skills.includes(s));
+          const missingSkills = mergedSkills.filter((s) => !skills.includes(s));
+          const skillMatch = mergedSkills.length ? matchedSkills.length / mergedSkills.length : 0;
+          
+          const languageMatch = detectedLanguage
+            ? languages.includes(detectedLanguage)
+              ? 1
+              : 0
+            : 0.5;
+          
+          const teamAlign = teamId
+            ? a.teamMemberships?.some((m) => m.teamId === teamId)
+              ? 1
+              : 0
+            : 0.5;
+
+          const performanceScore = 0.5; // Placeholder
+
+          const score =
+            weights.capacity * capacityScore +
+            weights.skills * skillMatch +
+            weights.language * languageMatch +
+            weights.team * teamAlign +
+            weights.performance * performanceScore;
+
+          return {
+            agentId: a.id,
+            score,
+            reasoning: {
+              capacityScore,
+              skillMatch,
+              languageMatch,
+              teamAlign,
+              performanceScore,
+              matchedSkills,
+              missingSkills,
+              currentLoad: current,
+              maxCapacity: max,
+              languageMatchDetails: detectedLanguage
+                ? languages.includes(detectedLanguage)
+                  ? `Speaks ${detectedLanguage}`
+                  : `Does not speak ${detectedLanguage}`
+                : undefined,
+              teamMatchDetails: teamId
+                ? a.teamMemberships?.some((m) => m.teamId === teamId)
+                  ? 'Member of required team'
+                  : 'Not a member of required team'
+                : undefined,
+            },
+          };
+        })
+        .sort((x, y) => y.score - x.score)
+        .slice(0, limit);
+
+      return scored;
+    } catch (error) {
+      this.logger.error(`Failed to get routing suggestions: ${String(error)}`);
+      return [];
+    }
   }
 }
 

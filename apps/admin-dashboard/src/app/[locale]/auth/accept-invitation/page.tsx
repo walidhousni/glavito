@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Alert } from '@/components/ui/alert';
 import { api } from '@/lib/api/config';
-import { User, Lock, Building, Mail, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
+import { User, Lock, Building, Mail, CheckCircle, AlertTriangle, Sparkles, ArrowRight } from 'lucide-react';
 import { ModernAuthLayout } from '@/components/auth/modern-auth-layout';
 import { ModernAuthCard } from '@/components/auth/modern-auth-card';
 import { ModernInput } from '@/components/auth/modern-input';
@@ -21,7 +21,6 @@ interface InvitationInfo {
   inviter: {
     firstName: string;
     lastName: string;
-    email: string;
   };
   expiresAt: string;
 }
@@ -37,8 +36,6 @@ export default function AcceptInvitationPage() {
     password: '',
     confirmPassword: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingInvitation, setIsLoadingInvitation] = useState(true);
@@ -169,13 +166,13 @@ export default function AcceptInvitationPage() {
           <AnimatePresence>
             {error && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Alert variant="destructive" className="mb-4 border-red-200 bg-red-50 dark:bg-red-950/20">
-                  <AlertTriangle className="h-4 w-4" />
+                <Alert variant="destructive" className="mb-4 border-red-200 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
                   {error}
                 </Alert>
               </motion.div>
@@ -185,7 +182,6 @@ export default function AcceptInvitationPage() {
           <ModernButton
             onClick={() => router.push('/auth/login')}
             className="w-full"
-            gradient={false}
             variant="outline"
           >
             Go to Login
@@ -206,41 +202,41 @@ export default function AcceptInvitationPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-2xl border border-blue-200/50 dark:border-blue-800/50"
+          className="mb-8 p-5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800"
         >
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg">
-              <Building className="h-6 w-6 text-white" />
+          <div className="flex items-start space-x-4">
+            <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <Building className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                 {invitation.tenant.name}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-1">
-                <Sparkles className="h-3 w-3" />
-                <span>Role: {invitation.role}</span>
-              </p>
+              <div className="mt-1 flex flex-col space-y-1">
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                  <span>Role: <span className="font-medium text-gray-700 dark:text-gray-300">{invitation.role}</span></span>
+                </div>
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                  <Mail className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="truncate">Invited by {invitation.inviter.firstName} {invitation.inviter.lastName}</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-400">
-            <Mail className="h-4 w-4" />
-            <span>
-              Invited by <span className="font-medium">{invitation.inviter.firstName} {invitation.inviter.lastName}</span>
-            </span>
           </div>
         </motion.div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <AnimatePresence>
             {error && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20">
-                  <AlertTriangle className="h-4 w-4" />
+                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
                   {error}
                 </Alert>
               </motion.div>
@@ -255,8 +251,8 @@ export default function AcceptInvitationPage() {
               placeholder="John"
               value={formData.firstName}
               onChange={handleChange}
-              icon={<User className="h-4 w-4" />}
               required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
             />
 
             <ModernInput
@@ -266,8 +262,8 @@ export default function AcceptInvitationPage() {
               placeholder="Doe"
               value={formData.lastName}
               onChange={handleChange}
-              icon={<User className="h-4 w-4" />}
               required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
             />
           </div>
 
@@ -277,45 +273,46 @@ export default function AcceptInvitationPage() {
             type="email"
             value={invitation.email}
             disabled
-            icon={<Mail className="h-4 w-4" />}
-            className="bg-gray-50 dark:bg-gray-800/50"
+            className="bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed border-gray-200 dark:border-gray-700"
           />
 
-          <ModernInput
-            id="password"
-            name="password"
-            label="Password"
-            type="password"
-            placeholder="Create a strong password"
-            value={formData.password}
-            onChange={handleChange}
-            icon={<Lock className="h-4 w-4" />}
-            helperText="Must be at least 8 characters long"
-            required
-          />
+          <div className="space-y-4">
+            <ModernInput
+              id="password"
+              name="password"
+              label="Password"
+              type="password"
+              placeholder="Create a strong password"
+              value={formData.password}
+              onChange={handleChange}
+              helperText="Must be at least 8 characters long"
+              required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
+            />
 
-          <ModernInput
-            id="confirmPassword"
-            name="confirmPassword"
-            label="Confirm Password"
-            type="password"
-            placeholder="Confirm your password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            icon={<Lock className="h-4 w-4" />}
-            success={Boolean(formData.confirmPassword) && formData.password === formData.confirmPassword}
-            error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Passwords don't match" : undefined}
-            required
-          />
+            <ModernInput
+              id="confirmPassword"
+              name="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              placeholder="Confirm your password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              success={Boolean(formData.confirmPassword) && formData.password === formData.confirmPassword}
+              error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Passwords don't match" : undefined}
+              required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
+            />
+          </div>
 
           <ModernButton
             type="submit"
-            className="w-full"
+            className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200"
             loading={isLoading}
             loadingText="Creating account..."
-            icon={<CheckCircle className="h-4 w-4" />}
           >
-            Accept Invitation & Create Account
+            <span>Accept & Create Account</span>
+            <ArrowRight className="ml-2 h-4 w-4" />
           </ModernButton>
         </form>
 

@@ -132,6 +132,68 @@ export class LeadsService {
     return updated;
   }
 
+  async listActivities(
+    tenantId: string,
+    leadId: string,
+    options: { page?: number; limit?: number } = {}
+  ) {
+    const { page = 1, limit = 50 } = options;
+    const skip = (page - 1) * limit;
+
+    const lead = await this.db.lead.findFirst({ where: { id: leadId, tenantId }, select: { id: true } });
+    if (!lead) throw new NotFoundException('Lead not found');
+
+    const [activities, total] = await Promise.all([
+      this.db.leadActivity.findMany({
+        where: { leadId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: Math.min(limit, 200),
+        select: {
+          id: true,
+          type: true,
+          description: true,
+          metadata: true,
+          createdAt: true,
+          userId: true,
+        },
+      }),
+      this.db.leadActivity.count({ where: { leadId } })
+    ]);
+
+    return {
+      data: activities,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  async createActivity(
+    tenantId: string,
+    leadId: string,
+    payload: { type: string; description: string; metadata?: Record<string, unknown>; userId?: string }
+  ) {
+    const lead = await this.db.lead.findFirst({ where: { id: leadId, tenantId }, select: { id: true } });
+    if (!lead) throw new NotFoundException('Lead not found');
+
+    const created = await this.db.leadActivity.create({
+      data: {
+        leadId,
+        userId: payload.userId || null,
+        type: payload.type,
+        description: payload.description,
+        metadata: (payload.metadata || {}) as any,
+      } as any,
+    });
+    return created;
+  }
+
   private async validateAndNormalizeCustomFields(
     tenantId: string,
     entity: 'ticket' | 'customer' | 'lead' | 'deal',

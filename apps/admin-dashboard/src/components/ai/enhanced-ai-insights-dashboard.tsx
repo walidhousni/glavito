@@ -134,21 +134,21 @@ export default function EnhancedAIInsightsDashboard() {
         // Calculate insights
         const insights: PredictiveInsights = {
           leadScoring: {
-            totalLeads: leadScoresData.length,
-            highScoreLeads: leadScoresData.filter(l => l.score > 0.7).length,
-            averageScore: leadScoresData.reduce((sum, l) => sum + l.score, 0) / leadScoresData.length || 0,
+            totalLeads: leadScoresData?.length || 0,
+            highScoreLeads: leadScoresData?.filter(l => l.score > 0.7).length || 0,
+            averageScore: leadScoresData?.length ? leadScoresData.reduce((sum, l) => sum + l.score, 0) / leadScoresData.length : 0,
             topFactors: calculateTopFactors(leadScoresData)
           },
           churnPrevention: {
-            atRiskCustomers: churnData.filter(c => c.riskLevel === 'high' || c.riskLevel === 'critical').length,
-            highRiskCustomers: churnData.filter(c => c.riskLevel === 'critical').length,
+            atRiskCustomers: churnData?.filter(c => c.riskLevel === 'high' || c.riskLevel === 'critical').length || 0,
+            highRiskCustomers: churnData?.filter(c => c.riskLevel === 'critical').length || 0,
             retentionRate: calculateRetentionRate(churnData),
             topRiskFactors: calculateTopRiskFactors(churnData)
           },
           salesOptimization: {
-            totalDeals: dealData.length,
-            highProbabilityDeals: dealData.filter(d => d.winProbability > 0.7).length,
-            averageWinProbability: dealData.reduce((sum, d) => sum + d.winProbability, 0) / dealData.length || 0,
+            totalDeals: dealData?.length || 0,
+            highProbabilityDeals: dealData?.filter(d => d.winProbability > 0.7).length || 0,
+            averageWinProbability: dealData?.length ? dealData.reduce((sum, d) => sum + d.winProbability, 0) / dealData.length : 0,
             revenueAtRisk: calculateRevenueAtRisk(dealData)
           },
           customerJourney: {
@@ -227,16 +227,16 @@ export default function EnhancedAIInsightsDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">AI Predictive Analytics</h1>
-          <p className="text-muted-foreground">Advanced AI insights and predictions for your business</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            Export Report
+            {t('exportReport')}
           </Button>
           <Button size="sm" onClick={() => refetch()}>
             <Brain className="h-4 w-4 mr-2" />
-            Refresh Data
+            {t('refreshData')}
           </Button>
         </div>
       </div>
@@ -245,7 +245,7 @@ export default function EnhancedAIInsightsDashboard() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High-Score Leads</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('metrics.highScoreLeads')}</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -254,14 +254,14 @@ export default function EnhancedAIInsightsDashboard() {
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               {getTrendIcon(predictiveInsights?.leadScoring.highScoreLeads || 0, 45)}
-              <span className="ml-1">+12.3% from last week</span>
+              <span className="ml-1">+12.3% {t('trends.fromLastWeek')}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">At-Risk Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('metrics.atRiskCustomers')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -270,14 +270,14 @@ export default function EnhancedAIInsightsDashboard() {
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               {getTrendIcon(predictiveInsights?.churnPrevention.atRiskCustomers || 0, 23)}
-              <span className="ml-1">-5.2% from last week</span>
+              <span className="ml-1">-5.2% {t('trends.fromLastWeek')}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High-Probability Deals</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('metrics.highProbabilityDeals')}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -286,14 +286,14 @@ export default function EnhancedAIInsightsDashboard() {
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               {getTrendIcon(predictiveInsights?.salesOptimization.highProbabilityDeals || 0, 18)}
-              <span className="ml-1">+8.7% from last week</span>
+              <span className="ml-1">+8.7% {t('trends.fromLastWeek')}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Models</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('metrics.activeModels')}</CardTitle>
             <Brain className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -302,7 +302,7 @@ export default function EnhancedAIInsightsDashboard() {
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               <CheckCircle className="h-3 w-3 text-green-500 mr-1" />
-              All models healthy
+              {t('metrics.allModelsHealthy')}
             </div>
           </CardContent>
         </Card>
@@ -310,11 +310,11 @@ export default function EnhancedAIInsightsDashboard() {
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="lead-scoring">Lead Scoring</TabsTrigger>
-          <TabsTrigger value="churn-prevention">Churn Prevention</TabsTrigger>
-          <TabsTrigger value="sales-optimization">Sales Optimization</TabsTrigger>
-          <TabsTrigger value="models">Model Management</TabsTrigger>
+          <TabsTrigger value="overview">{t('tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="lead-scoring">{t('tabs.leadScoring')}</TabsTrigger>
+          <TabsTrigger value="churn-prevention">{t('tabs.churnPrevention')}</TabsTrigger>
+          <TabsTrigger value="sales-optimization">{t('tabs.salesOptimization')}</TabsTrigger>
+          <TabsTrigger value="models">{t('tabs.models')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -322,13 +322,13 @@ export default function EnhancedAIInsightsDashboard() {
             {/* Lead Scoring Overview */}
             <Card>
               <CardHeader>
-                <CardTitle>Lead Scoring Performance</CardTitle>
-                <CardDescription>Current lead scoring metrics and trends</CardDescription>
+                <CardTitle>{t('overview.leadScoring.title')}</CardTitle>
+                <CardDescription>{t('overview.leadScoring.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Average Score</span>
+                    <span className="text-sm font-medium">{t('overview.leadScoring.averageScore')}</span>
                     <span className="text-2xl font-bold">
                       {formatPercentage(predictiveInsights?.leadScoring.averageScore || 0)}
                     </span>
@@ -338,11 +338,11 @@ export default function EnhancedAIInsightsDashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold">{predictiveInsights?.leadScoring.totalLeads || 0}</div>
-                      <div className="text-xs text-muted-foreground">Total Leads</div>
+                      <div className="text-xs text-muted-foreground">{t('overview.leadScoring.totalLeads')}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold">{predictiveInsights?.leadScoring.highScoreLeads || 0}</div>
-                      <div className="text-xs text-muted-foreground">High Score</div>
+                      <div className="text-xs text-muted-foreground">{t('overview.leadScoring.highScore')}</div>
                     </div>
                   </div>
                 </div>
@@ -352,13 +352,13 @@ export default function EnhancedAIInsightsDashboard() {
             {/* Churn Prevention Overview */}
             <Card>
               <CardHeader>
-                <CardTitle>Churn Prevention Status</CardTitle>
-                <CardDescription>Customer retention and risk assessment</CardDescription>
+                <CardTitle>{t('overview.churnPrevention.title')}</CardTitle>
+                <CardDescription>{t('overview.churnPrevention.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Retention Rate</span>
+                    <span className="text-sm font-medium">{t('overview.churnPrevention.retentionRate')}</span>
                     <span className="text-2xl font-bold">
                       {formatPercentage(predictiveInsights?.churnPrevention.retentionRate || 0)}
                     </span>
@@ -368,11 +368,11 @@ export default function EnhancedAIInsightsDashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold">{predictiveInsights?.churnPrevention.atRiskCustomers || 0}</div>
-                      <div className="text-xs text-muted-foreground">At Risk</div>
+                      <div className="text-xs text-muted-foreground">{t('overview.churnPrevention.atRisk')}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold">{predictiveInsights?.churnPrevention.highRiskCustomers || 0}</div>
-                      <div className="text-xs text-muted-foreground">High Risk</div>
+                      <div className="text-xs text-muted-foreground">{t('overview.churnPrevention.highRisk')}</div>
                     </div>
                   </div>
                 </div>
@@ -383,8 +383,8 @@ export default function EnhancedAIInsightsDashboard() {
           {/* Model Performance Overview */}
           <Card>
             <CardHeader>
-              <CardTitle>Model Performance Overview</CardTitle>
-              <CardDescription>Current performance of all AI models</CardDescription>
+              <CardTitle>{t('overview.modelPerformance.title')}</CardTitle>
+              <CardDescription>{t('overview.modelPerformance.subtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
@@ -394,13 +394,13 @@ export default function EnhancedAIInsightsDashboard() {
                       <Brain className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="font-medium">{model.name}</div>
-                        <div className="text-sm text-muted-foreground">Version {model.version}</div>
+                        <div className="text-sm text-muted-foreground">{t('overview.modelPerformance.version')} {model.version}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <div className="text-sm font-medium">{formatPercentage(model.accuracy)}</div>
-                        <div className="text-xs text-muted-foreground">Accuracy</div>
+                        <div className="text-xs text-muted-foreground">{t('overview.modelPerformance.accuracy')}</div>
                       </div>
                       {getStatusBadge(model.status)}
                     </div>
@@ -416,8 +416,8 @@ export default function EnhancedAIInsightsDashboard() {
             {/* Top Lead Scoring Factors */}
             <Card>
               <CardHeader>
-                <CardTitle>Top Scoring Factors</CardTitle>
-                <CardDescription>Most influential factors in lead scoring</CardDescription>
+                <CardTitle>{t('leadScoring.topFactors.title')}</CardTitle>
+                <CardDescription>{t('leadScoring.topFactors.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -439,15 +439,15 @@ export default function EnhancedAIInsightsDashboard() {
             {/* Recent Lead Scores */}
             <Card>
               <CardHeader>
-                <CardTitle>Recent Lead Scores</CardTitle>
-                <CardDescription>Latest lead scoring results</CardDescription>
+                <CardTitle>{t('leadScoring.recentScores.title')}</CardTitle>
+                <CardDescription>{t('leadScoring.recentScores.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {leadScores.slice(0, 5).map((lead) => (
                     <div key={lead.leadId} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <div className="font-medium">Lead {lead.leadId.slice(-6)}</div>
+                        <div className="font-medium">{t('leadScoring.recentScores.lead')} {lead.leadId.slice(-6)}</div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(lead.lastUpdated).toLocaleDateString()}
                         </div>
@@ -455,7 +455,7 @@ export default function EnhancedAIInsightsDashboard() {
                       <div className="text-right">
                         <div className="text-lg font-bold">{formatPercentage(lead.score)}</div>
                         <div className="text-xs text-muted-foreground">
-                          {formatPercentage(lead.probability)} probability
+                          {formatPercentage(lead.probability)} {t('leadScoring.recentScores.probability')}
                         </div>
                       </div>
                     </div>
@@ -471,18 +471,18 @@ export default function EnhancedAIInsightsDashboard() {
             {/* Risk Distribution */}
             <Card>
               <CardHeader>
-                <CardTitle>Risk Level Distribution</CardTitle>
-                <CardDescription>Distribution of customer risk levels</CardDescription>
+                <CardTitle>{t('churnPrevention.riskDistribution.title')}</CardTitle>
+                <CardDescription>{t('churnPrevention.riskDistribution.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <RechartsPieChart>
                     <RechartsPie
                       data={[
-                        { name: 'Low Risk', value: churnAssessments.filter(c => c.riskLevel === 'low').length, color: riskColors.low },
-                        { name: 'Medium Risk', value: churnAssessments.filter(c => c.riskLevel === 'medium').length, color: riskColors.medium },
-                        { name: 'High Risk', value: churnAssessments.filter(c => c.riskLevel === 'high').length, color: riskColors.high },
-                        { name: 'Critical Risk', value: churnAssessments.filter(c => c.riskLevel === 'critical').length, color: riskColors.critical }
+                        { name: t('churnPrevention.riskDistribution.lowRisk'), value: churnAssessments?.filter(c => c.riskLevel === 'low').length || 0, color: riskColors.low },
+                        { name: t('churnPrevention.riskDistribution.mediumRisk'), value: churnAssessments?.filter(c => c.riskLevel === 'medium').length || 0, color: riskColors.medium },
+                        { name: t('churnPrevention.riskDistribution.highRisk'), value: churnAssessments?.filter(c => c.riskLevel === 'high').length || 0, color: riskColors.high },
+                        { name: t('churnPrevention.riskDistribution.criticalRisk'), value: churnAssessments?.filter(c => c.riskLevel === 'critical').length || 0, color: riskColors.critical }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -493,10 +493,10 @@ export default function EnhancedAIInsightsDashboard() {
                       dataKey="value"
                     >
                       {[
-                        { name: 'Low Risk', value: churnAssessments.filter(c => c.riskLevel === 'low').length, color: riskColors.low },
-                        { name: 'Medium Risk', value: churnAssessments.filter(c => c.riskLevel === 'medium').length, color: riskColors.medium },
-                        { name: 'High Risk', value: churnAssessments.filter(c => c.riskLevel === 'high').length, color: riskColors.high },
-                        { name: 'Critical Risk', value: churnAssessments.filter(c => c.riskLevel === 'critical').length, color: riskColors.critical }
+                        { name: t('churnPrevention.riskDistribution.lowRisk'), value: churnAssessments?.filter(c => c.riskLevel === 'low').length || 0, color: riskColors.low },
+                        { name: t('churnPrevention.riskDistribution.mediumRisk'), value: churnAssessments?.filter(c => c.riskLevel === 'medium').length || 0, color: riskColors.medium },
+                        { name: t('churnPrevention.riskDistribution.highRisk'), value: churnAssessments?.filter(c => c.riskLevel === 'high').length || 0, color: riskColors.high },
+                        { name: t('churnPrevention.riskDistribution.criticalRisk'), value: churnAssessments?.filter(c => c.riskLevel === 'critical').length || 0, color: riskColors.critical }
                       ].map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -510,8 +510,8 @@ export default function EnhancedAIInsightsDashboard() {
             {/* High-Risk Customers */}
             <Card>
               <CardHeader>
-                <CardTitle>High-Risk Customers</CardTitle>
-                <CardDescription>Customers requiring immediate attention</CardDescription>
+                <CardTitle>{t('churnPrevention.highRiskCustomers.title')}</CardTitle>
+                <CardDescription>{t('churnPrevention.highRiskCustomers.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -521,15 +521,15 @@ export default function EnhancedAIInsightsDashboard() {
                     .map((assessment) => (
                       <div key={assessment.customerId} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
-                          <div className="font-medium">Customer {assessment.customerId.slice(-6)}</div>
+                          <div className="font-medium">{t('churnPrevention.highRiskCustomers.customer')} {assessment.customerId.slice(-6)}</div>
                           <div className="text-xs text-muted-foreground">
-                            {assessment.recommendations.length} recommendations
+                            {assessment.recommendations?.length || 0} {t('churnPrevention.highRiskCustomers.recommendations')}
                           </div>
                         </div>
                         <div className="text-right">
                           {getRiskBadge(assessment.riskLevel)}
                           <div className="text-xs text-muted-foreground mt-1">
-                            {formatPercentage(assessment.probability)} probability
+                            {formatPercentage(assessment.probability)} {t('churnPrevention.highRiskCustomers.probability')}
                           </div>
                         </div>
                       </div>
@@ -545,17 +545,17 @@ export default function EnhancedAIInsightsDashboard() {
             {/* Deal Win Probability Distribution */}
             <Card>
               <CardHeader>
-                <CardTitle>Deal Win Probability</CardTitle>
-                <CardDescription>Distribution of deal win probabilities</CardDescription>
+                <CardTitle>{t('salesOptimization.dealWinProbability.title')}</CardTitle>
+                <CardDescription>{t('salesOptimization.dealWinProbability.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={[
-                    { range: '0-20%', count: dealPredictions.filter(d => d.winProbability < 0.2).length },
-                    { range: '20-40%', count: dealPredictions.filter(d => d.winProbability >= 0.2 && d.winProbability < 0.4).length },
-                    { range: '40-60%', count: dealPredictions.filter(d => d.winProbability >= 0.4 && d.winProbability < 0.6).length },
-                    { range: '60-80%', count: dealPredictions.filter(d => d.winProbability >= 0.6 && d.winProbability < 0.8).length },
-                    { range: '80-100%', count: dealPredictions.filter(d => d.winProbability >= 0.8).length }
+                    { range: '0-20%', count: dealPredictions?.filter(d => d.winProbability < 0.2).length || 0 },
+                    { range: '20-40%', count: dealPredictions?.filter(d => d.winProbability >= 0.2 && d.winProbability < 0.4).length || 0 },
+                    { range: '40-60%', count: dealPredictions?.filter(d => d.winProbability >= 0.4 && d.winProbability < 0.6).length || 0 },
+                    { range: '60-80%', count: dealPredictions?.filter(d => d.winProbability >= 0.6 && d.winProbability < 0.8).length || 0 },
+                    { range: '80-100%', count: dealPredictions?.filter(d => d.winProbability >= 0.8).length || 0 }
                   ]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="range" />
@@ -570,8 +570,8 @@ export default function EnhancedAIInsightsDashboard() {
             {/* High-Probability Deals */}
             <Card>
               <CardHeader>
-                <CardTitle>High-Probability Deals</CardTitle>
-                <CardDescription>Deals with high win probability</CardDescription>
+                <CardTitle>{t('salesOptimization.highProbabilityDeals.title')}</CardTitle>
+                <CardDescription>{t('salesOptimization.highProbabilityDeals.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -581,15 +581,15 @@ export default function EnhancedAIInsightsDashboard() {
                     .map((deal) => (
                       <div key={deal.dealId} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
-                          <div className="font-medium">Deal {deal.dealId.slice(-6)}</div>
+                          <div className="font-medium">{t('salesOptimization.highProbabilityDeals.deal')} {deal.dealId.slice(-6)}</div>
                           <div className="text-xs text-muted-foreground">
-                            {deal.recommendations.length} recommendations
+                            {deal.recommendations?.length || 0} {t('salesOptimization.highProbabilityDeals.recommendations')}
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold">{formatPercentage(deal.winProbability)}</div>
                           <div className="text-xs text-muted-foreground">
-                            {formatPercentage(deal.confidence)} confidence
+                            {formatPercentage(deal.confidence)} {t('salesOptimization.highProbabilityDeals.confidence')}
                           </div>
                         </div>
                       </div>
@@ -605,8 +605,8 @@ export default function EnhancedAIInsightsDashboard() {
             {/* Model Status */}
             <Card>
               <CardHeader>
-                <CardTitle>Model Status</CardTitle>
-                <CardDescription>Current status of all AI models</CardDescription>
+                <CardTitle>{t('models.status.title')}</CardTitle>
+                <CardDescription>{t('models.status.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -617,14 +617,14 @@ export default function EnhancedAIInsightsDashboard() {
                         <div>
                           <div className="font-medium">{model.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {model.type} • Version {model.version}
+                            {model.type} • {t('models.status.version')} {model.version}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <div className="text-sm font-medium">{formatPercentage(model.accuracy)}</div>
-                          <div className="text-xs text-muted-foreground">Accuracy</div>
+                          <div className="text-xs text-muted-foreground">{t('models.status.accuracy')}</div>
                         </div>
                         {getStatusBadge(model.status)}
                       </div>
@@ -637,8 +637,8 @@ export default function EnhancedAIInsightsDashboard() {
             {/* Training Jobs */}
             <Card>
               <CardHeader>
-                <CardTitle>Training Jobs</CardTitle>
-                <CardDescription>Recent and active model training jobs</CardDescription>
+                <CardTitle>{t('models.trainingJobs.title')}</CardTitle>
+                <CardDescription>{t('models.trainingJobs.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -647,16 +647,16 @@ export default function EnhancedAIInsightsDashboard() {
                       <div className="flex items-center gap-3">
                         <Zap className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <div className="font-medium">Training Job {job.id.slice(-6)}</div>
+                          <div className="font-medium">{t('models.trainingJobs.trainingJob')} {job.id.slice(-6)}</div>
                           <div className="text-sm text-muted-foreground">
-                            Model {job.modelId.slice(-6)}
+                            {t('models.trainingJobs.model')} {job.modelId.slice(-6)}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <div className="text-sm font-medium">{formatPercentage(job.progress)}</div>
-                          <div className="text-xs text-muted-foreground">Progress</div>
+                          <div className="text-xs text-muted-foreground">{t('models.trainingJobs.progress')}</div>
                         </div>
                         {getStatusBadge(job.status)}
                       </div>
@@ -676,21 +676,23 @@ export default function EnhancedAIInsightsDashboard() {
 function calculateTopFactors(leadScores: LeadScore[]): Array<{ factor: string; impact: number }> {
   const factorMap = new Map<string, number>();
   
+  if (!leadScores) return [];
+  
   leadScores.forEach(lead => {
-    lead.factors.forEach(factor => {
+    lead.factors?.forEach(factor => {
       const current = factorMap.get(factor.feature) || 0;
       factorMap.set(factor.feature, current + Math.abs(factor.contribution));
     });
   });
 
   return Array.from(factorMap.entries())
-    .map(([factor, impact]) => ({ factor, impact: impact / leadScores.length }))
+    .map(([factor, impact]) => ({ factor, impact: impact / (leadScores?.length || 1) }))
     .sort((a, b) => b.impact - a.impact)
     .slice(0, 5);
 }
 
 function calculateRetentionRate(assessments: ChurnRiskAssessment[]): number {
-  if (assessments.length === 0) return 0;
+  if (!assessments || assessments.length === 0) return 0;
   const lowRiskCount = assessments.filter(a => a.riskLevel === 'low').length;
   return lowRiskCount / assessments.length;
 }
@@ -698,8 +700,10 @@ function calculateRetentionRate(assessments: ChurnRiskAssessment[]): number {
 function calculateTopRiskFactors(assessments: ChurnRiskAssessment[]): Array<{ factor: string; frequency: number }> {
   const factorMap = new Map<string, number>();
   
+  if (!assessments) return [];
+  
   assessments.forEach(assessment => {
-    assessment.factors.forEach(factor => {
+    assessment.factors?.forEach(factor => {
       if (factor.trend === 'declining') {
         const current = factorMap.get(factor.factor) || 0;
         factorMap.set(factor.factor, current + 1);
@@ -715,6 +719,7 @@ function calculateTopRiskFactors(assessments: ChurnRiskAssessment[]): Array<{ fa
 
 function calculateRevenueAtRisk(dealPredictions: DealWinPrediction[]): number {
   // This is a simplified calculation - in reality, you'd need deal values
+  if (!dealPredictions) return 0;
   return dealPredictions
     .filter(d => d.winProbability < 0.5)
     .length * 10000; // Assuming average deal value of $10k

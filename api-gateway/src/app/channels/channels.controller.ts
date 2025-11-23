@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ChannelsService } from './channels.service';
@@ -16,8 +16,9 @@ export class ChannelsController {
   }
 
   @Get()
-  findAll() {
-    return this.channelsService.findAll();
+  findAll(@Req() req: any) {
+    const tenantId = req?.user?.tenantId;
+    return this.channelsService.findAll(tenantId);
   }
 
   @Get(':id')
@@ -43,5 +44,28 @@ export class ChannelsController {
   @Post('whatsapp/templates/refresh')
   refreshWhatsAppTemplates() {
     return this.channelsService.refreshWhatsAppTemplates();
+  }
+
+  @Post('whatsapp/test-send')
+  testSendTemplate(@Body() body: { to: string; templateId: string; templateParams?: Record<string, string>; language?: string }) {
+    return this.channelsService.testSendWhatsAppTemplate(body)
+  }
+
+  @Post('whatsapp/templates/create')
+  createWhatsAppTemplate(@Body() body: {
+    name: string;
+    category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
+    language: string;
+    body: string;
+    header?: string;
+    footer?: string;
+    buttons?: Array<{
+      type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+      text?: string;
+      url?: string;
+      phoneNumber?: string;
+    }>;
+  }) {
+    return this.channelsService.createWhatsAppTemplate(body);
   }
 }

@@ -10,7 +10,7 @@ import {
   UseGuards,
   Logger
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TicketsService } from './tickets.service';
 import { AIAnalysisService } from './ai-analysis.service';
 import { SearchService } from './search.service';

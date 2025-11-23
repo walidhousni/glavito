@@ -66,4 +66,5 @@ export type {
   MetricCalculatedEvent
 } from './lib/events.js';
 export type { ApiResponse } from './lib/types.js';
+export type { RealTimeMetricsUI, KPIMetricUI } from './lib/analytics-types.js';
 export type { InstagramAttachment } from './lib/conversation-types.js';

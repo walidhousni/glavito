@@ -1,10 +1,11 @@
 import { Controller, Get, Headers, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { DatabaseService } from '@glavito/shared-database';
+import { WhiteLabelService } from './white-label.service';
 
 @Controller('white-label/docs')
 export class ApiDocsBrandingController {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService, private readonly wl: WhiteLabelService) {}
 
   private async resolveTenantByHost(host?: string): Promise<{ name?: string; logoUrl?: string; primary?: string; supportEmail?: string } | null> {
     try {
@@ -30,12 +31,22 @@ export class ApiDocsBrandingController {
       const tenant = await this.db.tenant.findUnique({ where: { id: tenantId } });
       const wl = ((tenant as any)?.whiteLabelSettings || {}) as any;
       const branding = ((tenant as any)?.brandingConfig || {}) as any;
-      return {
-        name: wl?.name || branding?.name || (tenant as any)?.name || 'API',
-        logoUrl: branding?.logoUrl || wl?.assets?.logoUrl || '',
-        primary: branding?.colors?.primary || wl?.colors?.primary || '#2563EB',
-        supportEmail: wl?.supportEmail || 'support@' + (hostNoApi || 'example.com'),
-      };
+      try {
+        const theme = await this.wl.computeTheme(tenantId);
+        return {
+          name: wl?.name || branding?.name || (tenant as any)?.name || 'API',
+          logoUrl: theme.assets.logoUrl || branding?.logoUrl || wl?.assets?.logoUrl || '',
+          primary: theme.colors.primary || '#2563EB',
+          supportEmail: wl?.supportEmail || 'support@' + (hostNoApi || 'example.com'),
+        };
+      } catch {
+        return {
+          name: wl?.name || branding?.name || (tenant as any)?.name || 'API',
+          logoUrl: branding?.logoUrl || wl?.assets?.logoUrl || '',
+          primary: branding?.colors?.primary || wl?.colors?.primary || '#2563EB',
+          supportEmail: wl?.supportEmail || 'support@' + (hostNoApi || 'example.com'),
+        };
+      }
     } catch {
       return null;
     }

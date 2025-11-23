@@ -87,6 +87,39 @@ export class GetChurnPredictionDto {
   customerId?: string
 }
 
+// Shared simple date-range DTO for read endpoints
+export class GetDateRangeDto {
+  @ApiPropertyOptional({ description: 'Start date (ISO8601)' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string
+
+  @ApiPropertyOptional({ description: 'End date (ISO8601)' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string
+
+  @ApiPropertyOptional({
+    description: 'Time granularity',
+    enum: ['hour', 'day', 'week', 'month', 'quarter', 'year']
+  })
+  @IsOptional()
+  @IsEnum(['hour', 'day', 'week', 'month', 'quarter', 'year'])
+  granularity?: 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year'
+}
+
+export class GetRevenueAttributionDto extends GetDateRangeDto {}
+export class GetCostAnalyticsDto extends GetDateRangeDto {}
+export class GetROIAnalyticsDto extends GetDateRangeDto {}
+export class GetBusinessInsightsDto extends GetDateRangeDto {}
+
+export class GetChannelAnalyticsDto extends GetDateRangeDto {
+  @ApiPropertyOptional({ description: 'Channel ID to focus analytics on' })
+  @IsOptional()
+  @IsString()
+  channelId?: string
+}
+
 // Custom Report DTOs
 export class ReportMetricDto {
   @ApiProperty({ description: 'Metric name' })

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '@glavito/shared-database';
-import { AIIntelligenceService } from '@glavito/shared-ai';
+import { AIIntelligenceService, VectorStoreService } from '@glavito/shared-ai';
 
 @Injectable()
 export class KnowledgeService {
   constructor(
     private readonly db: DatabaseService,
     private readonly ai: AIIntelligenceService,
+    private readonly vector?: VectorStoreService,
   ) {}
 
   async search(tenantId: string, q: string, limit = 10, options?: { semantic?: boolean }) {
@@ -188,6 +189,15 @@ export class KnowledgeService {
       },
     });
     await this.createVersionSnapshot(created.id, payload.title, payload.content, payload.tags || [], userId);
+    // Seed vector store (best-effort)
+    try {
+      await this.vector?.upsert({
+        id: created.id,
+        tenantId,
+        text: `${payload.title}\n${payload.content}`,
+        metadata: { title: payload.title, snippet: (payload.content || '').slice(0, 200) },
+      });
+    } catch {}
     return created;
   }
 
@@ -199,6 +209,15 @@ export class KnowledgeService {
     }
     const updated = await this.db.knowledgeBase.update({ where: { id }, data });
     await this.createVersionSnapshot(id, updated.title, updated.content, updated.tags as string[] || [], userId);
+    // Update vector store (best-effort)
+    try {
+      await this.vector?.upsert({
+        id,
+        tenantId,
+        text: `${updated.title}\n${updated.content}`,
+        metadata: { title: updated.title, snippet: (updated.content || '').slice(0, 200) },
+      });
+    } catch {}
     return updated;
   }
 

@@ -3,6 +3,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import * as path from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheInterceptor } from '../common/interceptors/cache.interceptor';
 import { AppController } from './app.controller';
@@ -38,12 +39,17 @@ import { SearchModule } from './search/search.module';
 // FlowsModule removed in favor of centralized Workflows (n8n-backed)
 import { RedisModule } from '@glavito/shared-redis';
 import { NotificationsModule } from './notifications/notifications.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { AIModule as GatewayAIModule } from './ai/ai.module';
 import { CrmModule } from './crm/crm.module';
 import { MarketingModule } from './marketing/marketing.module'
 import { WhiteLabelModule } from './white-label/white-label.module'
+import { BotsModule } from './bots/bots.module'
 import { CustomerPortalModule } from './customer-portal/customer-portal.module'
 import { ApiDocsBrandingController } from './white-label/api-docs.controller'
+import { CollabModule } from './collab/collab.module'
+import { InternalChannelsModule } from './internal-channels/internal-channels.module'
+import { TicketCollabModule } from './ticket-collab/ticket-collab.module'
 import { SubscriptionController } from './auth/services/subscription.controller'
 import { IntegrationsModule } from './integrations/integrations.module'
 import { SecurityMiddleware } from './auth/middleware/security.middleware'
@@ -51,6 +57,8 @@ import { LocalizationModule } from './localization/localization.module'
 import { UsageModule } from './usage/usage.module'
 import { EmailAdapter } from '@glavito/shared-conversation'
 import { RequestLoggingInterceptor } from '../common/interceptors/request-logging.interceptor'
+import { TemplatesModule } from './templates/templates.module'
+import { WalletModule } from './wallet/wallet.module'
 
 const STATIC_UPLOADS = process.env.S3_BUCKET
   ? []
@@ -78,6 +86,9 @@ const STATIC_UPLOADS = process.env.S3_BUCKET
         limit: parseInt(process.env.RATE_LIMIT_LIMIT || '100'),
       },
     ]),
+
+    // Scheduler (enables @Cron jobs application-wide)
+    ScheduleModule.forRoot(),
 
     // Database and Event Infrastructure
     DatabaseModule,
@@ -119,6 +130,7 @@ const STATIC_UPLOADS = process.env.S3_BUCKET
     CollaborationModule,
     SearchModule,
     NotificationsModule,
+    DashboardModule,
     GatewayAIModule,
     CrmModule,
     MarketingModule,
@@ -127,6 +139,12 @@ const STATIC_UPLOADS = process.env.S3_BUCKET
     CustomerPortalModule,
     LocalizationModule,
     UsageModule,
+    BotsModule,
+    TemplatesModule,
+    CollabModule,
+    InternalChannelsModule,
+    TicketCollabModule,
+    WalletModule,
   ],
   controllers: [AppController, ApiDocsBrandingController, SubscriptionController],
   providers: [

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,10 +66,11 @@ interface Workflow {
   connectionCount?: number;
   lastExecutionStatus?: string;
   errorCount?: number;
+  n8nWorkflowId?: string;
 }
 
 interface WorkflowListProps {
-  workflows: Workflow[];
+  workflows: unknown[];
   loading: boolean;
   onRefresh: () => void;
   onCreateWorkflow: () => void;
@@ -97,8 +98,52 @@ export function WorkflowList({
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
+  // Normalize incoming items (DTO or UI shape) into UI Workflow shape
+  const uiWorkflows = useMemo<Workflow[]>(() => {
+    const toString = (v: unknown, d = '') => (typeof v === 'string' ? v : d);
+    const toNumber = (v: unknown, d = 0) => (typeof v === 'number' ? v : d);
+    const toArray = (v: unknown): string[] => (Array.isArray(v) ? (v.filter((x) => typeof x === 'string') as string[]) : []);
+    const toBoolean = (v: unknown, d = false) => (typeof v === 'boolean' ? v : d);
+
+    return (Array.isArray(workflows) ? workflows : []).map((item: any) => {
+      if (item && item.definition && typeof item.definition === 'object') {
+        // Already UI shape
+        return item as Workflow;
+      }
+
+      // DTO shape mapping (WorkflowRuleDTO)
+      const metadata = (item?.metadata || {}) as Record<string, unknown>;
+      const status = (toString(metadata.status) as 'active' | 'inactive' | 'draft') || (toBoolean(item?.isActive) ? 'active' : 'inactive');
+      const ui: Workflow = {
+        id: toString(item?.id),
+        definition: {
+          name: toString(item?.name, 'Untitled Workflow'),
+          description: toString(item?.description, ''),
+          status,
+          category: toString(metadata.category, 'general'),
+          tags: toArray(metadata.tags),
+          version: toString(metadata.version, '1.0'),
+          createdBy: toString(metadata.createdBy, 'system'),
+        },
+        isActive: toBoolean(item?.isActive, status === 'active'),
+        lastExecutedAt: item?.lastExecuted ? new Date(item.lastExecuted) : undefined,
+        executionCount: toNumber(item?.executionCount, 0),
+        averageExecutionTime: toNumber(metadata.avgExecutionTime, 0),
+        successRate: toNumber(metadata.successRate, 0),
+        createdAt: item?.createdAt ? new Date(item.createdAt) : new Date(),
+        updatedAt: item?.updatedAt ? new Date(item.updatedAt) : new Date(),
+        nodeCount: Array.isArray(metadata.nodes) ? (metadata.nodes as unknown[]).length : undefined,
+        connectionCount: Array.isArray(metadata.connections) ? (metadata.connections as unknown[]).length : undefined,
+        lastExecutionStatus: toString(metadata.lastExecutionStatus),
+        errorCount: toNumber(metadata.errorCount),
+        n8nWorkflowId: toString(metadata.n8nWorkflowId),
+      } as Workflow;
+      return ui;
+    });
+  }, [workflows]);
+
   // Filter workflows based on search and filters
-  const filteredWorkflows = workflows.filter(workflow => {
+  const filteredWorkflows = uiWorkflows.filter(workflow => {
     const matchesSearch = workflow.definition.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          workflow.definition.description.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -109,7 +154,7 @@ export function WorkflowList({
   });
 
   // Get unique categories for filter
-  const categories = Array.from(new Set(workflows.map(w => w.definition.category)));
+  const categories = Array.from(new Set(uiWorkflows.map(w => w.definition.category)));
 
   const getStatusColor = (
     status: 'active' | 'inactive' | 'draft' | string
@@ -291,9 +336,16 @@ export function WorkflowList({
                   {getStatusIcon(workflow.definition.status)}
                   <span className="capitalize">{workflow.definition.status}</span>
                 </Badge>
-                <Badge variant="outline">
-                  {workflow.definition.category.replace('_', ' ')}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  {workflow.n8nWorkflowId ? (
+                    <Badge variant="secondary" className="text-[10px]">N8N</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px]">No N8N</Badge>
+                  )}
+                  <Badge variant="outline">
+                    {workflow.definition.category.replace('_', ' ')}
+                  </Badge>
+                </div>
               </div>
 
               {/* Tags */}

@@ -5,8 +5,10 @@ import { AIIntelligenceService } from '@glavito/shared-ai'
 import { PublicChatLinkService } from '../webhooks/public-chat-link.service'
 import { PublicChatSessionStore } from './public-chat.store'
 import { WhatsAppAdapter } from '@glavito/shared-conversation'
-import { EmailService } from '../auth/email.service'
+import { EmailService } from '../email/email.service'
 import { KnowledgeService } from './knowledge.service'
+import { ChannelOrchestratorService } from './services/channel-orchestrator.service'
+import { ContactVerificationService } from './services/contact-verification.service'
 import type { Response } from 'express'
 
 // Reserved types for future expansion; currently stored via PublicChatSessionStore
@@ -25,6 +27,8 @@ export class PublicChatController {
     private readonly store: PublicChatSessionStore,
     private readonly emailService: EmailService,
     private readonly whatsappAdapter: WhatsAppAdapter,
+    private readonly channelOrchestrator: ChannelOrchestratorService,
+    private readonly contactVerification: ContactVerificationService,
   ) {}
 
   private normalizeHost(raw?: string): string {
@@ -145,7 +149,19 @@ export class PublicChatController {
       })
     } catch { /* ignore */ }
 
-    // If session linked to WhatsApp, send outgoing via orchestrator
+    // Send to all linked channels using orchestrator
+    try {
+      await this.channelOrchestrator.sendToAllChannels(sessionId, {
+        content: reply,
+        recipientId: '', // Not needed for channel orchestrator
+        messageType: 'text',
+      })
+    } catch (err: any) {
+      // Log but don't fail the web chat response
+      console.error('Failed to send to linked channels:', err?.message)
+    }
+
+    // Legacy: If session linked to WhatsApp via old system, send
     const linkedPhone = this.publicChatLinks.findWhatsAppBySession(sessionId)
     if (linkedPhone) {
       try {
@@ -283,6 +299,122 @@ export class PublicChatController {
     if (!info) return { ok: false }
     // Return session metadata so client can reconnect
     return { ok: true, sessionId: info.sessionId, tenantId: info.tenantId }
+  }
+
+  @Post('link-channel')
+  @ApiOperation({ summary: 'Link WhatsApp/Instagram to a chat session' })
+  async linkChannel(@Body() body: { sessionId: string; channel: 'whatsapp' | 'instagram' | 'email'; contact: string }) {
+    const sessionId = String(body?.sessionId || '')
+    const channel = body?.channel
+    const contact = String(body?.contact || '')
+
+    if (!sessionId || !channel || !contact) {
+      return { ok: false, error: 'Missing required fields' }
+    }
+
+    try {
+      if (channel === 'whatsapp') {
+        // Send verification code
+        const result = await this.contactVerification.sendWhatsAppVerification(sessionId, contact)
+        return { ok: result.success, error: result.error, requiresVerification: true }
+      } else if (channel === 'instagram') {
+        // Send verification code
+        const result = await this.contactVerification.sendInstagramVerification(sessionId, contact)
+        return { ok: result.success, error: result.error, requiresVerification: true }
+      } else if (channel === 'email') {
+        // Email doesn't require verification for now
+        this.store.linkEmail(sessionId, contact, true)
+        return { ok: true, requiresVerification: false }
+      }
+
+      return { ok: false, error: 'Invalid channel' }
+    } catch (error: any) {
+      return { ok: false, error: error?.message || 'Unknown error' }
+    }
+  }
+
+  @Post('verify-contact')
+  @ApiOperation({ summary: 'Verify phone/Instagram with code' })
+  async verifyContact(@Body() body: { sessionId: string; channel: 'whatsapp' | 'instagram'; code: string }) {
+    const sessionId = String(body?.sessionId || '')
+    const channel = body?.channel
+    const code = String(body?.code || '')
+
+    if (!sessionId || !channel || !code) {
+      return { ok: false, error: 'Missing required fields' }
+    }
+
+    try {
+      const result = await this.contactVerification.verifyCode(sessionId, channel, code)
+      if (result.success) {
+        // Broadcast verification success via SSE
+        return { ok: true, verified: true }
+      }
+      return { ok: false, error: result.error || 'Verification failed' }
+    } catch (error: any) {
+      return { ok: false, error: error?.message || 'Unknown error' }
+    }
+  }
+
+  @Get('channel-status')
+  @ApiOperation({ summary: 'Get linked channel status for a session' })
+  async channelStatus(@Query('sessionId') sessionId: string) {
+    if (!sessionId) {
+      return { ok: false, error: 'Missing sessionId' }
+    }
+
+    try {
+      const linkedChannels = this.store.getLinkedChannels(sessionId)
+      const verificationStatus = await this.contactVerification.getVerificationStatus(sessionId)
+
+      return {
+        ok: true,
+        channels: {
+          whatsapp: linkedChannels?.whatsapp ? {
+            linked: true,
+            verified: linkedChannels.whatsapp.verified,
+            phoneNumber: linkedChannels.whatsapp.phoneNumber,
+            attemptsLeft: verificationStatus.whatsapp?.attemptsLeft || 0,
+          } : { linked: false },
+          instagram: linkedChannels?.instagram ? {
+            linked: true,
+            verified: linkedChannels.instagram.verified,
+            igHandle: linkedChannels.instagram.igHandle,
+            attemptsLeft: verificationStatus.instagram?.attemptsLeft || 0,
+          } : { linked: false },
+          email: linkedChannels?.email ? {
+            linked: true,
+            verified: linkedChannels.email.verified,
+            email: linkedChannels.email.email,
+          } : { linked: false },
+        },
+      }
+    } catch (error: any) {
+      return { ok: false, error: error?.message || 'Unknown error' }
+    }
+  }
+
+  @Post('send-to-channel')
+  @ApiOperation({ summary: 'Send a message to a specific channel' })
+  async sendToChannel(@Body() body: { sessionId: string; channel: 'whatsapp' | 'instagram' | 'email'; message: string }) {
+    const sessionId = String(body?.sessionId || '')
+    const channel = body?.channel
+    const message = String(body?.message || '')
+
+    if (!sessionId || !channel || !message) {
+      return { ok: false, error: 'Missing required fields' }
+    }
+
+    try {
+      await this.channelOrchestrator.sendToSpecificChannel(sessionId, channel, {
+        content: message,
+        recipientId: '', // Not needed for orchestrator
+        messageType: 'text',
+      })
+      return { ok: true }
+    } catch (error: any) {
+      return { ok: false, error: error?.message || 'Unknown error' }
+    }
   }
 }
 

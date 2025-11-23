@@ -40,6 +40,14 @@ const nextConfig = {
   trailingSlash: false,
   reactStrictMode: true,
   devIndicators: { buildActivity: true },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.icons8.com',
+      },
+    ],
+  },
   webpack: (config) => {
     config.plugins = config.plugins || [];
     config.resolve.alias = {

@@ -119,17 +119,17 @@ export default function RegisterPage() {
       subtitle="Join thousands of teams using Glavito"
     >
       <ModernAuthCard>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <AnimatePresence>
             {error && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20">
-                  <AlertTriangle className="h-4 w-4" />
+                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
                   {error}
                 </Alert>
               </motion.div>
@@ -144,8 +144,8 @@ export default function RegisterPage() {
               placeholder="John"
               value={formData.firstName}
               onChange={handleChange}
-              icon={<User className="h-4 w-4" />}
               required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
             />
 
             <ModernInput
@@ -155,8 +155,8 @@ export default function RegisterPage() {
               placeholder="Doe"
               value={formData.lastName}
               onChange={handleChange}
-              icon={<User className="h-4 w-4" />}
               required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
             />
           </div>
 
@@ -168,8 +168,8 @@ export default function RegisterPage() {
             placeholder="john@company.com"
             value={formData.email}
             onChange={handleChange}
-            icon={<Mail className="h-4 w-4" />}
             required
+            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
           />
 
           <div className="space-y-2">
@@ -181,8 +181,8 @@ export default function RegisterPage() {
               placeholder="Create a strong password"
               value={formData.password}
               onChange={handleChange}
-              icon={<Lock className="h-4 w-4" />}
               required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
             />
             
             {/* Password Strength Indicator */}
@@ -224,30 +224,30 @@ export default function RegisterPage() {
             placeholder="Confirm your password"
             value={formData.confirmPassword}
             onChange={handleChange}
-            icon={<Lock className="h-4 w-4" />}
             success={Boolean(formData.confirmPassword) && formData.password === formData.confirmPassword}
             error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Passwords don't match" : undefined}
             required
+            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
           />
 
           <motion.label
-            whileHover={{ scale: 1.02 }}
-            className="flex items-start space-x-3 cursor-pointer"
+            whileHover={{ scale: 1.01 }}
+            className="flex items-start space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
           >
             <Input
               type="checkbox"
               name="agreeToTerms"
               checked={formData.agreeToTerms}
               onChange={handleChange}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mt-0.5"
+              className="w-4 h-4 mt-0.5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
             />
             <span className="text-sm text-gray-600 dark:text-gray-400">
               I agree to the{' '}
-              <Link href="/terms" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+              <Link href="/terms" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+              <Link href="/privacy" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
                 Privacy Policy
               </Link>
             </span>
@@ -255,105 +255,100 @@ export default function RegisterPage() {
 
           <ModernButton
             type="submit"
-            className="w-full"
+            className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200"
             loading={isLoading}
             loadingText="Creating account..."
-            icon={<UserPlus className="h-4 w-4" />}
           >
             Create Account
           </ModernButton>
         </form>
 
-        {/* Divider */}
-        <div className="relative my-6">
+        <div className="relative my-8">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+            <div className="w-full border-t border-gray-200 dark:border-gray-800" />
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">Already have an account?</span>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white dark:bg-gray-950 px-2 text-gray-500">Or sign up with</span>
           </div>
         </div>
 
         {/* SSO Providers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
-          <ModernButton type="button" variant="outline" onClick={async () => {
-            const res = await http.post('/auth/sso/initiate/google');
-            const payload = (res as any)?.data?.data ?? res?.data;
-            const url = payload?.url as string; if (url) window.location.href = url;
-          }}>
-            <RefreshCw className="h-4 w-4 mr-2" /> Google SSO
-          </ModernButton>
-          <ModernButton type="button" variant="outline" onClick={async () => {
-            const res = await http.post('/auth/sso/initiate/microsoft');
-            const payload = (res as any)?.data?.data ?? res?.data;
-            const url = payload?.url as string; if (url) window.location.href = url;
-          }}>
-            <RefreshCw className="h-4 w-4 mr-2" /> Microsoft SSO
-          </ModernButton>
-          <ModernButton type="button" variant="outline" onClick={async () => {
-            const res = await http.post('/auth/sso/initiate/github');
-            const payload = (res as any)?.data?.data ?? res?.data;
-            const url = payload?.url as string; if (url) window.location.href = url;
-          }}>
-            <Github className="h-4 w-4 mr-2" /> GitHub SSO
-          </ModernButton>
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={async () => {
+              const res = await http.post('/auth/sso/initiate/google');
+              const payload = (res as any)?.data?.data ?? res?.data;
+              const url = payload?.url as string; if (url) window.location.href = url;
+            }}
+            className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200 group"
+          >
+            <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4"
+              />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853"
+              />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335"
+              />
+            </svg>
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Sign up with Google</span>
+          </button>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={async () => {
+                const res = await http.post('/auth/sso/initiate/microsoft');
+                const payload = (res as any)?.data?.data ?? res?.data;
+                const url = payload?.url as string; if (url) window.location.href = url;
+              }}
+              className="flex items-center justify-center px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200"
+            >
+              <svg className="h-5 w-5 mr-2" viewBox="0 0 23 23">
+                <path fill="#f35325" d="M1 1h10v10H1z"/>
+                <path fill="#81bc06" d="M12 1h10v10H12z"/>
+                <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+                <path fill="#ffba08" d="M12 12h10v10H12z"/>
+              </svg>
+              <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">Microsoft</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                const res = await http.post('/auth/sso/initiate/github');
+                const payload = (res as any)?.data?.data ?? res?.data;
+                const url = payload?.url as string; if (url) window.location.href = url;
+              }}
+              className="flex items-center justify-center px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200"
+            >
+              <Github className="h-5 w-5 mr-2 text-gray-900 dark:text-white" />
+              <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">GitHub</span>
+            </button>
+          </div>
         </div>
 
-        {/* Sign In Link */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Link
-            href="/auth/login"
-            className="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-600 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 group"
-          >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-            <span>Sign in instead</span>
-          </Link>
-        </motion.div>
-
-        {/* Features List */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mt-6 space-y-3"
-        >
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            What you get with Glavito:
-          </div>
-          {[
-            'Unified inbox for all channels',
-            'AI-powered automation',
-            'Advanced analytics & reporting',
-            '24/7 enterprise support'
-          ].map((feature, index) => (
-            <motion.div
-              key={feature}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7 + index * 0.1 }}
-              className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400"
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Already have an account?{' '}
+            <Link
+              href="/auth/login"
+              className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
             >
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span>{feature}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Security Notice */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
-        >
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-            <Shield className="h-4 w-4 text-green-500" />
-            <span>Your data is encrypted and secure</span>
-          </div>
-        </motion.div>
+              Sign in
+            </Link>
+          </p>
+        </div>
       </ModernAuthCard>
     </ModernAuthLayout>
   );

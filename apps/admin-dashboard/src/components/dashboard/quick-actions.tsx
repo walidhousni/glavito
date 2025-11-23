@@ -1,126 +1,98 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Plus, Users, FileText, Settings, TrendingUp, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Plus, 
-  Users, 
-  MessageSquare, 
-  Settings, 
-  FileText, 
-  BarChart3,
-  Zap,
-  Mail
-} from 'lucide-react';
-import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
-const getQuickActions = (t: any) => [
+const quickActions = [
   {
-    title: t('actions.newTicket.title'),
-    description: t('actions.newTicket.description'),
-    icon: <Plus className="h-6 w-6" />,
-    href: '/dashboard/tickets?action=create',
-    color: 'from-blue-500 to-blue-600',
+    title: 'New Ticket',
+    description: 'Create support ticket',
+    icon: Plus,
+    href: '/dashboard/tickets?create=true',
+    gradient: 'from-blue-500 to-cyan-600',
+    bgGradient: 'from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30',
+    shadow: 'shadow-blue-500/20',
+    hoverShadow: 'hover:shadow-blue-500/30',
   },
   {
-    title: t('actions.addAgent.title'),
-    description: t('actions.addAgent.description'),
-    icon: <Users className="h-6 w-6" />,
-    href: '/dashboard/agents?action=invite',
-    color: 'from-green-500 to-green-600',
+    title: 'New Customer',
+    description: 'Add customer profile',
+    icon: Users,
+    href: '/dashboard/customers?create=true',
+    gradient: 'from-green-500 to-emerald-600',
+    bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30',
+    shadow: 'shadow-green-500/20',
+    hoverShadow: 'hover:shadow-green-500/30',
   },
   {
-    title: t('actions.liveChat.title'),
-    description: t('actions.liveChat.description'),
-    icon: <MessageSquare className="h-6 w-6" />,
-    href: '/dashboard/conversations',
-    color: 'from-purple-500 to-purple-600',
-  },
-  {
-    title: t('actions.analytics.title'),
-    description: t('actions.analytics.description'),
-    icon: <BarChart3 className="h-6 w-6" />,
+    title: 'View Reports',
+    description: 'Analytics dashboard',
+    icon: BarChart3,
     href: '/dashboard/analytics',
-    color: 'from-orange-500 to-orange-600',
+    gradient: 'from-purple-500 to-pink-600',
+    bgGradient: 'from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30',
+    shadow: 'shadow-purple-500/20',
+    hoverShadow: 'hover:shadow-purple-500/30',
   },
   {
-    title: t('actions.workflows.title'),
-    description: t('actions.workflows.description'),
-    icon: <Zap className="h-6 w-6" />,
-    href: '/dashboard/workflows',
-    color: 'from-indigo-500 to-indigo-600',
-  },
-  {
-    title: t('actions.reports.title'),
-    description: t('actions.reports.description'),
-    icon: <FileText className="h-6 w-6" />,
-    href: '/dashboard/reports',
-    color: 'from-pink-500 to-pink-600',
-  },
-  {
-    title: t('actions.emailSetup.title'),
-    description: t('actions.emailSetup.description'),
-    icon: <Mail className="h-6 w-6" />,
-    href: '/dashboard/settings/channels',
-    color: 'from-teal-500 to-teal-600',
-  },
-  {
-    title: t('actions.settings.title'),
-    description: t('actions.settings.description'),
-    icon: <Settings className="h-6 w-6" />,
-    href: '/dashboard/settings',
-    color: 'from-gray-500 to-gray-600',
+    title: 'Settings',
+    description: 'Configure system',
+    icon: Settings,
+    href: '/dashboard/admin-settings',
+    gradient: 'from-orange-500 to-amber-600',
+    bgGradient: 'from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30',
+    shadow: 'shadow-orange-500/20',
+    hoverShadow: 'hover:shadow-orange-500/30',
   },
 ];
 
 export function QuickActions() {
-  const t = useTranslations('quickActions');
-  const quickActions = getQuickActions(t);
-
   return (
-    <Card className="border-0 shadow-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl">
-      <CardHeader className="pb-6">
-        <CardTitle className="text-2xl font-bold flex items-center space-x-3">
-          <div className="p-3 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg">
-            <Zap className="h-6 w-6 text-white" />
-          </div>
-          <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-            {t('title')}
-          </span>
-        </CardTitle>
+    <Card className="border-0 shadow-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl h-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.title}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.1, duration: 0.3 }}
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
             >
               <Link href={action.href}>
-                <Button
-                  variant="ghost"
-                  className="w-full h-auto p-5 flex flex-col items-start space-y-4 hover:bg-slate-50/70 dark:hover:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 hover:border-slate-300/60 dark:hover:border-slate-600/60 rounded-2xl transition-all duration-300 group hover:shadow-lg"
-                >
-                  <div className={`p-3 rounded-2xl bg-gradient-to-r ${action.color} group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
-                    <div className="text-white h-6 w-6">
-                      {action.icon}
+                <div className={cn(
+                  "group p-4 rounded-xl transition-all duration-300 cursor-pointer h-full",
+                  "bg-gradient-to-br border-2 border-transparent",
+                  "hover:scale-105 hover:border-white dark:hover:border-slate-800",
+                  "shadow-lg hover:shadow-xl",
+                  action.bgGradient,
+                  action.shadow,
+                  action.hoverShadow
+                )}>
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <div className={cn(
+                      "h-12 w-12 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6",
+                      action.gradient,
+                      action.shadow
+                    )}>
+                      <action.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">
+                        {action.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {action.description}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-left space-y-2">
-                    <p className="font-semibold text-slate-900 dark:text-white text-base group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
-                      {action.title}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
-                      {action.description}
-                    </p>
-                  </div>
-                </Button>
+                </div>
               </Link>
             </motion.div>
           ))}

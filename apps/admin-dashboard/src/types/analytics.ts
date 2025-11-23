@@ -5,6 +5,7 @@ export interface TimeRange {
   granularity?: 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year'
 }
 
+// Deprecated: prefer shared types from @glavito/shared-types
 export interface RealTimeMetrics {
   timestamp: Date
   activeTickets: number
@@ -32,6 +33,7 @@ export interface PriorityDistribution {
   percentage: number
 }
 
+// Deprecated: prefer shared types from @glavito/shared-types
 export interface KPIMetric {
   id: string
   name: string

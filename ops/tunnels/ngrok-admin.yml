@@ -1,0 +1,20 @@
+version: "2"
+
+# Ngrok configuration for exposing the Admin Dashboard (Next.js) running on localhost:3004
+# Usage:
+#   ngrok start --config ops/tunnels/ngrok-admin.yml admin-dashboard
+#
+# Notes:
+# - domain is optional; set NGROK_DOMAIN_ADMIN to use a reserved domain.
+# - Without a reserved domain, ngrok assigns an ephemeral subdomain.
+
+authtoken: 2prvz9bDhfX8flGcrQAADepSpJt_27usiXLHUh4z6mSwgVMub
+region: us
+
+tunnels:
+  admin-dashboard:
+    addr: http://localhost:3004
+    proto: http
+    domain: skunk-driving-oddly.ngrok-free.app
+    host_header: rewrite
+

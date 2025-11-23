@@ -1,0 +1,2545 @@
+{
+  "dashboard": {
+    "overview": "نظرة عامة على لوحة التحكم",
+    "monitorPerformance": "راقب الأداء وتتبع المقاييس الرئيسية",
+    "searchPlaceholder": "البحث في التذاكر، العملاء، المعرفة...",
+    "newTicket": "تذكرة جديدة",
+    "totalTicketsLabel": "إجمالي التذاكر",
+    "waiting": "في الانتظار",
+    "stats": {
+      "openTickets": "التذاكر المفتوحة",
+      "resolvedTickets": "تم حلها اليوم"
+    },
+    "performance": {
+      "assigned": "مُكلف",
+      "teamPerformance": "أداء الفريق",
+      "topPerformers": "أفضل المؤدين",
+      "leadingAgentsThisMonth": "أفضل الوكلاء هذا الشهر",
+      "viewAll": "عرض الكل",
+      "rank": "المرتبة",
+      "success": "نجاح",
+      "performance": "الأداء",
+      "averageResponseTime": "متوسط وقت الاستجابة",
+      "resolutionRate": "معدل الحل",
+      "customerSatisfaction": "رضا العملاء",
+      "ticketsResolved": "التذاكر المحلولة",
+      "responseTime": "وقت الاستجابة",
+      "satisfactionScore": "نتيجة الرضا"
+    },
+    "dashboardSimple": {
+      "kpi": {
+        "resolvedTickets": "التذاكر المحلولة",
+        "newTickets": "جديدة اليوم"
+      },
+      "charts": {
+        "resolvedVsAll": "المحلولة مقابل جميع التذاكر",
+        "averageResponseTime": "متوسط وقت الاستجابة",
+        "resolved": "محلولة",
+        "all": "الكل",
+        "minutes": "دقائق"
+      },
+      "latest": {
+        "title": "أحدث التذاكر",
+        "number": "رقم التذكرة",
+        "name": "العميل",
+        "subject": "الموضوع",
+        "created": "تم الإنشاء",
+        "modified": "تم التعديل",
+        "assigned": "مُكلف",
+        "category": "الفئة",
+        "status": "الحالة"
+      }
+    },
+    "activity": {
+      "title": "النشاط الأخير",
+      "description": "أحدث التحديثات والأحداث",
+      "viewAll": "عرض كل النشاط",
+      "noActivity": "لا يوجد نشاط حديث",
+      "noActivityDescription": "سيظهر النشاط هنا عند حدوثه",
+      "types": {
+        "ticket": "تذكرة",
+        "agent": "وكيل",
+        "customer": "عميل",
+        "system": "نظام",
+        "message": "رسالة",
+        "sla": "SLA"
+      }
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "description": "المهام الشائعة والاختصارات",
+      "search": "بحث",
+      "createTicket": "إنشاء تذكرة",
+      "createTicketDesc": "بدء تذكرة دعم جديدة",
+      "sendMessage": "إرسال رسالة",
+      "sendMessageDesc": "رسالة سريعة للعميل",
+      "addCustomer": "إضافة عميل",
+      "addCustomerDesc": "تسجيل عميل جديد",
+      "generateReport": "إنشاء تقرير",
+      "generateReportDesc": "إنشاء تقرير تحليلي",
+      "notifications": "الإشعارات",
+      "notificationsDesc": "عرض جميع الإشعارات",
+      "settings": "الإعدادات",
+      "settingsDesc": "تكوين إعدادات النظام",
+      "go": "اذهب",
+      "quickCommand": "أمر سريع",
+      "pressCmdK": "اضغط على",
+      "forQuickActions": "للإجراءات السريعة",
+      "viewTickets": "عرض جميع التذاكر",
+      "manageAgents": "إدارة الوكلاء",
+      "viewReports": "عرض التقارير"
+    },
+    "analytics": {
+      "title": "نظرة عامة على التحليلات",
+      "description": "تتبع مقاييس الأداء والاتجاهات",
+      "exportData": "تصدير البيانات",
+      "filter": "تصفية",
+      "totalTickets": "إجمالي التذاكر",
+      "resolved": "محلولة",
+      "satisfaction": "الرضا",
+      "tickets": "التذاكر",
+      "resolutionRate": "معدل الحل",
+      "avgSatisfaction": "متوسط الرضا"
+    },
+    "activityPage": {
+      "title": "سجل النشاط",
+      "subtitle": "تتبع جميع أنشطة وأحداث النظام",
+      "filters": {
+        "title": "المرشحات",
+        "subtitle": "تصفية الأنشطة حسب النوع والأولوية ومصطلحات البحث",
+        "searchPlaceholder": "البحث في الأنشطة...",
+        "type": "نوع النشاط",
+        "priority": "الأولوية",
+        "all": "الكل",
+        "loading": "جاري التحميل...",
+        "refresh": "تحديث",
+        "types": {
+          "ticket": "تذكرة",
+          "message": "رسالة",
+          "sla": "SLA",
+          "system": "نظام"
+        },
+        "priorities": {
+          "urgent": "عاجل",
+          "high": "عالي",
+          "medium": "متوسط",
+          "low": "منخفض"
+        }
+      }
+    }
+  },
+  "tickets": {
+    "selectConversation": "اختر محادثة",
+    "selectConversationDescription": "اختر محادثة من صندوق الوارد لبدء مساعدة عملائك",
+    "customerProfilePlaceholder": "ستظهر تفاصيل العميل هنا عند اختيار محادثة",
+    "priority": {
+      "urgent": "عاجل",
+      "high": "عالي",
+      "medium": "متوسط",
+      "low": "منخفض",
+      "critical": "حرج"
+    },
+    "status": {
+      "open": "مفتوح",
+      "in_progress": "قيد التنفيذ",
+      "waiting": "في الانتظار",
+      "resolved": "محلول",
+      "closed": "مغلق"
+    },
+    "createDialog": {
+      "title": "إنشاء تذكرة جديدة",
+      "description": "إنشاء تذكرة دعم جديدة للعميل",
+      "step": "الخطوة",
+      "of": "من",
+      "basicInformation": "المعلومات الأساسية",
+      "subject": "الموضوع",
+      "subjectPlaceholder": "أدخل موضوع التذكرة",
+      "descriptionLabel": "الوصف",
+      "descriptionPlaceholder": "صف المشكلة أو الطلب",
+      "customer": "العميل",
+      "selectCustomer": "اختر عميلاً",
+      "searchCustomer": "البحث في العملاء...",
+      "noCompany": "لا توجد شركة",
+      "noCustomersFound": "لم يتم العثور على عملاء",
+      "unknown": "غير معروف",
+      "priority": "الأولوية",
+      "channel": "القناة",
+      "assignee": "المسند إليه",
+      "selectAssignee": "اختر المسند إليه",
+      "unassigned": "غير مسند",
+      "team": "الفريق",
+      "selectTeam": "اختر فريقاً",
+      "noTeam": "لا يوجد فريق",
+      "tags": "العلامات",
+      "addTag": "إضافة علامة",
+      "suggestedTags": "العلامات المقترحة",
+      "selectedTags": "العلامات المختارة",
+      "dueDate": "تاريخ الاستحقاق",
+      "selectDueDate": "اختر تاريخ الاستحقاق",
+      "additionalFields": "حقول إضافية",
+      "selectOption": "اختر...",
+      "summary": "الملخص",
+      "back": "السابق",
+      "next": "التالي",
+      "create": "إنشاء التذكرة",
+      "creating": "جاري الإنشاء...",
+      "validation": {
+        "subjectRequired": "الموضوع مطلوب",
+        "descriptionRequired": "الوصف مطلوب",
+        "customerRequired": "العميل مطلوب",
+        "channelRequired": "القناة مطلوبة",
+        "createFailed": "فشل في إنشاء التذكرة"
+      }
+    }
+  },
+  "navigation": {
+    "supportPlatform": "منصة الدعم",
+    "newTicket": "تذكرة جديدة",
+    "logout": "تسجيل الخروج",
+    "groups": {
+      "main": "الرئيسي",
+      "manage": "إدارة",
+      "insights": "الرؤى",
+      "automation": "الأتمتة",
+      "settings": "الإعدادات"
+    },
+    "dashboard": "لوحة التحكم",
+    "agent_dashboard": "لوحة تحكم الوكيل",
+    "tickets": "التذاكر",
+    "activity": "النشاط",
+    "customers": "العملاء",
+    "teams": "الفريق",
+    "agents": "الوكلاء",
+    "crm": "إدارة علاقات العملاء",
+    "analytics": "التحليلات",
+    "business_insights": "رؤى الأعمال",
+    "ai_intelligence": "الذكاء الاصطناعي",
+    "coaching": "التدريب",
+    "knowledge": "المعرفة",
+    "workflows": "سير العمل",
+    "marketplace": "السوق",
+    "marketing": "التسويق",
+    "integrations": "التكاملات",
+    "whatsapp_automation": "أتمتة واتساب",
+    "customize_dashboard": "تخصيص لوحة التحكم",
+    "permissions": "الصلاحيات",
+    "admin_settings": "إعدادات الإدارة",
+    "conversations": "المحادثات",
+    "notifications": "الإشعارات"
+  },
+  "common": {
+    "searchPlaceholder": "البحث في التذاكر، العملاء، المعرفة...",
+    "createTicket": "إنشاء تذكرة",
+    "theme": "المظهر",
+    "light": "فاتح",
+    "dark": "داكن",
+    "system": "النظام",
+    "notifications": "الإشعارات",
+    "new": "جديد",
+    "markAllRead": "تحديد الكل كمقروء",
+    "viewAll": "عرض الكل",
+    "settings": "الإعدادات",
+    "help": "المساعدة",
+    "logout": "تسجيل الخروج"
+  },
+  "ticketsWorkspace": {
+    "title": "مساحة عمل التذاكر",
+    "subtitle": "إدارة والرد على تذاكر العملاء",
+    "newTicket": "تذكرة جديدة",
+    "searchPlaceholder": "البحث في التذاكر، العملاء، المعرفة...",
+    "urgent": "عاجل",
+    "unassigned": "غير مُكلف",
+    "mine": "تذاكري",
+    "readyToConnect": "جاهز للاتصال",
+    "selectTicketDescription": "اختر تذكرة من القائمة لبدء محادثة",
+    "multiChannel": "متعدد القنوات",
+    "multiChannelDesc": "دعم عبر جميع القنوات",
+    "aiPowered": "مدعوم بالذكاء الاصطناعي",
+    "aiPoweredDesc": "مساعدة ذكية وأتمتة",
+    "teamCollaboration": "تعاون الفريق",
+    "teamCollaborationDesc": "العمل معاً بسلاسة",
+    "guide": "دليل",
+    "createTicket": "إنشاء تذكرة",
+    "aiAssistant": "مساعد الذكاء الاصطناعي",
+    "aiAssistantDesc": "رفيق الدعم الذكي الخاص بك",
+    "askAiPlaceholder": "اسأل الذكاء الاصطناعي أو ابحث في المعرفة...",
+    "aiSuggest": "اقتراح الذكاء الاصطناعي",
+    "popular": "شائع",
+    "searchingKnowledge": "البحث في قاعدة المعرفة...",
+    "article": "مقال",
+    "faq": "الأسئلة الشائعة",
+    "aiPoweredKnowledge": "المعرفة المدعومة بالذكاء الاصطناعي",
+    "aiKnowledgeDesc": "احصل على إجابات فورية من قاعدة المعرفة الذكية",
+    "howToResetPassword": "كيفية إعادة تعيين كلمة المرور",
+    "billingAndPayments": "الفواتير والمدفوعات",
+    "accountSetupGuide": "دليل إعداد الحساب",
+    "noResultsFound": "لم يتم العثور على نتائج",
+    "noResultsDesc": "جرب كلمات مفتاحية مختلفة أو تصفح كل المحتوى",
+    "browseAll": "تصفح الكل",
+    "overdue": "متأخر",
+    "week": "الأسبوع",
+    "active": "نشط"
+  },
+  "conversationPanel": {
+    "linkedTicket": "تذكرة مرتبطة",
+    "openTicket": "فتح التذكرة",
+    "starTicket": "وضع نجمة على التذكرة",
+    "archive": "أرشفة",
+    "settings": "الإعدادات",
+    "delete": "حذف",
+    "addTag": "إضافة علامة…",
+    "removeTag": "إزالة العلامة",
+    "starting": "بدء التشغيل…",
+    "inCall": "في مكالمة",
+    "call": "مكالمة",
+    "resolve": "حل",
+    "snooze": "تأجيل",
+    "escalate": "تصعيد",
+    "aiCoach": "مدرب الذكاء الاصطناعي",
+    "assigning": "تعيين…",
+    "assignToMe": "تعيين لي",
+    "autoAssigning": "تعيين تلقائي…",
+    "autoAssign": "تعيين تلقائي",
+    "notes": "الملاحظات",
+    "watchers": "المتابعون",
+    "similarTickets": "تذاكر مشابهة",
+    "analyzing": "تحليل…",
+    "analyze": "تحليل",
+    "exporting": "تصدير…",
+    "export": "تصدير",
+    "aiAutopilot": "الطيار الآلي للذكاء الاصطناعي",
+    "autopilot": {
+      "modeOff": "إيقاف",
+      "modeDraft": "مسودة",
+      "modeAuto": "تلقائي",
+      "minConfidence": "الحد الأدنى للثقة",
+      "allowedChannels": "القنوات المسموحة",
+      "maxPerHour": "الحد الأقصى للردود/ساعة",
+      "summary": "{mode} • ≥{confidence}% • {max}/س{channels}"
+    },
+    "analyzingConversation": "تحليل المحادثة لاقتراح مسودة…",
+    "insert": "إدراج",
+    "send": "إرسال",
+    "dismiss": "رفض",
+    "readyToStart": "جاهز لبدء المحادثة",
+    "conversationStartDescription": "هذه بداية محادثتك مع العميل. أرسل رسالة ودية للبدء.",
+    "useTemplate": "استخدام قالب",
+    "sendGreeting": "إرسال تحية",
+    "recentCampaigns": "الحملات الأخيرة",
+    "aiPerformanceCoach": "مدرب الأداء بالذكاء الاصطناعي",
+    "realTimeInsights": "رؤى المحادثة في الوقت الفعلي",
+    "clarity": "الوضوح",
+    "sentiment": "المشاعر",
+    "fillerWords": "كلمات الحشو",
+    "refreshAnalysis": "تحديث التحليل",
+    "fullDashboard": "لوحة التحكم الكاملة",
+    "aiReady": "الذكاء الاصطناعي جاهز",
+    "typing": "يكتب…",
+    "customerOnline": "العميل متصل",
+    "whatsappChannel": "قناة واتساب",
+    "attachFile": "إرفاق ملف",
+    "typeMessage": "اكتب رسالتك...",
+    "tools": "الأدوات",
+    "templates": "القوالب",
+    "interactive": "تفاعلي",
+    "location": "الموقع",
+    "contact": "جهة الاتصال",
+    "sticker": "ملصق",
+    "openAiAssistant": "فتح مساعد الذكاء الاصطناعي",
+    "instagramWindowExpired": "انتهت نافذة المراسلة على إنستغرام لمدة 24 ساعة. الردود محظورة.",
+    "whatsappTemplates": "قوالب واتساب",
+    "selectTemplateAndFill": "اختر قالباً واملأ المتغيرات",
+    "searchTemplates": "البحث في القوالب...",
+    "refresh": "تحديث",
+    "loading": "جاري التحميل...",
+    "variables": "المتغيرات",
+    "variable": "متغير {number}",
+    "clear": "مسح",
+    "sendTemplate": "إرسال القالب",
+    "whatsappInteractive": "واتساب تفاعلي",
+    "buildInteractiveMessage": "بناء رسالة تفاعلية زر أو قائمة",
+    "buttons": "الأزرار",
+    "list": "قائمة",
+    "bodyText": "نص الرسالة",
+    "buttonTitle": "عنوان الزر {number}",
+    "addButton": "إضافة زر",
+    "listButtonText": "نص زر القائمة",
+    "sectionTitle": "عنوان القسم",
+    "rowTitle": "عنوان الصف {number}",
+    "descriptionOptional": "الوصف (اختياري)",
+    "addRow": "إضافة صف",
+    "cancel": "إلغاء",
+    "pleaseChooseOption": "يرجى اختيار خيار",
+    "choose": "اختر",
+    "options": "الخيارات",
+    "sendLocation": "إرسال الموقع",
+    "shareLatLng": "مشاركة خط العرض/الطول",
+    "latitude": "خط العرض",
+    "longitude": "خط الطول",
+    "nameOptional": "الاسم (اختياري)",
+    "addressOptional": "العنوان (اختياري)",
+    "sendContact": "إرسال جهة الاتصال",
+    "shareContactCard": "مشاركة بطاقة اتصال",
+    "name": "الاسم",
+    "phoneE164": "الهاتف (E.164)",
+    "noNotesYet": "لا توجد ملاحظات بعد",
+    "private": "خاص",
+    "addNote": "إضافة ملاحظة",
+    "noWatchers": "لا يوجد متابعون",
+    "watchTicketDescription": "يمكنك متابعة هذه التذكرة للحصول على إشعارات",
+    "watch": "متابعة",
+    "noSimilarTickets": "لا توجد تذاكر مشابهة",
+    "ticketTimeline": "الجدول الزمني للتذكرة",
+    "noTimelineEvents": "لا توجد أحداث في الجدول الزمني",
+    "exportTicket": "تصدير التذكرة",
+    "close": "إغلاق",
+    "downloadJson": "تحميل JSON",
+    "satisfactionSurveyTitle": "استطلاع الرضا",
+    "satisfactionSurveyDescription": "إرسال استطلاع رضا للعميل",
+    "sendViaEmail": "إرسال عبر البريد الإلكتروني",
+    "sendViaWhatsApp": "إرسال عبر واتساب",
+    "preview": "معاينة",
+    "question1": "ما مدى رضاك عن دعمنا؟",
+    "question2": "كيف تقيم وقت الاستجابة؟",
+    "question3": "هل تم حل مشكلتك بالكامل؟",
+    "question4": "هل تنصح الآخرين بنا؟",
+    "sending": "جاري الإرسال...",
+    "sendButton": "إرسال الاستطلاع",
+    "skip": "تخطي",
+    "sent": "تم إرسال الاستطلاع!",
+    "sentDescription": "سيستلم العميل استطلاع الرضا قريباً."
+  },
+  "threadView": {
+    "loadingMessages": "جاري تحميل الرسائل…",
+    "failedToLoadMessages": "فشل في تحميل الرسائل"
+  },
+  "ticketsView": {
+    "title": "التذاكر",
+    "subtitle": "إدارة وتتبع تذاكر دعم العملاء",
+    "refresh": "تحديث",
+    "save": "حفظ",
+    "createTicket": "إنشاء تذكرة",
+    "searchPlaceholder": "البحث في التذاكر، العملاء، المعرفة...",
+    "filtersLabel": "المرشحات",
+    "views": {
+      "list": "قائمة",
+      "board": "لوحة",
+      "table": "جدول"
+    },
+    "filters": {
+      "status": "الحالة",
+      "priority": "الأولوية",
+      "tags": "العلامات"
+    },
+    "suggestions": {
+      "subjects": "المواضيع",
+      "tags": "العلامات",
+      "customers": "العملاء"
+    },
+    "saved": {
+      "button": "محفوظ",
+      "searches": "البحث المحفوظ",
+      "none": "لا توجد عمليات بحث محفوظة",
+      "semanticOn": "بحث بالذكاء الاصطناعي",
+      "semanticOff": "بحث أساسي"
+    },
+    "bulkActionSuccess": "تم تطبيق الإجراء المجمع: {action} على {count} تذكرة",
+    "savedSearchCreated": "تم إنشاء البحث المحفوظ: {name}",
+    "failedToSaveSearch": "فشل في حفظ البحث",
+    "savedSearchDeleted": "تم حذف البحث المحفوظ",
+    "failedToDeleteSearch": "فشل في حذف البحث",
+    "aiAnalyze": "تحليل بالذكاء الاصطناعي",
+    "aiAutoAssign": "تعيين تلقائي بالذكاء الاصطناعي",
+    "table": {
+      "ticket": "التذكرة",
+      "status": "الحالة",
+      "priority": "الأولوية",
+      "customer": "العميل",
+      "created": "تم الإنشاء",
+      "id": "المعرف",
+      "subject": "الموضوع",
+      "channel": "القناة",
+      "assignee": "المُكلف"
+    },
+    "noSubject": "لا يوجد موضوع",
+    "noDescription": "لا يوجد وصف متاح",
+    "actions": "الإجراءات",
+    "view": "عرض",
+    "edit": "تعديل",
+    "assign": "تعيين",
+    "noTicketsFound": "لم يتم العثور على تذاكر",
+    "noTicketsMatchFilters": "لا توجد تذاكر تطابق المرشحات الحالية. جرب تعديل معايير البحث.",
+    "getStartedMessage": "ابدأ بإنشاء تذكرتك الأولى أو انتظر وصول استفسارات العملاء.",
+    "clearFilters": "مسح المرشحات",
+    "noTickets": "لا توجد تذاكر",
+    "channels": {
+      "whatsapp": "واتساب",
+      "instagram": "إنستغرام",
+      "email": "البريد الإلكتروني",
+      "web": "الويب"
+    },
+    "unassigned": "غير مُكلف",
+    "pagination": {
+      "showing": "عرض {start} إلى {end} من {total} نتيجة",
+      "previous": "السابق",
+      "next": "التالي"
+    }
+  },
+  "customers": {
+    "title": "العملاء",
+    "subtitle": "إدارة وتحليل علاقات العملاء",
+    "exportReport": "تصدير التقرير",
+    "addCustomer": "إضافة عميل",
+    "rescoreHealth": "إعادة حساب الصحة",
+    "stats": {
+      "totalCustomers": "إجمالي العملاء",
+      "thisMonth": "هذا الشهر",
+      "activeCustomers": "العملاء النشطون",
+      "ofTotal": "من الإجمالي",
+      "avgLifetimeValue": "متوسط القيمة مدى الحياة",
+      "fromLastMonth": "من الشهر الماضي",
+      "churnRate": "معدل التسرب"
+    },
+    "tabs": {
+      "overview": "نظرة عامة",
+      "healthScore": "درجة الصحة",
+      "journey": "الرحلة",
+      "interactions": "التفاعلات",
+      "insights": "الرؤى"
+    },
+    "segments": {
+      "title": "شرائح العملاء",
+      "description": "تنظيم العملاء في مجموعات ذات معنى",
+      "newCustomers": "عملاء جدد",
+      "newCustomersDesc": "العملاء المكتسبون مؤخراً",
+      "customers": "العملاء",
+      "avgValue": "متوسط القيمة",
+      "monthlyGrowth": "النمو الشهري",
+      "segmentHealth": "صحة الشريحة",
+      "viewCustomers": "عرض العملاء",
+      "createCampaign": "إنشاء حملة"
+    },
+    "topCustomers": {
+      "title": "أفضل العملاء",
+      "description": "أكثر العملاء قيمة لديك"
+    },
+    "keyInsights": "الرؤى الرئيسية",
+    "sentiment": "المشاعر",
+    "score": "النتيجة",
+    "trend": "الاتجاه",
+    "confidence": "الثقة",
+    "opportunities": "الفرص",
+    "nextBestActions": "أفضل الإجراءات التالية",
+    "execute": "تنفيذ",
+    "loading": "جاري التحميل...",
+    "refresh": "تحديث",
+    "searchCustomers": "البحث في العملاء...",
+    "selectSegment": "اختر الشريحة",
+    "allSegments": "جميع الشرائح",
+    "filters": "المرشحات",
+    "viewDetails": "عرض التفاصيل",
+    "exportData": "تصدير البيانات",
+    "sendCampaign": "إرسال حملة",
+    "createAutomation": "إنشاء أتمتة",
+    "excellent": "ممتاز",
+    "good": "جيد",
+    "attention": "يحتاج انتباه",
+    "critical": "حرج",
+    "noJourneyData": "لا توجد بيانات رحلة متاحة لهذا العميل",
+    "allStages": "جميع المراحل",
+    "allChannels": "جميع القنوات",
+    "moreFilters": "مرشحات أكثر",
+    "journeyStages": "مراحل الرحلة",
+    "interactionTimeline": "الجدول الزمني للتفاعل",
+    "conversionEvents": "أحداث التحويل",
+    "details": "التفاصيل",
+    "attribution": "الانتماء",
+    "value": "القيمة",
+    "stages": {
+      "awareness": "الوعي",
+      "interest": "الاهتمام",
+      "consideration": "النظر",
+      "purchase": "الشراء",
+      "onboarding": "الإدماج",
+      "retention": "الاحتفاظ",
+      "expansion": "التوسع",
+      "advocacy": "المناصرة"
+    },
+    "channels": {
+      "email": "البريد الإلكتروني",
+      "whatsapp": "واتساب",
+      "web": "الويب",
+      "phone": "الهاتف",
+      "instagram": "إنستغرام"
+    },
+    "healthScore": {
+      "title": "درجة صحة العميل",
+      "factors": "عوامل الصحة",
+      "recommendations": "توصيات الذكاء الاصطناعي",
+      "ticketVolume": "حجم التذاكر",
+      "responseTime": "وقت الاستجابة",
+      "satisfaction": "الرضا",
+      "engagement": "التفاعل",
+      "churnRisk": "خطر التسرب",
+      "noRecommendations": "لا توجد توصيات متاحة",
+      "noRecommendationsDesc": "ستظهر التوصيات المدعومة بالذكاء الاصطناعي هنا بناءً على سلوك العميل.",
+      "checkBack": "تحقق مرة أخرى مع توفر المزيد من بيانات التفاعل.",
+      "recentTrend": "الاتجاه الأخير",
+      "last30Days": "آخر 30 يوماً",
+      "healthImprovement": "تحسن درجة الصحة",
+      "points": "نقاط",
+      "contactCustomer": "الاتصال بالعميل",
+      "viewHistory": "عرض السجل"
+    },
+    "riskLevel": {
+      "low": "خطر منخفض",
+      "medium": "خطر متوسط",
+      "high": "خطر عالي",
+      "critical": "حرج"
+    },
+    "analytics": {
+      "title": "تحليلات العملاء",
+      "subtitle": "رؤى عميقة حول سلوك العملاء وأنماط التفاعل",
+      "last7Days": "آخر 7 أيام",
+      "last30Days": "آخر 30 يوماً",
+      "last90Days": "آخر 90 يوماً",
+      "lastYear": "السنة الماضية",
+      "allMetrics": "جميع المقاييس",
+      "engagement": "التفاعل",
+      "conversion": "التحويل",
+      "retention": "الاحتفاظ",
+      "refresh": "تحديث",
+      "export": "تصدير",
+      "channelPreferences": "تفضيلات القنوات",
+      "peakHours": "ساعات الذروة",
+      "engagementMetrics": "مقاييس التفاعل",
+      "avgSessionDuration": "متوسط مدة الجلسة",
+      "pagesPerSession": "صفحات لكل جلسة",
+      "bounceRate": "معدل الارتداد",
+      "returnVisitorRate": "معدل الزوار العائدين",
+      "emailOpenRate": "معدل فتح البريد الإلكتروني",
+      "clickThroughRate": "معدل النقر",
+      "fromLastMonth": "من الشهر الماضي",
+      "conversionFunnel": "قمع التحويل",
+      "cohortAnalysis": "تحليل الأفواج",
+      "retentionRatesByMonth": "معدلات الاحتفاظ حسب الشهر",
+      "conversionRate": "معدل التحويل: {rate}%",
+      "retained": "مُحتفظ به: {rate}%",
+      "predictiveInsights": "الرؤى التنبؤية",
+      "churnPrediction": "توقع التسرب",
+      "lifetimeValueForecast": "توقع القيمة مدى الحياة",
+      "upsellOpportunities": "فرص البيع الإضافي",
+      "highRisk": "خطر عالي",
+      "mediumRisk": "خطر متوسط",
+      "lowRisk": "خطر منخفض",
+      "predictedChurnRate": "معدل التسرب المتوقع",
+      "nextQuarter": "الربع القادم",
+      "nextYear": "العام القادم",
+      "growth": "النمو: {rate}",
+      "customersCount": "{count} عميل",
+      "likely": "محتمل: {probability}%",
+      "channels": {
+        "email": "البريد الإلكتروني",
+        "whatsapp": "واتساب",
+        "webChat": "دردشة ويب",
+        "instagram": "إنستغرام"
+      },
+      "funnelStages": {
+        "awareness": "الوعي",
+        "interest": "الاهتمام",
+        "consideration": "النظر",
+        "purchase": "الشراء",
+        "retention": "الاحتفاظ"
+      },
+      "segments": {
+        "vipCustomers": "عملاء VIP",
+        "engagedUsers": "مستخدمون متفاعلون"
+      },
+      "noPeakHourData": "لا توجد بيانات ساعات الذروة",
+      "noPeakHourDesc": "ستظهر تحليلات ساعات الذروة هنا مع زيادة تفاعلات العملاء.",
+      "noPeakHourHelp": "يساعد هذا في تحسين جدولة فريق الدعم.",
+      "noConversionData": "لا توجد بيانات تحويل",
+      "noConversionDesc": "ستظهر بيانات قمع التحويل هنا عندما يتقدم العملاء في مراحل المبيعات.",
+      "noConversionHelp": "تتبع معدلات تحويل الزوار إلى عملاء.",
+      "noCohortData": "لا توجد بيانات أفواج",
+      "noCohortDesc": "ستظهر تحليلات احتفاظ الأفواج هنا مع اكتساب المزيد من العملاء.",
+      "noCohortHelp": "تتبع جودة الاحتفاظ بالعملاء بمرور الوقت."
+    },
+    "insights": {
+      "opportunities": "الفرص",
+      "risks": "المخاطر",
+      "vipGrowth": "فرصة نمو VIP",
+      "vipGrowthDesc": "العملاء ذوو القيمة العالية يُظهرون أنماط تفاعل قوية. فكر في توسيع برنامج VIP الخاص بك لتحقيق المزيد من الإيرادات.",
+      "expandProgram": "توسيع البرنامج",
+      "newCustomerSuccess": "نجاح العملاء الجدد",
+      "newCustomerSuccessDesc": "إدماج العملاء الجدد يُظهر نتائج ممتازة. حسّن العملية لتحسين معدلات الاحتفاظ.",
+      "optimizeOnboarding": "تحسين الإدماج",
+      "atRiskIncrease": "العملاء المعرضون للخطر في ازدياد",
+      "atRiskIncreaseDesc": "درجات صحة العملاء تتراجع. نفّذ استراتيجيات الاحتفاظ لمنع التسرب.",
+      "implementRetention": "تنفيذ الاحتفاظ",
+      "supportVolumeRising": "حجم الدعم في ازدياد",
+      "supportVolumeRisingDesc": "حجم تذاكر الدعم آخذ في الازدياد. راجع العمليات لتحسين الكفاءة.",
+      "reviewProcesses": "مراجعة العمليات"
+    },
+    "createDialog": {
+      "title": "إضافة عميل جديد",
+      "description": "إنشاء ملف عميل جديد بمعلوماته",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "عنوان البريد الإلكتروني",
+      "company": "الشركة",
+      "phone": "رقم الهاتف",
+      "required": "هذا الحقل مطلوب",
+      "cancel": "إلغاء",
+      "creating": "جاري الإنشاء...",
+      "create": "إنشاء العميل"
+    },
+    "profile": {
+      "loading": "جاري تحميل ملف العميل",
+      "gatheringInsights": "جمع رؤى العميل والبيانات التحليلية",
+      "notFound": "العميل غير موجود",
+      "notFoundDescription": "لم يتم العثور على ملف العميل المطلوب أو تحميله.",
+      "edit": "تعديل",
+      "sendMessage": "إرسال رسالة",
+      "callCustomer": "الاتصال بالعميل",
+      "enterpriseCustomer": "عميل مؤسسي",
+      "verified": "متحقق",
+      "ltv": "القيمة مدى الحياة",
+      "health": "درجة الصحة",
+      "since": "عميل منذ",
+      "loyal": "مخلص",
+      "lifetimeValue": "القيمة مدى الحياة",
+      "predicted": "متوقع",
+      "customerSince": "عميل منذ",
+      "recentActivity": "النشاط الأخير",
+      "latestInteractions": "أحدث تفاعلات وأنشطة العميل",
+      "noRecentActivity": "لا يوجد نشاط حديث",
+      "noRecentActivityDescription": "سيظهر نشاط العميل هنا مع حدوث التفاعلات.",
+      "aiAnalysis": "تحليل العميل المدعوم بالذكاء الاصطناعي والرؤى",
+      "aiInsights": "رؤى الذكاء الاصطناعي",
+      "noInsightsAvailable": "لا توجد رؤى متاحة",
+      "insightsPlaceholder": "ستظهر الرؤى المدعومة بالذكاء الاصطناعي هنا بناءً على سلوك وتفاعلات العميل.",
+      "reply": "رد",
+      "contactInformation": "معلومات الاتصال",
+      "companyDetails": "تفاصيل الشركة",
+      "noCustomFields": "لا توجد حقول مخصصة متاحة",
+      "quickActions": "إجراءات سريعة",
+      "createTicket": "إنشاء تذكرة",
+      "scheduleCall": "جدولة مكالمة",
+      "addToVIP": "إضافة إلى VIP",
+      "exportProfile": "تصدير الملف",
+      "unknown": "غير معروف",
+      "recent": "حديث",
+      "orders": "الطلبات",
+      "creating": "جاري الإنشاء…",
+      "createOrder": "إنشاء طلب",
+      "noRecentOrders": "لا توجد طلبات حديثة",
+      "saving": "جاري الحفظ...",
+      "save": "حفظ",
+      "sending": "جاري الإرسال...",
+      "send": "إرسال",
+      "channel": "القناة",
+      "selectChannel": "اختر قناة",
+      "message": "الرسالة",
+      "typeMessage": "اكتب رسالتك هنا..."
+    },
+    "lifetimeValue": "القيمة مدى الحياة",
+    "predicted": "متوقع",
+    "customerSince": "عميل منذ",
+    "recentActivity": "النشاط الأخير",
+    "reply": "رد",
+    "risk": "خطر"
+  },
+  "teams": {
+    "title": "إدارة الفرق",
+    "subtitle": "إدارة فرق الدعم وأعضائها",
+    "details": {
+      "title": "تفاصيل الفريق",
+      "subtitle": "إدارة أعضاء الفريق والإعدادات"
+    },
+    "members": "الأعضاء",
+    "tabs": {
+      "members": "الأعضاء",
+      "settings": "الإعدادات",
+      "automation": "الأتمتة"
+    },
+    "membersList": "أعضاء الفريق",
+    "membersDescription": "عرض وإدارة أعضاء الفريق",
+    "table": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "role": "الدور",
+      "actions": "الإجراءات"
+    },
+    "invite": {
+      "title": "دعوة عضو",
+      "subtitle": "إضافة أعضاء جدد إلى الفريق",
+      "selectUser": "اختر المستخدم",
+      "userPlaceholder": "اختر مستخدم للدعوة",
+      "role": "الدور",
+      "rolePlaceholder": "اختر دور",
+      "inviting": "جاري الدعوة...",
+      "invite": "دعوة"
+    },
+    "roles": {
+      "member": "عضو",
+      "lead": "قائد",
+      "admin": "مدير"
+    },
+    "settings": {
+      "title": "إعدادات الفريق",
+      "subtitle": "تكوين تفضيلات وإعدادات الفريق",
+      "autoAssign": {
+        "title": "تعيين التذاكر تلقائياً",
+        "desc": "تعيين التذاكر تلقائياً لأعضاء الفريق المتاحين"
+      },
+      "color": "لون الفريق",
+      "description": "وصف الفريق",
+      "descriptionPlaceholder": "أدخل وصف الفريق",
+      "reset": "إعادة تعيين",
+      "save": "حفظ"
+    },
+    "automation": {
+      "title": "أتمتة الفريق",
+      "subtitle": "إعداد سير العمل المؤتمت لهذا الفريق",
+      "description": "إنشاء سير عمل مخصص لأتمتة توجيه التذاكر والإشعارات وعمليات الفريق.",
+      "openBuilder": "فتح منشئ سير العمل"
+    },
+    "empty": "لم يتم العثور على أعضاء",
+    "actions": {
+      "view": "عرض",
+      "createTeam": "إنشاء فريق",
+      "editTeam": "تعديل الفريق",
+      "deleteTeam": "حذف الفريق",
+      "viewTeam": "عرض",
+      "settings": "الإعدادات",
+      "cancel": "إلغاء",
+      "create": "إنشاء الفريق",
+      "save": "حفظ",
+      "delete": "حذف",
+      "saving": "جاري الحفظ…",
+      "deleting": "جاري الحذف…"
+    },
+    "create": {
+      "title": "إنشاء فريق جديد",
+      "description": "إنشاء فريق دعم جديد لتنظيم الوكلاء وإدارة التذاكر."
+    },
+    "fields": {
+      "name": "اسم الفريق",
+      "description": "الوصف",
+      "color": "لون الفريق"
+    },
+    "placeholders": {
+      "teamName": "أدخل اسم الفريق",
+      "teamDescription": "أدخل وصف الفريق",
+      "searchTeams": "البحث في الفرق..."
+    },
+    "labels": {
+      "default": "افتراضي",
+      "members": "الأعضاء",
+      "lead": "قائد",
+      "teamLead": "قائد الفريق"
+    },
+    "descriptions": {
+      "teamSettings": "تعديل إعدادات JSON للفريق"
+    },
+    "confirmations": {
+      "deleteTeam": "هل أنت متأكد من أنك تريد حذف هذا الفريق؟ لا يمكن التراجع عن هذا الإجراء."
+    },
+    "emptyState": {
+      "title": "لم يتم العثور على فرق",
+      "description": "ابدأ بإنشاء فريقك الأول.",
+      "searchDescription": "حاول تعديل معايير البحث الخاصة بك."
+    }
+  },
+  "agents": {
+    "title": "إدارة الوكلاء",
+    "subtitle": "إدارة وكلاء الدعم وأدائهم",
+    "inviteAgent": "دعوة وكيل",
+    "totalAgents": "إجمالي الوكلاء",
+    "availableAgents": "الوكلاء المتاحون",
+    "avgResponseTime": "متوسط وقت الاستجابة",
+    "satisfaction": "الرضا",
+    "searchAgents": "البحث في الوكلاء...",
+    "filterByStatus": "تصفية حسب الحالة",
+    "filterBySkill": "تصفية حسب المهارة",
+    "allStatus": "جميع الحالات",
+    "allSkills": "جميع المهارات",
+    "available": "متاح",
+    "busy": "مشغول",
+    "away": "غائب",
+    "offline": "غير متصل",
+    "editProfile": "تعديل الملف الشخصي",
+    "viewPerformance": "عرض الأداء",
+    "settings": "الإعدادات",
+    "autoAssign": "تعيين تلقائي",
+    "manual": "يدوي",
+    "currentWorkload": "عبء العمل الحالي",
+    "responseTime": "وقت الاستجابة",
+    "resolutionRate": "معدل الحل",
+    "resolved": "محلول",
+    "skills": "المهارات",
+    "noAgentsFound": "لم يتم العثور على وكلاء",
+    "tryAdjustingSearch": "حاول تعديل معايير البحث أو دعوة وكلاء جدد.",
+    "getStartedInviting": "ابدأ بدعوة أول وكيل للانضمام إلى الفريق.",
+    "cards": {
+      "totalAgentsDesc": "إجمالي عدد الوكلاء في فريقك",
+      "availableDesc": "الوكلاء المتاحون حالياً لتذاكر جديدة",
+      "avgResponseDesc": "متوسط وقت الاستجابة عبر جميع الوكلاء",
+      "satisfactionDesc": "متوسط تقييم رضا العملاء"
+    },
+    "profile": {
+      "title": "ملف الوكيل الشخصي",
+      "subtitle": "قم بتكوين ملفك الشخصي للمساعدة في توجيه التذاكر الذكي",
+      "personalInformation": "المعلومات الشخصية",
+      "displayName": "اسم العرض",
+      "displayNamePlaceholder": "مثال: أحمد س.",
+      "displayNameDescription": "كيف ستظهر للعملاء وأعضاء الفريق",
+      "timezone": "المنطقة الزمنية",
+      "timezonePlaceholder": "مثال: Europe/Paris, America/New_York",
+      "timezoneDescription": "تُستخدم للجدولة وتتبع التوفر",
+      "bio": "السيرة الذاتية",
+      "bioPlaceholder": "أخبرنا عن خبرتك وخبراتك ونهجك في دعم العملاء. هذا يساعد في تنسيق الفريق وثقة العملاء.",
+      "bioDescription": "شارك خلفيتك وتخصصاتك للمساعدة في تنسيق الفريق",
+      "skillsAndLanguages": "المهارات واللغات",
+      "skills": "المهارات (مفصولة بفواصل)",
+      "skillsPlaceholder": "تقني، فواتير، إدماج، api، استكشاف الأخطاء",
+      "skillsCount": "{count, plural, one {مهارة واحدة مُكونة} other {# مهارات مُكونة}}",
+      "languages": "اللغات (مفصولة بفواصل)",
+      "languagesPlaceholder": "ar, en, fr, es, de",
+      "languagesCount": "{count, plural, one {لغة واحدة مدعومة} other {# لغات مدعومة}}",
+      "availabilityAndPreferences": "التوفر والتفضيلات",
+      "workloadManagement": "إدارة عبء العمل",
+      "maxConcurrentTickets": "الحد الأقصى للتذاكر المتزامنة",
+      "currentLimit": "{count, plural, one {الحد الحالي: تذكرة واحدة} other {الحد الحالي: # تذاكر}}",
+      "recommendedRange": "مُوصى به: 3-8 للأداء الأمثل",
+      "assignmentPreferences": "تفضيلات التعيين",
+      "autoAssignment": "التعيين التلقائي",
+      "autoAssignmentDescription": "السماح للنظام بتعيين التذاكر لك تلقائياً",
+      "autoAssignmentEnabled": "التعيين التلقائي مفعل - ستحصل على التذاكر تلقائياً",
+      "updateProfile": "تحديث ملفك الشخصي",
+      "createProfile": "إنشاء ملف الوكيل الشخصي",
+      "changesDescription": "سيتم حفظ التغييرات فوراً وتؤثر على توجيه التذاكر",
+      "saving": "جاري الحفظ...",
+      "updateProfileButton": "تحديث الملف",
+      "createProfileButton": "إنشاء الملف"
+    },
+    "inviteDialog": {
+      "title": "دعوة وكيل",
+      "subtitle": "دعوة أعضاء فريق جدد للانضمام إلى فريق الدعم الخاص بك",
+      "emailsLabel": "عناوين البريد الإلكتروني",
+      "emailPlaceholder": "أدخل عناوين البريد الإلكتروني (اضغط Enter أو فاصلة أو مسافة للإضافة)",
+      "addMoreEmails": "إضافة المزيد من الإيميلات...",
+      "invalidEmails": "إيميلات غير صالحة",
+      "emailsReady": "{count, plural, one {إيميل واحد جاهز للدعوة} other {# إيميلات جاهزة للدعوة}}",
+      "roleLabel": "الدور",
+      "roleDescriptions": {
+        "agent": "إدارة تذاكر دعم العملاء",
+        "manager": "إدارة الفرق وسير العمل",
+        "admin": "وصول كامل للنظام"
+      },
+      "teamsLabel": "الفرق",
+      "noTeams": "لا توجد فرق متاحة",
+      "teamsSelected": "{count, plural, one {فريق واحد مختار} other {# فرق مختارة}}",
+      "messageLabel": "رسالة مخصصة",
+      "optional": "اختياري",
+      "messagePlaceholder": "أضف رسالة ترحيب شخصية...",
+      "messageDescription": "أضف رسالة شخصية لجعل دعوتك أكثر ترحيباً",
+      "cancel": "إلغاء",
+      "send": "إرسال الدعوات",
+      "sending": "جاري الإرسال...",
+      "successAll": "تم إرسال الدعوات بنجاح!",
+      "successPartial": "تم إرسال {success} من أصل {total} دعوة",
+      "failed": "فشل في إرسال الدعوات"
+    },
+    "roles": {
+      "agent": "وكيل",
+      "manager": "مدير",
+      "admin": "مدير النظام"
+    }
+  },
+  "crm": {
+    "title": "مركز إدارة علاقات العملاء",
+    "subtitle": "إدارة العملاء المحتملين والصفقات وعلاقات العملاء",
+    "searchPlaceholder": "البحث في جميع بيانات إدارة علاقات العملاء...",
+    "messages": {
+      "dealDetailsComingSoon": "ميزة تفاصيل الصفقات قريباً",
+      "customerDetailsComingSoon": "ميزة تفاصيل العملاء قريباً",
+      "segmentDetailsComingSoon": "ميزة تفاصيل الشرائح قريباً",
+      "selectSegment": "اختر شريحة واحدة على الأقل",
+      "assignmentUpdated": "تم تحديث التعيين",
+      "assignmentFailed": "فشل في تعيين بعض العناصر",
+      "leadRescored": "تم إعادة تقييم العميل المحتمل",
+      "deleteLeadComingSoon": "ميزة حذف العميل المحتمل قريباً",
+      "pipelineRefreshed": "تم تحديث خط الأنابيب",
+      "exportComingSoon": "ميزة التصدير قريباً",
+      "settingsComingSoon": "ميزة الإعدادات قريباً"
+    },
+    "bulkActions": {
+      "selected": "{count, plural, one {محدد واحد} other {# محدد}}",
+      "assignOwner": "تعيين مالك",
+      "startCampaign": "بدء حملة",
+      "clear": "مسح",
+      "selectOwner": "اختر المالك",
+      "apply": "تطبيق"
+    },
+    "leadScore": "نتيجة العميل المحتمل",
+    "actions": {
+      "viewDetails": "عرض التفاصيل",
+      "rescoreLead": "إعادة تقييم العميل المحتمل",
+      "convertToDeal": "تحويل إلى صفقة",
+      "deleteLead": "حذف العميل المحتمل",
+      "editDeal": "تعديل الصفقة",
+      "deleteDeal": "حذف الصفقة",
+      "createLead": "إنشاء عميل محتمل",
+      "createDeal": "إنشاء صفقة"
+    },
+    "empty": {
+      "leads": "لم يتم العثور على عملاء محتملين",
+      "leadsDescription": "ابدأ بإنشاء عملك المحتمل الأول",
+      "segments": "لم يتم العثور على شرائح",
+      "segmentsDescription": "ابدأ بإنشاء شريحتك الأولى"
+    },
+    "timeFormat": {
+      "daysAgo": "{count, plural, one {منذ يوم واحد} other {منذ # أيام}}",
+      "daysLeft": "{count, plural, one {يوم واحد متبقي} other {# أيام متبقية}}"
+    },
+    "stats": {
+      "totalLeads": "إجمالي العملاء المحتملين",
+      "qualifiedLeads": "العملاء المحتملون المؤهلون",
+      "pipelineValue": "قيمة خط الأنابيب",
+      "conversionRate": "معدل التحويل",
+      "thisMonth": "هذا الشهر",
+      "qualified": "مؤهل",
+      "activeDeals": "صفقات نشطة",
+      "wonDeals": "صفقات مكتملة"
+    },
+    "tabs": {
+      "leads": "العملاء المحتملون",
+      "pipeline": "خط الأنابيب",
+      "segments": "الشرائح",
+      "analytics": "التحليلات"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "createLead": "إنشاء عميل محتمل",
+      "createDeal": "إنشاء صفقة",
+      "createSegment": "إنشاء شريحة",
+      "viewAnalytics": "عرض التحليلات",
+      "viewPipeline": "عرض خط الأنابيب",
+      "exportData": "تصدير البيانات",
+      "crmSettings": "إعدادات إدارة علاقات العملاء"
+    },
+    "searchLeadsPlaceholder": "البحث في العملاء المحتملين...",
+    "pipeline": {
+      "title": "خط أنابيب المبيعات",
+      "subtitle": "إدارة صفقات المبيعات وتتبع التقدم",
+      "refresh": "تحديث",
+      "searchPlaceholder": "البحث في الصفقات...",
+      "dropNewDeals": "إسقاط صفقات جديدة هنا",
+      "noDealsInStage": "لا توجد صفقات في هذه المرحلة"
+    },
+    "stages": {
+      "new": "جديد",
+      "qualified": "مؤهل",
+      "proposal": "اقتراح",
+      "negotiation": "مفاوضة",
+      "won": "مكتمل",
+      "lost": "مفقود"
+    },
+    "segments": {
+      "editTitle": "تعديل الشريحة",
+      "createTitle": "إنشاء شريحة",
+      "name": "اسم الشريحة",
+      "namePlaceholder": "أدخل اسم الشريحة",
+      "description": "الوصف",
+      "descriptionPlaceholder": "أدخل وصف الشريحة",
+      "membership": "عضوية الشريحة",
+      "preview": "معاينة",
+      "recalculate": "إعادة حساب",
+      "totalMatched": "إجمالي المطابق",
+      "sampleCount": "عدد العينات",
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "create": "إنشاء",
+      "details": {
+        "title": "تفاصيل الشريحة",
+        "metrics": "المقاييس",
+        "preview": "معاينة",
+        "actions": "الإجراءات",
+        "totalCustomers": "إجمالي العملاء",
+        "avgValue": "متوسط القيمة",
+        "monthlyGrowth": "النمو الشهري",
+        "summary": "ملخص الشريحة",
+        "totalMatched": "إجمالي المطابق",
+        "sampleCount": "عدد العينات",
+        "recalculate": "إعادة حساب",
+        "noSample": "لم يتم العثور على عملاء عينة",
+        "exportJson": "تصدير JSON",
+        "exportCsv": "تصدير CSV"
+      }
+    },
+    "analytics": {
+      "pipelineOverview": "نظرة عامة على خط الأنابيب",
+      "salesForecast": "توقع المبيعات (30 يوم)",
+      "weightedPipeline": "خط الأنابيب الموزون",
+      "winRate": "معدل النجاح",
+      "avgCycle": "متوسط دورة المبيعات (أيام)",
+      "byStage": "الصفقات حسب المرحلة",
+      "totalForecast": "التوقع الإجمالي",
+      "days": "أيام",
+      "nextDays": "الأيام القادمة"
+    },
+    "leadDetails": {
+      "title": "تفاصيل العميل المحتمل",
+      "contactInfo": "معلومات الاتصال",
+      "leadScore": "نتيجة العميل المحتمل",
+      "currentScore": "النتيجة الحالية",
+      "lastUpdated": "آخر تحديث منذ يومين",
+      "recentActivity": "النشاط الأخير",
+      "noActivity": "لا يوجد نشاط حتى الآن",
+      "loadMore": "تحميل المزيد",
+      "leadCreated": "تم إنشاء العميل المحتمل",
+      "emailOpened": "تم فتح البريد الإلكتروني",
+      "visitedPricing": "تم زيارة صفحة التسعير",
+      "daysAgo": "أيام",
+      "hoursAgo": "ساعات",
+      "campaignTouchpoints": "نقاط اتصال الحملة",
+      "noCampaignActivity": "لا يوجد نشاط حملة",
+      "searchCustomer": "البحث في العميل...",
+      "actions": {
+        "createDeal": "إنشاء صفقة",
+        "sendEmail": "إرسال بريد إلكتروني",
+        "call": "مكالمة",
+        "rescore": "إعادة تقييم"
+      }
+    },
+    "createLeadDialog": {
+      "title": "إنشاء عميل محتمل جديد",
+      "description": "إضافة عميل محتمل جديد إلى خط أنابيب إدارة علاقات العملاء",
+      "sections": {
+        "personalInfo": "المعلومات الشخصية",
+        "contactInfo": "معلومات الاتصال",
+        "companyInfo": "معلومات الشركة",
+        "customFields": "حقول إضافية"
+      },
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "عنوان البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "company": "الشركة",
+      "source": "مصدر العميل المحتمل",
+      "placeholders": {
+        "firstName": "أدخل الاسم الأول",
+        "lastName": "أدخل اسم العائلة",
+        "email": "أدخل عنوان البريد الإلكتروني",
+        "phone": "أدخل رقم الهاتف",
+        "company": "أدخل اسم الشركة",
+        "source": "اختر مصدر العميل المحتمل"
+      },
+      "sources": {
+        "website": "الموقع الإلكتروني",
+        "referral": "إحالة",
+        "socialMedia": "وسائل التواصل الاجتماعي",
+        "emailCampaign": "حملة بريد إلكتروني",
+        "coldCall": "مكالمة باردة",
+        "tradeShow": "معرض تجاري",
+        "partner": "شريك",
+        "other": "أخرى"
+      },
+      "errors": {
+        "firstNameRequired": "الاسم الأول مطلوب",
+        "lastNameRequired": "اسم العائلة مطلوب",
+        "emailRequired": "عنوان البريد الإلكتروني مطلوب",
+        "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+        "companyRequired": "اسم الشركة مطلوب",
+        "phoneInvalid": "يرجى إدخال رقم هاتف صحيح"
+      },
+      "cancel": "إلغاء",
+      "create": "إنشاء عميل محتمل",
+      "creating": "جاري الإنشاء..."
+    },
+    "createDealDialog": {
+      "title": "إنشاء صفقة جديدة",
+      "description": "إضافة صفقة جديدة إلى خط أنابيب المبيعات",
+      "sections": {
+        "dealInfo": "معلومات الصفقة",
+        "financialInfo": "المعلومات المالية",
+        "pipelineInfo": "خط الأنابيب والمرحلة",
+        "customer": "العميل",
+        "customFields": "حقول إضافية"
+      },
+      "fields": {
+        "name": "اسم الصفقة",
+        "description": "الوصف",
+        "value": "قيمة الصفقة",
+        "currency": "العملة",
+        "pipeline": "خط الأنابيب",
+        "stage": "المرحلة",
+        "customer": "ربط بالعميل (اختياري)"
+      },
+      "placeholders": {
+        "name": "أدخل اسم الصفقة",
+        "description": "أدخل وصف الصفقة",
+        "value": "أدخل قيمة الصفقة",
+        "currency": "اختر العملة",
+        "pipeline": "اختر خط الأنابيب",
+        "stage": "اختر المرحلة",
+        "searchCustomer": "البحث عن عميل بالاسم أو البريد الإلكتروني"
+      },
+      "errors": {
+        "nameRequired": "اسم الصفقة مطلوب",
+        "valueRequired": "قيمة الصفقة مطلوبة",
+        "valueInvalid": "يرجى إدخال قيمة صفقة صحيحة",
+        "pipelineRequired": "اختيار خط الأنابيب مطلوب"
+      },
+      "cancel": "إلغاء",
+      "create": "إنشاء الصفقة",
+      "creating": "جاري الإنشاء..."
+    },
+    "campaignDialog": {
+      "title": "إنشاء حملة للشريحة",
+      "campaign": "حملة",
+      "newCampaign": "حملة جديدة",
+      "fields": {
+        "name": "الاسم",
+        "type": "النوع",
+        "schedule": "جدولة (اختياري)",
+        "subject": "الموضوع",
+        "description": "الوصف"
+      },
+      "placeholders": {
+        "name": "اسم الحملة",
+        "subject": "سطر الموضوع",
+        "description": "وصف داخلي (اختياري)"
+      },
+      "types": {
+        "email": "البريد الإلكتروني",
+        "sms": "رسائل نصية",
+        "social": "وسائل التواصل الاجتماعي",
+        "webinar": "ندوة عبر الإنترنت",
+        "content": "محتوى",
+        "paidAds": "إعلانات مدفوعة"
+      },
+      "actions": {
+        "cancel": "إلغاء",
+        "saveDraft": "حفظ مسودة",
+        "schedule": "جدولة",
+        "launchNow": "إطلاق الآن"
+      }
+    },
+    "search": {
+      "placeholder": "البحث في بيانات إدارة علاقات العملاء...",
+      "results": {
+        "searching": "جاري البحث...",
+        "noResults": "لم يتم العثور على نتائج",
+        "found": "نتيجة موجودة"
+      },
+      "suggestions": {
+        "title": "اقتراحات"
+      },
+      "filters": {
+        "title": "مرشحات متقدمة",
+        "clear": "مسح الكل",
+        "entities": "أنواع الكيانات",
+        "selectEntities": "اختر الكيانات",
+        "allEntities": "جميع الكيانات",
+        "leads": "العملاء المحتملون",
+        "deals": "الصفقات",
+        "customers": "العملاء",
+        "segments": "الشرائح",
+        "dateRange": "نطاق التاريخ",
+        "from": "من",
+        "to": "إلى",
+        "valueRange": "نطاق القيمة",
+        "minValue": "الحد الأدنى للقيمة",
+        "maxValue": "الحد الأقصى للقيمة",
+        "semanticSearch": "البحث الدلالي بالذكاء الاصطناعي"
+      },
+      "saved": {
+        "title": "البحث المحفوظ",
+        "saveCurrent": "حفظ البحث الحالي",
+        "saveTitle": "حفظ البحث",
+        "namePlaceholder": "أدخل اسم البحث",
+        "cancel": "إلغاء",
+        "save": "حفظ"
+      }
+    },
+    "satisfaction": {
+      "title": "رضا العملاء",
+      "subtitle": "تتبع وتحليل تعليقات العملاء عبر جميع القنوات",
+      "timeRanges": {
+        "7d": "7 أيام",
+        "30d": "30 يوم",
+        "90d": "90 يوم"
+      },
+      "export": "تصدير",
+      "error": "فشل في تحميل تحليلات الرضا",
+      "metrics": {
+        "surveysSent": "الاستطلاعات المرسلة",
+        "activeCampaign": "حملة نشطة",
+        "noSurveys": "لم يتم إرسال استطلاعات",
+        "responseRate": "معدل الاستجابة",
+        "of": "من",
+        "responded": "استجابوا",
+        "averageRating": "التقييم المتوسط",
+        "totalResponses": "إجمالي الاستجابات",
+        "valuableFeedback": "تم جمع تعليقات قيمة"
+      },
+      "charts": {
+        "csatTrend": "اتجاه رضا العملاء",
+        "csatTrendDesc": "متوسط درجة الرضا اليومية",
+        "csatByChannel": "رضا العملاء حسب القناة",
+        "csatByChannelDesc": "متوسط تقييم الرضا لكل قناة",
+        "ratingDistribution": "توزيع التقييمات",
+        "ratingDistributionDesc": "تفصيل تقييمات رضا العملاء",
+        "channelPerformance": "أداء القنوات",
+        "channelPerformanceDesc": "توزيع الاستطلاعات عبر قنوات التواصل"
+      },
+      "recentFeedback": {
+        "title": "التعليقات الحديثة",
+        "subtitle": "أحدث استجابات وتعليقات رضا العملاء",
+        "noResponses": "لا توجد استجابات استطلاع بعد"
+      }
+    }
+  },
+  "analytics": {
+    "ui": {
+      "loadingFailed": "فشل في تحميل بيانات التحليلات",
+      "retry": "إعادة المحاولة",
+      "time": {
+        "24h": "24س",
+        "7d": "7أ",
+        "30d": "30أ",
+        "90d": "90أ"
+      },
+      "tabs": {
+        "performance": "الأداء",
+        "predictive": "التنبؤ",
+        "financial": "المالي",
+        "custom": "التقارير المخصصة"
+      },
+      "realtime": {
+        "activeTickets": "التذاكر النشطة",
+        "queue": "طابور الانتظار",
+        "activeAgents": "الوكلاء النشطون",
+        "onlineNow": "متصل الآن",
+        "avgResponseTime": "متوسط وقت الاستجابة",
+        "last24h": "آخر 24 ساعة",
+        "customerSatisfaction": "رضا العملاء",
+        "outOf5": "من 5"
+      },
+      "kpi": {
+        "fromLastPeriod": "من الفترة الماضية: {value}%",
+        "target": "الهدف: {value}"
+      },
+      "charts": {
+        "channelDistribution": "توزيع القنوات",
+        "channelDistributionDesc": "التذاكر حسب قناة التواصل",
+        "priorityDistribution": "توزيع الأولوية",
+        "priorityDistributionDesc": "التذاكر حسب مستوى الأولوية",
+        "slaCompliance": "الامتثال لاتفاقية مستوى الخدمة",
+        "slaComplianceDesc": "الالتزام باتفاقيات مستوى الخدمة",
+        "complianceRate": "معدل الامتثال",
+        "slaAboveThreshold": "معدل انتهاك اتفاقية مستوى الخدمة أعلى من العتبة"
+      },
+      "performance": {
+        "topChannels": "أفضل القنوات",
+        "topChannelsDesc": "قنوات التواصل ذات الحجم الأعلى",
+        "agentLeaderboard": "تصنيف الوكلاء",
+        "agentLeaderboardDesc": "وكلاء الدعم الأكثر أداءً",
+        "viewDetails": "عرض التفاصيل",
+        "resolved": "محلولة",
+        "csat": "درجة رضا العملاء",
+        "agentDetails": "تفاصيل الوكيل",
+        "agentDetailsDesc": "مقاييس الأداء التفصيلية للوكيل المحدد",
+        "agent": "الوكيل",
+        "ticketsHandled": "التذاكر المعالجة",
+        "avgResp": "متوسط الاستجابة",
+        "avgRes": "متوسط الحل",
+        "trendPerformance": "اتجاه الأداء",
+        "trendSatisfaction": "اتجاه الرضا",
+        "channelDetails": "تفاصيل القناة",
+        "channelDetailsDesc": "مقاييس تفصيلية للقناة المحددة",
+        "channel": "القناة",
+        "tickets": "التذاكر",
+        "trendVolume": "اتجاه الحجم"
+      },
+      "predictive": {
+        "demandForecast": "توقع الطلب",
+        "demandForecastDesc": "حجم التذاكر المتوقع مع مرور الوقت",
+        "noForecast": "لا توجد بيانات توقع متاحة",
+        "capacityAnalysis": "تحليل السعة",
+        "capacityAnalysisDesc": "السعة الحالية مقابل الطلب المتوقع",
+        "currentCapacity": "السعة الحالية",
+        "predictedDemand": "الطلب المتوقع",
+        "utilizationRate": "معدل الاستخدام",
+        "highUtilization": "تم اكتشاف استخدام عالي",
+        "noCapacity": "لا توجد بيانات سعة متاحة",
+        "churnRiskAnalysis": "تحليل مخاطر فقدان العملاء",
+        "churnRiskAnalysisDesc": "العملاء المعرضون لخطر الفقدان",
+        "customer": "العميل {id}",
+        "riskLevel": "مستوى المخاطر",
+        "days": "أيام",
+        "noChurn": "لا توجد بيانات توقع فقدان العملاء متاحة"
+      },
+      "financial": {
+        "revenue": "الإيرادات",
+        "costs": "التكاليف",
+        "roi": "عائد الاستثمار",
+        "revenueByChannel": "الإيرادات حسب القناة",
+        "roiByChannel": "عائد الاستثمار حسب القناة",
+        "costBreakdown": "تفصيل التكاليف",
+        "costBreakdownDesc": "الأفراد، التكنولوجيا، البنية التحتية، التدريب، الخارجي، النفقات العامة"
+      },
+      "customReports": {
+        "title": "التقارير المخصصة",
+        "desc": "إنشاء وإدارة تقارير تحليلية مخصصة",
+        "templates": "قوالب التقارير",
+        "templatesDesc": "قوالب تقارير جاهزة",
+        "exports": "وظائف التصدير",
+        "exportsDesc": "وظائف تصدير البيانات الحديثة"
+      },
+      "loading": "جاري التحميل...",
+      "noData": "لا توجد بيانات متاحة"
+    },
+    "revenue": {
+      "title": "إجمالي الإيرادات",
+      "subtitle": "تتبع تخصيص الإيرادات عبر القنوات"
+    },
+    "tickets": {
+      "total": "إجمالي التذاكر"
+    },
+    "agents": {
+      "active": "الوكلاء النشطون"
+    },
+    "kpis": {
+      "csat": "درجة رضا العملاء"
+    },
+    "financial": {
+      "costs": "إجمالي التكاليف",
+      "roi": "عائد الاستثمار"
+    },
+    "channels": {
+      "title": "تحليلات القنوات",
+      "subtitle": "الحجم والأداء والتكاليف لكل قناة"
+    },
+    "observability": {
+      "title": "صحة النظام",
+      "healthSummary": "حالة النظام الحالية ومقاييس الأداء"
+    },
+    "calls": {
+      "totalCalls": "إجمالي المكالمات",
+      "activeCalls": "المكالمات النشطة",
+      "endedCalls": "المكالمات المنتهية",
+      "totalMinutes": "إجمالي الدقائق",
+      "byType": "المكالمات حسب النوع",
+      "byDirection": "المكالمات حسب الاتجاه",
+      "quality24h": "جودة المكالمات (24 ساعة)",
+      "trend7d": "اتجاهات مدة المكالمات (7 أيام)",
+      "noData": "لا توجد بيانات متاحة"
+    },
+    "common": {
+      "loading": "جاري تحميل تحليلات المكالمات...",
+      "liveData": "البيانات المباشرة",
+      "realTime": "الوقت الفعلي",
+      "systemStatus": "حالة النظام",
+      "allSystemsOperational": "جميع الأنظمة تعمل",
+      "healthy": "صحي",
+      "cpuUsage": "استخدام المعالج",
+      "memoryUsage": "استخدام الذاكرة",
+      "diskUsage": "استخدام القرص",
+      "networkQuality": "مقاييس جودة الشبكة للـ 24 ساعة الماضية",
+      "dailyTrends": "اتجاهات مدة المكالمات اليومية خلال الأسبوع الماضي",
+      "rtt": "وقت الاستجابة (مللي ثانية)",
+      "jitter": "التذبذب (مللي ثانية)",
+      "upload": "الرفع (كيلوبت/ثانية)",
+      "download": "التحميل (كيلوبت/ثانية)",
+      "lossUp": "فقدان الرفع (%)",
+      "lossDown": "فقدان التحميل (%)",
+      "tickets": "تذاكر",
+      "msgs": "رسائل",
+      "avgRt": "متوسط وقت الاستجابة",
+      "avgRes": "متوسط الحل",
+      "costTicket": "التكلفة/التذكرة",
+      "calls": "مكالمات"
+    },
+    "noData": "لا توجد بيانات إيرادات متاحة",
+    "ai": {
+      "buttons": {
+        "export": "تصدير"
+      },
+      "title": "التحليلات التنبؤية بالذكاء الاصطناعي",
+      "subtitle": "رؤى وتوقعات ذكية متقدمة لعملك",
+      "exportReport": "تصدير التقرير",
+      "refreshData": "تحديث البيانات",
+      "metrics": {
+        "highScoreLeads": "العملاء المحتملون عاليو النقاط",
+        "atRiskCustomers": "العملاء المعرضون للخطر",
+        "highProbabilityDeals": "الصفقات عالية الاحتمالية",
+        "activeModels": "النماذج النشطة",
+        "allModelsHealthy": "جميع النماذج سليمة"
+      },
+      "tabs": {
+        "overview": "نظرة عامة",
+        "leadScoring": "تقييم العملاء المحتملين",
+        "churnPrevention": "منع فقدان العملاء",
+        "salesOptimization": "تحسين المبيعات",
+        "models": "إدارة النماذج"
+      },
+      "overview": {
+        "leadScoring": {
+          "title": "أداء تقييم العملاء المحتملين",
+          "subtitle": "مقاييس واتجاهات تقييم العملاء المحتملين الحالية",
+          "averageScore": "النقاط المتوسطة",
+          "totalLeads": "إجمالي العملاء المحتملين",
+          "highScore": "نقاط عالية"
+        },
+        "churnPrevention": {
+          "title": "حالة منع فقدان العملاء",
+          "subtitle": "الاحتفاظ بالعملاء وتقييم المخاطر",
+          "retentionRate": "معدل الاحتفاظ",
+          "atRisk": "معرض للخطر",
+          "highRisk": "خطر عالي"
+        },
+        "modelPerformance": {
+          "title": "نظرة عامة على أداء النماذج",
+          "subtitle": "الأداء الحالي لجميع نماذج الذكاء الاصطناعي",
+          "version": "الإصدار",
+          "accuracy": "الدقة"
+        }
+      },
+      "leadScoring": {
+        "topFactors": {
+          "title": "أهم عوامل التقييم",
+          "subtitle": "العوامل الأكثر تأثيراً في تقييم العملاء المحتملين"
+        },
+        "recentScores": {
+          "title": "تقييمات العملاء المحتملين الحديثة",
+          "subtitle": "أحدث نتائج تقييم العملاء المحتملين",
+          "lead": "عميل محتمل",
+          "probability": "احتمالية"
+        }
+      },
+      "churnPrevention": {
+        "riskDistribution": {
+          "title": "توزيع مستويات المخاطر",
+          "subtitle": "توزيع مستويات مخاطر العملاء",
+          "lowRisk": "خطر منخفض",
+          "mediumRisk": "خطر متوسط",
+          "highRisk": "خطر عالي",
+          "criticalRisk": "خطر حرج"
+        },
+        "highRiskCustomers": {
+          "title": "العملاء عاليو المخاطر",
+          "subtitle": "العملاء الذين يحتاجون إلى اهتمام فوري",
+          "customer": "عميل",
+          "recommendations": "توصيات",
+          "probability": "احتمالية"
+        }
+      },
+      "salesOptimization": {
+        "dealWinProbability": {
+          "title": "احتمالية الفوز بالصفقة",
+          "subtitle": "توزيع احتمالات الفوز بالصفقات"
+        },
+        "highProbabilityDeals": {
+          "title": "الصفقات عالية الاحتمالية",
+          "subtitle": "الصفقات ذات احتمالية فوز عالية",
+          "deal": "صفقة",
+          "recommendations": "توصيات",
+          "confidence": "ثقة"
+        }
+      },
+      "models": {
+        "status": {
+          "title": "حالة النماذج",
+          "subtitle": "الحالة الحالية لجميع نماذج الذكاء الاصطناعي",
+          "type": "النوع",
+          "version": "الإصدار",
+          "accuracy": "الدقة"
+        },
+        "trainingJobs": {
+          "title": "مهام التدريب",
+          "subtitle": "مهام تدريب النماذج الحديثة والنشطة",
+          "trainingJob": "مهمة تدريب",
+          "model": "نموذج",
+          "progress": "التقدم"
+        }
+      },
+      "trends": {
+        "fromLastWeek": "من الأسبوع الماضي"
+      }
+    }
+  },
+  "workflows": {
+    "title": "سير العمل",
+    "subtitle": "أتمتة عمليات الأعمال الخاصة بك مع أتمتة سير العمل القوية",
+    "webhooks": "Webhooks",
+    "list": {
+      "reload": "إعادة التحميل",
+      "createWorkflow": "إنشاء سير عمل",
+      "filters": "المرشحات",
+      "search": "البحث في سير العمل...",
+      "status": "الحالة",
+      "all": "الكل",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "draft": "مسودة",
+      "category": "الفئة",
+      "general": "عام",
+      "chatbot": "روبوت المحادثة",
+      "ticket_management": "إدارة التذاكر",
+      "sla": "اتفاقية مستوى الخدمة",
+      "onboarding": "الإدماج",
+      "totalWorkflows": "إجمالي سير العمل",
+      "totalExecutions": "إجمالي التنفيذات",
+      "successRate": "معدل النجاح",
+      "avgExecutionTime": "متوسط وقت التنفيذ",
+      "today": "اليوم",
+      "thisWeek": "هذا الأسبوع",
+      "thisMonth": "هذا الشهر",
+      "executionActivity": "نشاط التنفيذ",
+      "recentIssues": "المشاكل الأخيرة",
+      "viewAllIssues": "عرض جميع المشاكل",
+      "acrossAllWorkflows": "في جميع سير العمل",
+      "successful": "نجح",
+      "failed": "فشل"
+    },
+    "templates": {
+      "title": "القوالب",
+      "featured": "مميز",
+      "all": "الكل",
+      "nodes": "عقد",
+      "use": "استخدام",
+      "createFromTemplate": "تم إنشاء سير العمل من القالب",
+      "open": "فتح"
+    },
+    "errors": {
+      "loadingWorkflows": "خطأ في تحميل سير العمل",
+      "tryAgain": "حاول مرة أخرى",
+      "fetchFailed": "فشل في جلب سير العمل",
+      "deleteFailed": "فشل في حذف سير العمل",
+      "updateFailed": "فشل في تحديث سير العمل",
+      "executeFailed": "فشل في تنفيذ سير العمل"
+    },
+    "issues": {
+      "slaMonitoringFailed": "فشل مراقبة اتفاقية مستوى الخدمة",
+      "slowExecutionDetected": "تم اكتشاف تنفيذ بطيء",
+      "hoursAgo": "ساعات"
+    },
+    "designer": {
+      "title": "مصمم سير العمل",
+      "untitled": "سير عمل بدون عنوان",
+      "workflow": "سير العمل",
+      "standard": "قياسي",
+      "normal": "عادي",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "draft": "مسودة",
+      "toolbar": {
+        "templates": "القوالب",
+        "webhooks": "Webhooks",
+        "syncN8N": "مزامنة N8N",
+        "test": "اختبار",
+        "activate": "تفعيل",
+        "deactivate": "إلغاء التفعيل",
+        "save": "حفظ"
+      },
+      "palette": {
+        "title": "لوحة العقد",
+        "subtitle": "اسحب لإضافة العقد"
+      },
+      "emptyState": {
+        "title": "بناء شيء مذهل",
+        "description": "اللوحة في انتظارك. حمّل قالباً للاستفادة الفورية، أو اسحب العقد من اللوحة لإنشاء أتمتتك المخصصة.",
+        "browseTemplates": "تصفح القوالب",
+        "addStartNode": "إضافة عقدة البداية"
+      },
+      "tabs": {
+        "inspector": "المفتش",
+        "details": "التفاصيل",
+        "history": "السجل"
+      },
+      "inspector": {
+        "title": "تكوين العقدة",
+        "subtitle": "تخصيص سلوك العقدة",
+        "noNodeSelected": "لم يتم اختيار عقدة",
+        "noNodeDescription": "انقر على عقدة لتكوين خصائصها وإعداداتها"
+      },
+      "details": {
+        "title": "تفاصيل سير العمل",
+        "subtitle": "التكوين والبيانات الوصفية",
+        "name": "الاسم",
+        "type": "النوع",
+        "priority": "الأولوية",
+        "status": "الحالة",
+        "rawMetadata": "البيانات الوصفية الخام",
+        "metadataPlaceholder": "بيانات سير العمل الوصفية (JSON)"
+      },
+      "history": {
+        "title": "سجل التنفيذ",
+        "subtitle": "تشغيلات سير العمل الأخيرة",
+        "refresh": "تحديث",
+        "loadingExecutions": "جاري تحميل التنفيذات...",
+        "noExecutions": "لا توجد تنفيذات بعد",
+        "noExecutionsDescription": "قم بتشغيل سير العمل لرؤية سجل التنفيذ هنا",
+        "fetchingHistory": "جاري جلب سجل التنفيذ"
+      },
+      "execution": {
+        "details": "تفاصيل التنفيذ",
+        "status": "الحالة",
+        "startedAt": "بدأ في",
+        "duration": "المدة",
+        "input": "الإدخال",
+        "output": "الإخراج",
+        "error": "خطأ",
+        "manual": "يدوي"
+      },
+      "templates": {
+        "title": "اختر قالب سير العمل",
+        "subtitle": "اختر قالباً للبدء مع سير العمل الخاص بك. يمكنك تخصيصه بعد التحميل.",
+        "nodes": "عقد"
+      },
+      "test": {
+        "title": "تنفيذ الاختبار",
+        "inputData": "بيانات الإدخال (JSON)",
+        "inputPlaceholder": "{\n  \"customerId\": \"123\",\n  \"ticketId\": \"456\"\n}",
+        "response": "الاستجابة",
+        "close": "إغلاق",
+        "runTest": "تشغيل الاختبار",
+        "running": "جاري التشغيل...",
+        "invalidJson": "JSON غير صالح",
+        "executeFailed": "فشل التنفيذ"
+      },
+      "errors": {
+        "loadFailed": "فشل في تحميل سير العمل",
+        "saveFailed": "فشل في الحفظ",
+        "executeFailed": "فشل في تنفيذ سير العمل",
+        "updateStatusFailed": "فشل في تحديث الحالة",
+        "syncFailed": "فشل في المزامنة مع N8N",
+        "applyTemplateFailed": "فشل في تطبيق القالب"
+      },
+      "defaultNodes": {
+        "start": "البداية",
+        "processTicket": "معالجة التذكرة",
+        "end": "النهاية"
+      },
+      "sampleTemplates": {
+        "intelligentTicketRouting": {
+          "name": "توجيه التذاكر الذكي",
+          "description": "توجيه التذاكر تلقائياً بناءً على تحليل الذكاء الاصطناعي وملف العميل"
+        },
+        "slaMonitoring": {
+          "name": "مراقبة وتصعيد اتفاقية مستوى الخدمة",
+          "description": "مراقبة امتثال اتفاقية مستوى الخدمة وتصعيد التذاكر المعرضة للخطر تلقائياً"
+        },
+        "customerOnboarding": {
+          "name": "إدماج العميل",
+          "description": "سير عمل آلي لإدماج العملاء الجدد مع التواصل الشخصي"
+        }
+      }
+    }
+  },
+  "knowledge": {
+    "title": "قاعدة المعرفة",
+    "subtitle": "إدارة المقالات والأسئلة الشائعة والوثائق",
+    "searchPlaceholder": "البحث في قاعدة المعرفة...",
+    "createArticle": "إنشاء مقال",
+    "articles": "المقالات",
+    "faqs": "الأسئلة الشائعة",
+    "analytics": "التحليلات",
+    "maintenance": "الصيانة",
+    "loading": "جاري التحميل...",
+    "noResults": "لم يتم العثور على نتائج",
+    "error": "حدث خطأ",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "publish": "نشر",
+    "unpublish": "إلغاء النشر",
+    "view": "عرض",
+    "related": "المقالات ذات الصلة",
+    "tags": "العلامات",
+    "author": "المؤلف",
+    "created": "تم الإنشاء",
+    "updated": "تم التحديث",
+    "views": "المشاهدات",
+    "helpful": "مفيد",
+    "notHelpful": "غير مفيد",
+    "markReviewed": "وضع علامة كمُراجع",
+    "outdated": "قديم",
+    "needsReview": "يحتاج إلى مراجعة",
+    "published": "منشور",
+    "draft": "مسودة",
+    "titleRequired": "العنوان مطلوب",
+    "contentRequired": "المحتوى مطلوب",
+    "saving": "جاري الحفظ...",
+    "saved": "تم الحفظ بنجاح",
+    "failedToSave": "فشل في الحفظ",
+    "failedToLoad": "فشل في تحميل البيانات",
+    "searchResults": "نتائج البحث",
+    "totalArticles": "إجمالي المقالات",
+    "totalViews": "إجمالي المشاهدات",
+    "avgHelpfulness": "متوسط الفائدة",
+    "recentActivity": "النشاط الأخير",
+    "mostViewed": "الأكثر مشاهدة",
+    "mostHelpful": "الأكثر فائدة",
+    "recentUpdates": "التحديثات الأخيرة"
+  },
+  "coaching": {
+    "title": "لوحة تحكم التدريب بالذكاء الاصطناعي",
+    "trends": "تحديث الاتجاهات",
+    "analyses": "تحليلات",
+    "allAgents": "جميع الوكلاء",
+    "selectAgent": "اختر وكيل",
+    "clarity": "الوضوح",
+    "filler": "كلمات الحشو",
+    "sentiment": "المشاعر",
+    "effectiveness": "الفعالية",
+    "clarityDelta": "Δ الوضوح",
+    "fillerDelta": "Δ كلمات الحشو",
+    "sentimentDelta": "Δ المشاعر",
+    "loading": "جاري التحميل...",
+    "noData": "لا توجد بيانات",
+    "recentAnalyses": "التحليلات الحديثة",
+    "recentAnalysesAgent": "التحليلات الحديثة (وكيل)",
+    "noRecentAnalyses": "لا توجد تحليلات حديثة",
+    "clarity14d": "الوضوح (14 يوم)",
+    "confidence": "الثقة",
+    "failedToLoad": "فشل في تحميل بيانات التدريب"
+  },
+  "businessInsights": {
+    "title": "رؤى الأعمال",
+    "subtitle": "تحليلات شاملة لأداء الأعمال والإيرادات",
+    "viewAnalytics": "عرض التحليلات",
+    "kpis": {
+      "orders": "الطلبات",
+      "confirmations": "التأكيدات",
+      "deliveries": "التوصيلات",
+      "earnings": "الأرباح"
+    },
+    "trends": {
+      "title": "اتجاهات الأعمال",
+      "orders": "الطلبات",
+      "confirmations": "التأكيدات",
+      "deliveries": "التوصيلات",
+      "earnings": "الأرباح"
+    },
+    "csat": {
+      "title": "رضا العملاء"
+    },
+    "customers": {
+      "title": "مقاييس العملاء",
+      "subtitle": "مؤشرات الأداء الرئيسية للعملاء",
+      "kpis": {
+        "newCustomers": "عملاء جدد",
+        "activeCustomers": "عملاء نشطون",
+        "revenuePerCustomer": "الإيرادات لكل عميل",
+        "averageOrderValue": "متوسط قيمة الطلب",
+        "repeatPurchaseRate": "معدل إعادة الشراء"
+      }
+    },
+    "channels": {
+      "title": "الإيرادات حسب القناة",
+      "subtitle": "الإيرادات المنسوبة حسب القناة",
+      "empty": "لا توجد بيانات إيرادات للقنوات",
+      "columns": {
+        "channel": "القناة",
+        "revenue": "الإيرادات",
+        "percentage": "الحصة",
+        "tickets": "التذاكر",
+        "avgValue": "القيمة المتوسطة"
+      }
+    },
+    "segments": {
+      "title": "إيرادات الشرائح",
+      "subtitle": "تفصيل الإيرادات حسب شرائح العملاء",
+      "empty": "لا توجد بيانات شرائح متاحة",
+      "columns": {
+        "segment": "الشرائح",
+        "revenue": "الإيرادات",
+        "customers": "العملاء"
+      }
+    }
+  },
+  "integrations": {
+    "title": "التكاملات",
+    "subtitle": "ربط أنظمة الطرف الثالث وتوسيع قدرات النظام",
+    "reload": "إعادة التحميل",
+    "noErrors": "لا توجد أخطاء",
+    "actions": {
+      "addCustom": "إضافة تكامل مخصص",
+      "reload": "إعادة التحميل",
+      "mappings": "الربط",
+      "docs": "الوثائق",
+      "documentation": "الوثائق",
+      "fieldMappings": "ربط الحقول",
+      "syncCustomers": "مزامنة العملاء",
+      "syncLeads": "مزامنة العملاء المحتملين",
+      "syncDeals": "مزامنة الصفقات",
+      "authorize": "تفويض",
+      "sync": "مزامنة",
+      "customers": "العملاء",
+      "leads": "العملاء المحتملون",
+      "deals": "الصفقات",
+      "refreshToken": "تحديث الرمز المميز"
+    },
+    "metrics": {
+      "prebuilt": "التكاملات الجاهزة",
+      "avgSetupTime": "متوسط وقت الإعداد",
+      "systemUptime": "وقت تشغيل النظام",
+      "supportLevel": "مستوى الدعم",
+      "lastSync": "آخر مزامنة",
+      "token": "الرمز المميز",
+      "scope": "النطاق"
+    },
+    "search": {
+      "placeholder": "البحث في التكاملات...",
+      "filter": "تصفية",
+      "all": "الكل",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "category": "الفئة"
+    },
+    "status": {
+      "active": "نشط"
+    },
+    "sections": {
+      "active": {
+        "title": "التكاملات النشطة",
+        "subtitle": "إدارة الخدمات والقنوات المتصلة"
+      },
+      "connectors": {
+        "title": "موصلات البيانات",
+        "subtitle": "مزامنة البيانات بين أنظمتك والمنصات الخارجية"
+      }
+    },
+    "dialogs": {
+      "configure": {
+        "description": "وثائق التكامل ودليل الإعداد",
+        "setupInstructions": "تعليمات الإعداد",
+        "environmentVariables": "متغيرات البيئة",
+        "fieldMappingsDescription": "تكوين كيفية ربط حقول البيانات بين الأنظمة",
+        "editMapping": "تعديل الربط",
+        "addNewMapping": "إضافة ربط جديد",
+        "fields": {
+          "sourceEntity": "الكيان المصدر",
+          "targetEntity": "الكيان المستهدف",
+          "direction": "الاتجاه",
+          "fieldMappings": "ربط الحقول (JSON)"
+        },
+        "saveMapping": "حفظ الربط",
+        "updateMapping": "تحديث الربط",
+        "cancelEdit": "إلغاء التعديل",
+        "existingMappings": "الربطات الموجودة",
+        "noMappings": "لا توجد ربطات حقول مكونة بعد",
+        "noMappingsDesc": "أضف ربطتك الأولى أعلاه للبدء"
+      },
+      "channelSetup": {
+        "title": "إعداد القناة",
+        "description": "ربط واتساب أو إنستغرام أو البريد الإلكتروني بحسابك",
+        "fields": {
+          "channel": "القناة",
+          "businessAccountId": "معرف حساب الأعمال",
+          "phoneNumberId": "معرف رقم الهاتف",
+          "accessToken": "رمز الوصول",
+          "verifyToken": "رمز التحقق",
+          "pageId": "معرف الصفحة",
+          "appId": "معرف التطبيق",
+          "appSecret": "سر التطبيق",
+          "provider": "المزود",
+          "smtpHost": "خادم SMTP",
+          "smtpPort": "منفذ SMTP",
+          "imapHost": "خادم IMAP",
+          "imapPort": "منفذ IMAP",
+          "username": "اسم المستخدم",
+          "password": "كلمة المرور",
+          "fromEmail": "البريد الإلكتروني المرسل",
+          "fromName": "اسم المرسل"
+        },
+        "channels": {
+          "whatsapp": "واتساب",
+          "instagram": "إنستغرام",
+          "email": "البريد الإلكتروني"
+        },
+        "providers": {
+          "gmail": "Gmail",
+          "outlook": "Outlook",
+          "custom": "مخصص"
+        },
+        "actions": {
+          "saving": "جاري الحفظ...",
+          "saveAndTest": "حفظ واختبار"
+        },
+        "messages": {
+          "configured": "تم التكوين",
+          "failed": "فشل"
+        },
+        "channelSettings": "تكوين إعدادات تكامل القناة"
+      }
+    },
+    "meta": {
+      "lastUpdated": "آخر تحديث",
+      "version": "الإصدار",
+      "category": "الفئة",
+      "provider": "المزود",
+      "documentation": "الوثائق",
+      "support": "الدعم",
+      "status": "الحالة",
+      "health": "الصحة",
+      "uptime": "وقت التشغيل"
+    },
+    "fallbacks": {
+      "loading": "جاري تحميل التكاملات...",
+      "error": "فشل في تحميل التكاملات",
+      "retry": "إعادة المحاولة",
+      "noIntegrations": "لا توجد تكاملات متاحة",
+      "noIntegrationsDesc": "ابدأ بإضافة تكاملات جديدة لربط أنظمة الطرف الثالث",
+      "searchNoResults": "لم يتم العثور على نتائج",
+      "searchNoResultsDesc": "جرب مصطلحات بحث مختلفة أو فلاتر مختلفة",
+      "integrationDescription": "ستظهر وصف التكامل هنا"
+    }
+  },
+  "whatsapp": {
+    "title": "أتمتة واتساب",
+    "refreshTemplates": "تحديث القوالب",
+    "testSendTemplate": "اختبار إرسال القالب",
+    "sendTest": "إرسال الاختبار",
+    "placeholders": {
+      "recipientPhone": "هاتف المستلم (E.164)",
+      "templateId": "معرف القالب (اختياري)",
+      "templateParams": "معاملات JSON للقالب، مثال {\"orderId\":\"123\"}"
+    },
+    "messages": {
+      "sentSuccessfully": "تم الإرسال بنجاح",
+      "failedToSend": "فشل في الإرسال"
+    },
+    "templates": {
+      "title": "قوالب واتساب",
+      "unknown": "غير معروف",
+      "noPreview": "لا يوجد معاينة",
+      "vars": "المتغيرات"
+    }
+  },
+  "settings": {
+    "title": "إعدادات الإدارة",
+    "subtitle": "قم بتكوين إعدادات وتفضيلات منظمتك",
+    "tabs": {
+      "basicInfo": "معلومات أساسية",
+      "billing": "الفوترة",
+      "bots": "البوتات",
+      "team": "الفريق",
+      "domains": "النطاقات",
+      "appearance": "المظهر",
+      "email": "البريد الإلكتروني",
+      "notifications": "الإشعارات",
+      "features": "الميزات",
+      "auditTrail": "سجل التدقيق",
+      "integrations": "التكاملات"
+    },
+    "actions": {
+      "reset": "إعادة تعيين",
+      "save": "حفظ"
+    },
+    "basicInfo": {
+      "title": "المعلومات الأساسية",
+      "subtitle": "قم بتكوين تفاصيل منظمتك الأساسية ومعلومات الاتصال",
+      "companyInfo": "معلومات الشركة",
+      "companyInfoDesc": "تفاصيل أساسية عن منظمتك",
+      "companyName": "اسم الشركة",
+      "companyNamePlaceholder": "أدخل اسم شركتك",
+      "website": "الموقع الإلكتروني",
+      "industry": "الصناعة",
+      "selectIndustry": "حدد الصناعة",
+      "companySize": "حجم الشركة",
+      "selectCompanySize": "حدد حجم الشركة",
+      "contactInfo": "معلومات الاتصال",
+      "contactInfoDesc": "تفاصيل الاتصال الرئيسية لمنظمتك",
+      "contactEmail": "بريد الاتصال الإلكتروني",
+      "contactPhone": "هاتف الاتصال",
+      "address": "العنوان",
+      "addressDesc": "العنوان الفعلي لمنظمتك",
+      "street": "عنوان الشارع",
+      "city": "المدينة",
+      "state": "الولاية/المقاطعة",
+      "postalCode": "الرمز البريدي",
+      "country": "البلد",
+      "selectCountry": "حدد البلد",
+      "localization": "التخصيص المحلي",
+      "localizationDesc": "حدد لغتك الافتراضية وعملتك وتفضيلاتك الإقليمية"
+    },
+    "localization": {
+      "selectLocale": "حدد اللغة المحلية",
+      "selectCurrency": "حدد العملة",
+      "save": "حفظ"
+    },
+    "industries": {
+      "technology": "التكنولوجيا",
+      "healthcare": "الرعاية الصحية",
+      "finance": "المالية",
+      "ecommerce": "التجارة الإلكترونية",
+      "other": "أخرى"
+    },
+    "companySizes": {
+      "1-10": "1-10 موظفين",
+      "11-50": "11-50 موظفين",
+      "51-200": "51-200 موظفين",
+      "201-500": "201-500 موظفين",
+      "500+": "500+ موظفين"
+    },
+    "billing": {
+      "title": "الفوترة والاشتراك",
+      "subtitle": "إدارة اشتراكك ومعلومات الفوترة"
+    },
+    "bots": {
+      "title": "البوتات ووكلاء الذكاء الاصطناعي",
+      "subtitle": "قم بتكوين وكلاء الذكاء الاصطناعي وإعدادات التلقائية"
+    },
+    "domains": {
+      "title": "النطاقات المخصصة",
+      "subtitle": "إدارة أسماء المضيفين للبوابة و DNS البريد الإلكتروني"
+    },
+    "appearance": {
+      "title": "المظهر",
+      "subtitle": "قم بتخصيص مظهر وأسلوب منصتك",
+      "theme": "الثيم",
+      "themeDesc": "اختر ثيمك المفضل للمنصة",
+      "brandColors": "ألوان العلامة التجارية",
+      "brandColorsDesc": "قم بتخصيص ألوان علامتك التجارية في جميع أنحاء المنصة",
+      "primaryColor": "اللون الأساسي",
+      "secondaryColor": "اللون الثانوي",
+      "accentColor": "لون التمييز",
+      "fontFamily": "عائلة الخط",
+      "customCss": "CSS مخصص"
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "subtitle": "قم بتكوين كيفية ومتى تتلقى الإشعارات",
+      "email": "إشعارات البريد الإلكتروني",
+      "emailDesc": "اختر أي إشعارات بريد إلكتروني تتلقاها",
+      "push": "إشعارات الدفع",
+      "pushDesc": "قم بتكوين تفضيلات إشعارات الدفع",
+      "emailItems": {
+        "newCustomers": "تسجيلات عملاء جدد",
+        "orderUpdates": "تحديثات حالة الطلب",
+        "systemAlerts": "تنبيهات النظام والصيانة",
+        "weeklyReports": "تقارير الأداء الأسبوعية"
+      },
+      "pushItems": {
+        "urgentAlerts": "تنبيهات النظام العاجلة",
+        "mentions": "عندما يذكرك أحدهم",
+        "comments": "تعليقات جديدة على منشوراتك"
+      }
+    },
+    "auditTrail": {
+      "title": "سجل التدقيق",
+      "subtitle": "عرض وإدارة سجلات نشاط النظام",
+      "export": "تصدير السجلات",
+      "recentActivity": "النشاط الأخير",
+      "recentActivityDesc": "آخر أنشطة النظام وأفعال المستخدم",
+      "logs": {
+        "userLogin": "تسجيل دخول المستخدم",
+        "settingsUpdated": "تم تحديث الإعدادات",
+        "newUserInvited": "تم دعوة مستخدم جديد",
+        "by": "بواسطة"
+      }
+    },
+    "integrations": {
+      "title": "التكاملات",
+      "subtitle": "ربط وإدارة الخدمات الخارجية",
+      "connected": "التكاملات المتصلة",
+      "connectedDesc": "التكاملات النشطة حالياً",
+      "available": "التكاملات المتاحة",
+      "availableDesc": "ربط خدمات جديدة لتحسين منصتك",
+      "configure": "تكوين",
+      "connect": "ربط",
+      "connectedIntegrations": {
+        "paymentProcessing": "معالجة الدفع",
+        "emailDelivery": "توصيل البريد الإلكتروني",
+        "connected": "متصل"
+      },
+      "availableIntegrations": {
+        "teamCommunication": "تواصل الفريق",
+        "websiteAnalytics": "تحليلات الموقع",
+        "workflowAutomation": "أتمتة سير العمل",
+        "customIntegrations": "التكاملات المخصصة"
+      }
+    },
+    "whiteLabel": {
+      "title": "القوالب",
+      "type": "النوع",
+      "name": "الاسم",
+      "variables": "المتغيرات (k:v، مفصولة بفواصل)",
+      "content": "المحتوى",
+      "previewButton": "معاينة",
+      "save": "حفظ",
+      "previewLabel": "معاينة",
+      "existing": "الموجودة",
+      "noTemplates": "لا توجد قوالب بعد.",
+      "footer": "يتم استخدام عرض Handlebars عند التوفر، مع استبدال احتياطي.",
+      "edit": "تحرير",
+      "delete": "حذف"
+    }
+  },
+  "marketing": {
+    "title": "لوحة تحكم التسويق",
+    "subtitle": "إدارة حملاتك وتفاعل العملاء",
+    "reload": "إعادة تحميل",
+    "create": "إنشاء حملة",
+    "noDescription": "لا وصف",
+    "spent": "مصروف",
+    "actions": {
+      "launch": "إطلاق",
+      "scheduleNow": "جدولة الآن",
+      "manageWorkflows": "إدارة سير العمل"
+    },
+    "stats": {
+      "totalCampaigns": "إجمالي الحملات",
+      "active": "نشطة",
+      "avgOpenRate": "معدل الفتح المتوسط",
+      "avgClickRate": "معدل النقر المتوسط"
+    },
+    "empty": "ابدأ بإنشاء حملتك التسويقية الأولى.",
+    "emptyTitle": "لا توجد حملات بعد",
+    "createTitle": "إنشاء حملة جديدة",
+    "fields": {
+      "name": "اسم الحملة",
+      "type": "النوع",
+      "subject": "الموضوع",
+      "description": "الوصف",
+      "schedule": "الجدولة",
+      "template": "القالب"
+    },
+    "placeholders": {
+      "name": "اسم الحملة",
+      "subject": "موضوع البريد الإلكتروني أو عنوان الحملة",
+      "description": "صف أهداف حملتك ومحتواها"
+    },
+    "types": {
+      "email": "بريد إلكتروني",
+      "sms": "رسائل نصية",
+      "social": "اجتماعي",
+      "webinar": "ندوة عبر الإنترنت",
+      "content": "محتوى",
+      "paidAds": "إعلانات مدفوعة"
+    },
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "preview": {
+      "title": "معاينة",
+      "button": "توليد المعاينة"
+    },
+    "template": {
+      "select": "اختر قالب",
+      "loading": "جاري تحميل القوالب..."
+    },
+    "charts": {
+      "performanceTitle": "اتجاهات الأداء",
+      "openRate": "معدل الفتح (%)",
+      "clickRate": "معدل النقر (%)"
+    },
+    "errors": {
+      "nameRequired": "الاسم مطلوب",
+      "subjectRequired": "الموضوع مطلوب للبريد الإلكتروني",
+      "smsTooLong": "جسم الرسالة النصية طويل جداً (حد أقصى 1600 حرف)"
+    }
+  },
+  "onboarding": {
+    "title": "مرحباً بك في جلافيتو",
+    "subtitle": "دعنا نساعدك في الإعداد",
+    "loading": "جاري تحضير عملية الإدماج...",
+    "exitDialog": {
+      "title": "الخروج من عملية الإدماج؟",
+      "description": "سيتم حفظ تقدمك. يمكنك الاستئناف في أي وقت من حيث توقفت.",
+      "cancel": "متابعة عملية الإدماج",
+      "confirm": "الخروج الآن"
+    },
+    "steps": {
+      "welcome": {
+        "title": "مرحباً بك في جلافيتو",
+        "subtitle": "منصة دعم العملاء المدعومة بالذكاء الاصطناعي",
+        "description": "دعنا نساعدك في إعداد كل ما تحتاجه لتقديم دعم عملاء استثنائي.",
+        "getStarted": "ابدأ الآن",
+        "ui": {
+          "welcomeTitle": "مرحباً بك في جلافيتو!",
+          "welcomeSubtitle": "دعنا نبدأ بالتعرف على شركتك",
+          "companyInformation": "معلومات الشركة",
+          "companyDescription": "أخبرنا عن عملك لتخصيص تجربتك",
+          "companyName": "اسم الشركة *",
+          "companyNamePlaceholder": "شركة أكمي",
+          "industry": "القطاع *",
+          "selectIndustry": "اختر القطاع",
+          "companySize": "حجم الشركة *",
+          "selectSize": "اختر الحجم",
+          "timezone": "المنطقة الزمنية *",
+          "selectTimezone": "اختر المنطقة الزمنية",
+          "industries": {
+            "technology": "التكنولوجيا",
+            "retail": "التجارة الإلكترونية",
+            "healthcare": "الرعاية الصحية",
+            "finance": "المالية والمصرفية",
+            "education": "التعليم",
+            "services": "الخدمات المهنية",
+            "other": "أخرى"
+          },
+          "sizes": {
+            "1-10": "1-10 موظفين",
+            "11-50": "11-50 موظف",
+            "51-200": "51-200 موظف",
+            "201-500": "201-500 موظف",
+            "501+": "501+ موظف"
+          },
+          "timezones": {
+            "eastern": "الوقت الشرقي (ET)",
+            "central": "الوقت المركزي (CT)",
+            "mountain": "وقت الجبال (MT)",
+            "pacific": "الوقت الهادئ (PT)",
+            "london": "لندن (GMT)",
+            "centralEuropean": "الوقت الأوروبي المركزي",
+            "tokyo": "طوكيو (JST)",
+            "utc": "UTC"
+          }
+        }
+      },
+      "stripe": {
+        "title": "إعداد الدفع",
+        "subtitle": "تكوين الفوترة والاشتراك",
+        "description": "قم بإعداد طريقة الدفع الخاصة بك لفتح جميع الميزات وبدء رحلتك مع جلافيتو.",
+        "connectStripe": "ربط سترايب",
+        "skipForNow": "تخطي الآن",
+        "ui": {
+          "setupPayments": "إعداد المدفوعات",
+          "connectStripeAccount": "اربط حساب سترايب الخاص بك لبدء قبول المدفوعات",
+          "stripeConnect": "سترايب كونكت",
+          "securelyConnect": "اربط حساب سترايب الخاص بك بأمان",
+          "connected": "متصل!",
+          "accountConnected": "تم ربط حساب سترايب الخاص بك بنجاح",
+          "active": "نشط",
+          "secureAndEasy": "آمن وسهل",
+          "secureDescription": "معلومات الدفع الخاصة بك مشفرة وآمنة. نستخدم سترايب كونكت لمعالجة المدفوعات المتوافقة مع PCI.",
+          "connectStripeAccountButton": "ربط حساب سترايب",
+          "redirectMessage": "سيتم إعادة توجيهك إلى سترايب لتفويض الاتصال"
+        }
+      },
+      "channels": {
+        "title": "ربط قنواتك",
+        "subtitle": "إعداد قنوات التواصل الخاصة بك",
+        "description": "اربط القنوات التي يتواصل معك العملاء من خلالها.",
+        "whatsapp": "واتساب للأعمال",
+        "instagram": "إنستغرام",
+        "email": "البريد الإلكتروني",
+        "web": "دردشة الويب",
+        "connect": "ربط",
+        "connected": "متصل",
+        "skip": "تخطي",
+        "ui": {
+          "connectChannels": "ربط القنوات",
+          "selectChannels": "اختر قنوات التواصل التي تريد تفعيلها",
+          "availableChannels": "القنوات المتاحة",
+          "enableChannels": "فعل قناة واحدة أو أكثر لبدء استلام الرسائل",
+          "whatsapp": "واتساب",
+          "instagram": "إنستغرام",
+          "email": "البريد الإلكتروني",
+          "liveChat": "الدردشة المباشرة"
+        }
+      },
+      "team": {
+        "title": "دعوة فريقك",
+        "subtitle": "إضافة أعضاء الفريق إلى مساحة العمل",
+        "description": "ادع أعضاء فريقك للتعاون في دعم العملاء.",
+        "inviteMembers": "دعوة أعضاء الفريق",
+        "skipForNow": "تخطي الآن",
+        "emailPlaceholder": "أدخل عناوين البريد الإلكتروني",
+        "sendInvites": "إرسال الدعوات",
+        "ui": {
+          "inviteYourTeam": "دعوة فريقك",
+          "addTeamMembers": "إضافة أعضاء الفريق للتعاون",
+          "teamInvitations": "دعوات الفريق",
+          "inviteViaEmail": "دعوة أعضاء الفريق عبر البريد الإلكتروني",
+          "emailAddress": "عنوان البريد الإلكتروني",
+          "emailPlaceholder": "زميل@مثال.com",
+          "skipAndInviteLater": "يمكنك تخطي هذه الخطوة ودعوة أعضاء الفريق لاحقاً"
+        }
+      },
+      "knowledgeBase": {
+        "title": "قاعدة المعرفة",
+        "subtitle": "إعداد قاعدة المعرفة الخاصة بك",
+        "description": "أنشئ المقالات والأسئلة الشائعة لمساعدة عملائك في العثور على الإجابات بسرعة.",
+        "createArticle": "إنشاء أول مقال",
+        "importContent": "استيراد المحتوى",
+        "skipForNow": "تخطي الآن",
+        "ui": {
+          "buildKnowledgeBase": "بناء قاعدة المعرفة",
+          "importOrCreate": "استيراد أو إنشاء مقالات لفريقك",
+          "knowledgeBaseSetup": "إعداد قاعدة المعرفة",
+          "addDocumentation": "إضافة وثائق لمساعدة فريقك في الرد بشكل أسرع",
+          "importFromCsv": "استيراد من CSV",
+          "createManually": "إنشاء يدوياً",
+          "skipAndAddLater": "أو تخطي وإضافة المقالات لاحقاً"
+        }
+      },
+      "aiFeatures": {
+        "title": "ميزات الذكاء الاصطناعي",
+        "subtitle": "تكوين مساعدك الذكي",
+        "description": "قم بإعداد الميزات المدعومة بالذكاء الاصطناعي لأتمتة الردود وتحسين الكفاءة.",
+        "enableAI": "تفعيل المساعد الذكي",
+        "configureLater": "التكوين لاحقاً",
+        "features": {
+          "autoResponses": "الردود التلقائية",
+          "sentimentAnalysis": "تحليل المشاعر",
+          "smartRouting": "التوجيه الذكي"
+        },
+        "ui": {
+          "aiPoweredFeatures": "الميزات المدعومة بالذكاء الاصطناعي",
+          "enableIntelligentAutomation": "تفعيل الأتمتة الذكية",
+          "aiConfiguration": "تكوين الذكاء الاصطناعي",
+          "chooseFeatures": "اختر ميزات الذكاء الاصطناعي المراد تفعيلها",
+          "autoPilotResponses": "الردود بالطيار الآلي",
+          "sentimentAnalysis": "تحليل المشاعر",
+          "smartRouting": "التوجيه الذكي",
+          "leadScoring": "تقييم العملاء المحتملين"
+        }
+      },
+      "workflows": {
+        "title": "سير العمل",
+        "subtitle": "أتمتة عملياتك",
+        "description": "أنشئ سير العمل لأتمتة المهام المتكررة وتحسين الكفاءة.",
+        "createWorkflow": "إنشاء أول سير عمل",
+        "useTemplate": "استخدام قالب",
+        "skipForNow": "تخطي الآن"
+      },
+      "complete": {
+        "title": "أنت جاهز!",
+        "subtitle": "مرحباً بك في جلافيتو",
+        "description": "اكتملت عملية الإدماج الخاصة بك. يمكنك الآن البدء في إدارة دعم العملاء بثقة.",
+        "goToDashboard": "الذهاب إلى لوحة التحكم",
+        "exploreFeatures": "استكشاف الميزات",
+        "ui": {
+          "allSet": "أنت جاهز!",
+          "workspaceReady": "مساحة العمل الخاصة بك جاهزة. دعنا نبدأ في بناء تجارب عملاء مذهلة!",
+          "clickFinish": "انقر على \"إنهاء\" أدناه لإكمال الإعداد",
+          "goToDashboard": "الذهاب إلى لوحة التحكم",
+          "accessSettingsLater": "يمكنك دائماً الوصول إلى هذه الإعدادات لاحقاً من لوحة التحكم",
+          "stats": {
+            "channelsConnected": "القنوات المتصلة",
+            "teamMembers": "أعضاء الفريق",
+            "aiEnabled": "الذكاء الاصطناعي مفعل"
+          }
+        }
+      },
+      "agentProfile": {
+        "title": "إكمال ملفك الشخصي",
+        "subtitle": "إعداد ملف الوكيل الشخصي",
+        "description": "أكمل ملفك الشخصي لمساعدة العملاء وأعضاء الفريق في معرفة من يعملون معه.",
+        "displayName": "اسم العرض",
+        "displayNamePlaceholder": "كيف ستظهر للعملاء",
+        "timezone": "المنطقة الزمنية",
+        "bio": "السيرة الذاتية",
+        "bioPlaceholder": "أخبرنا عن خبرتك وخبراتك",
+        "skills": "المهارات",
+        "skillsPlaceholder": "مثال: تقني، فوترة، تكامل",
+        "languages": "اللغات",
+        "languagesPlaceholder": "مثال: العربية، الإنجليزية، الفرنسية",
+        "saveProfile": "حفظ الملف الشخصي",
+        "profileInfo": {
+          "title": "معلومات الملف الشخصي",
+          "description": "ستكون هذه المعلومات مرئية لفريقك",
+          "bioOptional": "السيرة الذاتية (اختياري)",
+          "bioPlaceholder": "وصف موجز عن نفسك..."
+        }
+      },
+      "agentTour": {
+        "title": "جولة تعريفية",
+        "subtitle": "تعلم أساسيات جلافيتو",
+        "description": "دعنا نريك المنصة ونساعدك في التعرف على الميزات الرئيسية.",
+        "startTour": "بدء الجولة",
+        "skipTour": "تخطي الجولة",
+        "next": "التالي",
+        "previous": "السابق",
+        "finish": "إنهاء",
+        "ui": {
+          "dashboardTour": "جولة لوحة التحكم",
+          "exploreWorkspace": "دعنا نستكشف مساحة العمل الخاصة بك",
+          "tourDescription": "سنرشدك عبر الميزات الرئيسية في لوحة التحكم في الشاشة التالية.",
+          "skipMessage": "لا تتردد في التخطي إذا كنت تريد الاستكشاف بنفسك"
+        }
+      },
+      "agentSampleTicket": {
+        "title": "التدرب على تذكرة نموذجية",
+        "subtitle": "احصل على خبرة عملية",
+        "description": "تدرب على الرد على استفسار عميل نموذجي للتعرف على نظام التذاكر.",
+        "startPractice": "بدء التدريب",
+        "skipPractice": "تخطي التدريب",
+        "sampleTicket": {
+          "subject": "أحتاج مساعدة في حسابي",
+          "description": "أواجه مشكلة في تسجيل الدخول إلى حسابي. هل يمكنك مساعدتي في إعادة تعيين كلمة المرور؟",
+          "customer": "أحمد محمد",
+          "channel": "البريد الإلكتروني"
+        },
+        "ui": {
+          "practiceTitle": "تذكرة تدريبية",
+          "practiceSubtitle": "جرب الرد على استفسار عميل نموذجي",
+          "sampleMessageTitle": "رسالة عميل نموذجية",
+          "practiceDescription": "تدرب على مهارات الرد",
+          "responsePlaceholder": "اكتب ردك هنا...",
+          "sendResponse": "إرسال الرد التدريبي"
+        }
+      },
+      "agentKBIntro": {
+        "title": "مقدمة قاعدة المعرفة",
+        "subtitle": "تعلم كيفية استخدام قاعدة المعرفة",
+        "description": "اكتشف كيفية البحث واستخدام قاعدة المعرفة لتقديم دعم عملاء أفضل.",
+        "exploreKB": "استكشاف قاعدة المعرفة",
+        "skipIntro": "تخطي المقدمة",
+        "features": {
+          "search": "البحث في المقالات",
+          "categories": "تصفح الفئات",
+          "favorites": "وضع علامة مفضلة"
+        }
+      },
+      "agentNotifications": {
+        "title": "إعدادات الإشعارات",
+        "subtitle": "تكوين إشعاراتك",
+        "description": "قم بإعداد كيفية ومتى تريد استلام الإشعارات حول التذاكر الجديدة والتحديثات.",
+        "emailNotifications": "إشعارات البريد الإلكتروني",
+        "pushNotifications": "إشعارات الدفع",
+        "desktopNotifications": "إشعارات سطح المكتب",
+        "soundAlerts": "تنبيهات الصوت",
+        "saveSettings": "حفظ الإعدادات",
+        "testNotification": "اختبار الإشعار",
+        "preferences": {
+          "email": {
+            "label": "إشعارات البريد الإلكتروني",
+            "description": "استلام تحديثات البريد الإلكتروني للتذاكر الجديدة"
+          },
+          "inApp": {
+            "label": "الإشعارات داخل التطبيق",
+            "description": "رؤية الإشعارات في لوحة التحكم"
+          },
+          "push": {
+            "label": "إشعارات الدفع",
+            "description": "الحصول على إشعارات دفع المتصفح"
+          }
+        }
+      }
+    },
+    "navigation": {
+      "next": "التالي",
+      "previous": "السابق",
+      "skip": "تخطي",
+      "finish": "إنهاء",
+      "continue": "متابعة",
+      "processing": "جاري المعالجة..."
+    },
+    "progress": {
+      "step": "الخطوة",
+      "of": "من",
+      "completed": "مكتمل",
+      "current": "الحالي",
+      "pending": "في الانتظار",
+      "percentage": "{percentage}% مكتمل"
+    }
+  }
+}

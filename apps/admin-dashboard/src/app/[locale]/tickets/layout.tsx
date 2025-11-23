@@ -4,7 +4,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 
 export default function TicketsSectionLayout({ children }: { children: ReactNode }) {
   return (
-    <ProtectedRoute requiredRole={['agent']}>
+    <ProtectedRoute requiredRole={['agent','admin']}>
       <AppShell>{children}</AppShell>
     </ProtectedRoute>
   );

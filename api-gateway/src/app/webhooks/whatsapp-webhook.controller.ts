@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Body, Headers, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Headers, HttpCode, HttpStatus, Logger, Optional } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '@glavito/shared-database';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +11,8 @@ import { WorkflowService } from '@glavito/shared-workflow'
 import { PublicChatSessionStore } from '../knowledge/public-chat.store';
 import { MediaAnalysisService } from '../ai/media-analysis.service';
 import { TranscriptionService } from '../calls/transcription.service';
+import { WalletService } from '../wallet/wallet.service';
+import { calculateRefund } from '../wallet/pricing.config';
 
 @ApiTags('webhooks-whatsapp')
 @Controller('webhooks/whatsapp')
@@ -27,6 +29,7 @@ export class WhatsAppWebhookController {
     private readonly transcription: TranscriptionService,
     private readonly mediaAnalysis: MediaAnalysisService,
     private readonly workflowService: WorkflowService,
+    @Optional() private readonly walletService?: WalletService,
   ) {}
 
   // Meta verification handshake
@@ -69,6 +72,78 @@ export class WhatsAppWebhookController {
 
       const payload = { source: ChannelType.WHATSAPP, data: body, headers, timestamp: Date.now() } as unknown as WebhookPayload;
 
+      // WhatsApp status updates (delivered/read/failed) → update delivery logs and message metadata
+      try {
+        type WAStatus = { id?: string; status?: string; timestamp?: string | number; recipient_id?: string; errors?: Array<{ code?: string; title?: string; details?: string }> };
+        type WAStatusWrapper = { entry?: Array<{ changes?: Array<{ value?: { statuses?: WAStatus[] } }> }> };
+        const w = body as WAStatusWrapper;
+        const statuses = w?.entry?.[0]?.changes?.[0]?.value?.statuses || [];
+        for (const s of statuses) {
+          const msgId = s?.id;
+          const st = (s?.status || '').toLowerCase();
+          const ts = s?.timestamp ? new Date(Number(s.timestamp) * 1000) : new Date();
+          if (!msgId) continue;
+          try {
+            // Campaign deliveries update by messageId
+            if (st === 'delivered') {
+              await (this.prisma as any)['campaignDelivery'].updateMany({ where: { messageId: msgId }, data: { status: 'delivered', deliveredAt: ts } });
+            } else if (st === 'read') {
+              await (this.prisma as any)['campaignDelivery'].updateMany({ where: { messageId: msgId }, data: { status: 'opened', openedAt: ts } });
+            } else if (st === 'failed' || st === 'undeliverable') {
+              const errMsg = (s?.errors && s.errors[0]?.title) || 'failed';
+              await (this.prisma as any)['campaignDelivery'].updateMany({ where: { messageId: msgId }, data: { status: 'failed', errorMessage: errMsg } });
+            }
+            // Advanced message metadata by channelMessageId
+            if (st === 'delivered') {
+              await (this.prisma as any)['messageAdvanced'].updateMany({ where: { channel: 'whatsapp', channelMessageId: msgId }, data: { metadata: { status: 'delivered', deliveredAt: ts } } });
+            } else if (st === 'read') {
+              await (this.prisma as any)['messageAdvanced'].updateMany({ where: { channel: 'whatsapp', channelMessageId: msgId }, data: { metadata: { status: 'read', readAt: ts } } });
+            } else if (st === 'failed' || st === 'undeliverable') {
+              await (this.prisma as any)['messageAdvanced'].updateMany({ where: { channel: 'whatsapp', channelMessageId: msgId }, data: { metadata: { status: 'failed', error: (s?.errors && s.errors[0]) || null } } });
+              
+              // Record refund for failed message (best-effort)
+              try {
+                if (this.walletService && tenantId) {
+                  // Find the original usage transaction for this message
+                  const message = await (this.prisma as any)['messageAdvanced'].findFirst({
+                    where: { channel: 'whatsapp', channelMessageId: msgId },
+                    select: { id: true, messageType: true },
+                  });
+                  
+                  if (message) {
+                    // Find usage transaction for this message
+                    const usageTx = await (this.prisma as any)['channelWalletTransaction'].findFirst({
+                      where: {
+                        tenantId,
+                        type: 'usage',
+                        metadata: { path: ['messageId'], equals: message.id },
+                      },
+                      include: { wallet: { select: { channelType: true } } },
+                    });
+                    
+                    if (usageTx) {
+                      const originalCost = Math.abs(Number(usageTx.amount));
+                      const refund = calculateRefund('whatsapp', originalCost);
+                      
+                      if (refund > 0) {
+                        await this.walletService.purchaseCredits(
+                          tenantId,
+                          usageTx.wallet.channelType,
+                          refund,
+                          `Refund for failed message ${msgId}`,
+                        );
+                      }
+                    }
+                  }
+                }
+              } catch (err) {
+                this.logger.debug(`Failed to record refund for failed WhatsApp message: ${(err as Error).message}`);
+              }
+            }
+          } catch { /* ignore per-status failure */ }
+        }
+      } catch { /* ignore statuses block */ }
+
       // Try to link incoming WA sender to an existing public chat session if phone was pre-linked
       try {
         type WAData = { entry?: Array<{ changes?: Array<{ value?: { messages?: Array<{ from?: string }> } }> }> };
@@ -90,6 +165,20 @@ export class WhatsAppWebhookController {
           // Also mirror inbound into public chat store for widget
           this.publicChatStore.appendMessage(sessionId, 'assistant', content, Date.now())
         }
+        // STOP/UNSUBSCRIBE opt-out handling
+        try {
+          const lower = (rawMsg?.text?.body || '').trim().toLowerCase()
+          if (lower === 'stop' || lower === 'unsubscribe' || lower === 'opt out' || lower === 'optout') {
+            if (from && tenantId) {
+              const customers = await (this.prisma as any)['customer'].findMany({ where: { tenantId, phone: from } })
+              for (const c of customers || []) {
+                const cf = ((c as any).customFields || {}) as Record<string, any>
+                const marketing = { ...(cf.marketingPreferences || {}), whatsappOptOut: true }
+                await (this.prisma as any)['customer'].update({ where: { id: (c as any).id }, data: { customFields: { ...cf, marketingPreferences: marketing } } })
+              }
+            }
+          }
+        } catch { /* ignore opt-out errors */ }
       } catch {/* ignore linking errors */}
       const start = Date.now();
       const res = await this.orchestrator.processWebhook(payload, tenantId);
@@ -196,6 +285,11 @@ export class WhatsAppWebhookController {
         if (cfg.phoneNumberId === phoneNumberId || cfg.whatsappPhoneNumberId === phoneNumberId) {
           return ch.tenantId as string;
         }
+      }
+      // As a last resort in dev: if exactly one active WhatsApp channel exists, assume its tenant
+      const onlyActive = await this.prisma['channel'].findMany({ where: { type: 'whatsapp', isActive: true }, select: { tenantId: true } });
+      if (Array.isArray(onlyActive) && onlyActive.length === 1) {
+        return (onlyActive[0] as { tenantId: string }).tenantId;
       }
       return null;
     } catch {

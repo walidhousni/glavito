@@ -32,19 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} theme-transition`} suppressHydrationWarning>
-        {/* Register service worker on client */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-                window.addEventListener('load', function () {
-                  const sw = '/sw.js';
-                  navigator.serviceWorker.register(sw).catch(function () { /* ignore */ });
-                });
-              }
-            `,
-          }}
-        />
+        {/* Removed service worker auto-registration to prevent stale SW intercepting API calls */}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -14,7 +13,8 @@ import {
   MoreHorizontal,
   Eye,
   MessageSquare,
-  Target
+  Target,
+  Download
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -61,7 +61,7 @@ export function CustomerSegmentCard({ segment, onClick, onExport, onTriggerWorkf
 
   return (
     <Card 
-      className="customer-card-elevated cursor-pointer group"
+      className="cursor-pointer group transition-all hover:shadow-md"
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -73,15 +73,15 @@ export function CustomerSegmentCard({ segment, onClick, onExport, onTriggerWorkf
       role="button"
       aria-label={`${segment.name} segment with ${segment.customerCount} customers`}
     >
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
               <Icon className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-title">{segment.name}</CardTitle>
-              <p className="text-subtitle mt-1">{segment.description}</p>
+              <CardTitle className="text-base">{segment.name}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">{segment.description}</p>
             </div>
           </div>
           <DropdownMenu>
@@ -96,11 +96,11 @@ export function CustomerSegmentCard({ segment, onClick, onExport, onTriggerWorkf
                 {t('viewDetails', { default: 'View details' })}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onExport?.('json'); }}>
-                <span className="mr-2 h-4 w-4" />
-                {t('exportData', { default: 'Export data' })}
+                <Download className="mr-2 h-4 w-4" />
+                {t('exportData', { default: 'Export data' })} JSON
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onExport?.('csv'); }}>
-                <span className="mr-2 h-4 w-4" />
+                <Download className="mr-2 h-4 w-4" />
                 {t('exportData', { default: 'Export data' })} CSV
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendCampaign?.(); }}>
@@ -118,52 +118,47 @@ export function CustomerSegmentCard({ segment, onClick, onExport, onTriggerWorkf
       
       <CardContent className="space-y-4">
         {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div className="p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2 text-caption mb-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Users className="h-3 w-3" />
               <span>{t('segments.customers')}</span>
             </div>
-            <div className="text-xl font-bold text-foreground">{segment.customerCount.toLocaleString()}</div>
+            <div className="text-lg font-semibold">{segment.customerCount.toLocaleString()}</div>
           </div>
           <div className="p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2 text-caption mb-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <DollarSign className="h-3 w-3" />
               <span>{t('segments.avgValue')}</span>
             </div>
-            <div className="text-xl font-bold text-foreground">{formatCurrency(segment.averageValue)}</div>
+            <div className="text-lg font-semibold">{formatCurrency(segment.averageValue)}</div>
           </div>
         </div>
 
         {/* Growth Rate */}
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center justify-between">
-            <span className="text-subtitle">{t('segments.monthlyGrowth')}</span>
-            <div className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
-              segment.growthRate > 0 ? "badge-success" : "badge-danger"
-            )}>
+            <span className="text-sm text-muted-foreground">{t('segments.monthlyGrowth')}</span>
+            <Badge variant={segment.growthRate > 0 ? "default" : "destructive"}>
               {React.createElement(getGrowthIcon(segment.growthRate), {
-                className: "h-3 w-3"
+                className: "h-3 w-3 mr-1"
               })}
-              <span>
-                {segment.growthRate > 0 ? '+' : ''}{segment.growthRate}%
-              </span>
-            </div>
+              {segment.growthRate > 0 ? '+' : ''}{segment.growthRate}%
+            </Badge>
           </div>
         </div>
 
         {/* Segment Health Indicator */}
         <div className="pt-3 border-t">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-subtitle">{t('segments.segmentHealth')}</span>
+            <span className="text-sm text-muted-foreground">{t('segments.segmentHealth')}</span>
             <Badge 
-              className={cn(
-                segment.growthRate > 10 ? "badge-success" :
-                segment.growthRate > 0 ? "badge-info" :
-                segment.growthRate > -10 ? "badge-warning" :
-                "badge-danger"
-              )}
+              variant={
+                segment.growthRate > 10 ? "default" :
+                segment.growthRate > 0 ? "secondary" :
+                segment.growthRate > -10 ? "outline" :
+                "destructive"
+              }
             >
               {segment.growthRate > 10 ? t('excellent') :
                segment.growthRate > 0 ? t('good') :
@@ -172,8 +167,8 @@ export function CustomerSegmentCard({ segment, onClick, onExport, onTriggerWorkf
             </Badge>
           </div>
           {lastTriggeredAt && (
-            <div className="text-caption flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
-              <div className="status-dot status-success" />
+            <div className="text-xs text-muted-foreground flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
               <span>Last triggered: {typeof lastTriggeredAt === 'string' ? lastTriggeredAt : new Date(lastTriggeredAt).toLocaleString()}</span>
             </div>
           )}
@@ -184,7 +179,7 @@ export function CustomerSegmentCard({ segment, onClick, onExport, onTriggerWorkf
           <Button 
             size="sm" 
             variant="outline" 
-            className="flex-1 text-xs"
+            className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
               if (onViewDetails) onViewDetails(); else if (onClick) onClick();
@@ -196,7 +191,7 @@ export function CustomerSegmentCard({ segment, onClick, onExport, onTriggerWorkf
           <Button 
             size="sm" 
             variant="outline" 
-            className="flex-1 text-xs"
+            className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
               onSendCampaign?.();

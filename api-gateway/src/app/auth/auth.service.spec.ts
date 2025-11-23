@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from '@glavito/shared-database';
-import { EmailService } from './email.service';
+import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcryptjs';
 import { ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 

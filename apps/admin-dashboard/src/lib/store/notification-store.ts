@@ -4,7 +4,7 @@ import { api } from '@/lib/api/config';
 
 export interface Notification {
   id: string;
-  type: 'ticket' | 'customer' | 'system' | 'sla' | 'team';
+  type: 'ticket' | 'customer' | 'system' | 'sla' | 'team' | 'conversation';
   title: string;
   message: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -104,17 +104,40 @@ export const useNotificationStore = create<NotificationState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await api.get('/notifications');
-          const notifications = response.data;
-          const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
+          // Handle both wrapped and unwrapped responses
+          const data = response.data;
+          const notifications = Array.isArray(data) 
+            ? data 
+            : Array.isArray(data?.data) 
+              ? data.data 
+              : [];
+          
+          // Ensure notifications have correct format
+          const normalizedNotifications: Notification[] = notifications.map((n: any) => ({
+            id: n.id,
+            type: n.type as Notification['type'],
+            title: n.title || '',
+            message: n.message || '',
+            priority: (n.priority || 'low') as Notification['priority'],
+            isRead: n.isRead ?? false,
+            createdAt: n.createdAt || new Date().toISOString(),
+            updatedAt: n.updatedAt || new Date().toISOString(),
+            userId: n.userId || '',
+            tenantId: n.tenantId || '',
+            metadata: n.metadata || {},
+          }));
+          
+          const unreadCount = normalizedNotifications.filter((n) => !n.isRead).length;
           
           set({ 
-            notifications, 
+            notifications: normalizedNotifications, 
             unreadCount,
             isLoading: false 
           });
         } catch (error: any) {
+          console.error('Failed to fetch notifications:', error);
           set({ 
-            error: error.response?.data?.message || 'Failed to fetch notifications',
+            error: error.response?.data?.message || error.message || 'Failed to fetch notifications',
             isLoading: false 
           });
         }
@@ -207,14 +230,21 @@ export const useNotificationStore = create<NotificationState>()(
         }
       },
 
-      updatePreferences: async (newPreferences: Partial<NotificationPreferences>) => {
+      updatePreferences: async (newPreferences: Partial<NotificationPreferences> | NotificationPreferences) => {
         try {
-          const updatedPreferences = { ...get().preferences, ...newPreferences };
+          const currentPrefs = get().preferences;
+          const updatedPreferences: NotificationPreferences = {
+            email: { ...currentPrefs.email, ...(newPreferences.email || {}) },
+            inApp: { ...currentPrefs.inApp, ...(newPreferences.inApp || {}) },
+            push: { ...currentPrefs.push, ...(newPreferences.push || {}) },
+          };
+          
           await api.patch('/notifications/preferences', updatedPreferences);
           
           set({ preferences: updatedPreferences });
         } catch (error: any) {
           set({ error: error.response?.data?.message || 'Failed to update preferences' });
+          throw error;
         }
       },
 
@@ -224,12 +254,16 @@ export const useNotificationStore = create<NotificationState>()(
           id: `temp-${Date.now()}`,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          isRead: false, // Default unread
         };
         
-        set((state) => ({
-          notifications: [newNotification, ...state.notifications],
-          unreadCount: state.unreadCount + 1,
-        }));
+        set((state) => {
+          const nextUnread = state.unreadCount + (!newNotification.isRead ? 1 : 0);
+          return {
+            notifications: [newNotification, ...state.notifications],
+            unreadCount: nextUnread,
+          };
+        });
       },
 
       setError: (error: string | null) => {

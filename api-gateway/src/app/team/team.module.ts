@@ -9,9 +9,15 @@ import { InvitationController } from './invitation.controller';
 import { AgentProfileService } from './agent-profile.service';
 import { AgentProfileController } from './agent-profile.controller';
 import { TeamEventHandler } from './team-event.handler';
+import { AuthModule } from '../auth/auth.module';
+import { EmailModule } from '../email/email.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
   imports: [
+    AuthModule,
+    EmailModule,
+    SubscriptionsModule,
     ConfigModule,
     HttpModule.register({
       timeout: 10000,

@@ -16,7 +16,7 @@ import type {
   CreateInvitationRequest,
   AcceptInvitationRequest
 } from '@glavito/shared-types';
-import { EmailService } from './email.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -199,6 +199,14 @@ export class AuthService {
           'crm.custom_objects.create',
           'crm.custom_objects.update',
           'crm.custom_objects.delete',
+          // Analytics permissions
+          'analytics.read',
+          // Workflows (admin baseline)
+          'workflows.read',
+          'workflows.create',
+          'workflows.update',
+          'workflows.delete',
+          'workflows.execute',
           // Marketplace management defaults
           'marketplace.read',
           'marketplace.manage',
@@ -229,10 +237,25 @@ export class AuthService {
           'crm.deals.update',
           // Custom objects read for agents
           'crm.custom_objects.read',
+          // Analytics permissions
+          'analytics.read',
+          // Workflows (agent baseline)
+          'workflows.read',
+          'workflows.execute',
           // Marketplace read-only defaults
           'marketplace.read',
         ];
       }
+    }
+
+    // Always ensure minimal workflow permissions are present based on role,
+    // even if tenant roles mapping exists but omitted them.
+    if (roleName === 'admin') {
+      const baseline = ['workflows.read', 'workflows.create', 'workflows.update', 'workflows.delete', 'workflows.execute'];
+      rolePerms = Array.from(new Set([...(rolePerms || []), ...baseline]));
+    } else if (roleName === 'agent') {
+      const baseline = ['workflows.read', 'workflows.execute'];
+      rolePerms = Array.from(new Set([...(rolePerms || []), ...baseline]));
     }
 
     const effectivePermissions = Array.from(new Set([...(directPerms || []), ...(rolePerms || [])]));
@@ -657,42 +680,61 @@ export class AuthService {
     return userWithoutPassword as User;
   }
 
-  async initiateSSO(provider: 'google' | 'microsoft' | 'github') {
-    const state = randomBytes(16).toString('hex');
+  async initiateSSO(
+    provider: 'google' | 'microsoft' | 'github',
+    mode?: 'mobile' | 'web',
+    redirect?: string,
+  ) {
+    const nonce = randomBytes(16).toString('hex');
     const frontend = this.configService.get<string>('FRONTEND_URL');
+    const apiBase = this.configService.get<string>('PUBLIC_API_BASE_URL');
     if (!frontend) throw new BadRequestException('FRONTEND_URL not configured');
+
+    const isMobile = (mode || 'web') === 'mobile';
+    const callbackBase = isMobile ? (apiBase || '') : frontend;
+    if (!callbackBase) throw new BadRequestException('Callback base not configured');
+
+    // Encode state to optionally carry the mobile redirect target
+    const statePayload = { nonce, redirect: typeof redirect === 'string' ? redirect : undefined } as const;
+    const encodedState = encodeURIComponent(Buffer.from(JSON.stringify(statePayload)).toString('base64'));
 
     let authUrl: string;
     switch (provider) {
       case 'google': {
         const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
-        const redirectUri = `${frontend}/auth/google/callback`;
+        const redirectUri = `${callbackBase}${isMobile ? '/auth/sso/callback/google' : '/auth/google/callback'}`;
         const scope = encodeURIComponent('openid email profile');
-        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&include_granted_scopes=true&state=${state}`;
+        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&include_granted_scopes=true&state=${encodedState}`;
         break;
       }
       case 'microsoft': {
         const clientId = this.configService.get<string>('MICROSOFT_CLIENT_ID');
-        const redirectUri = `${frontend}/auth/microsoft/callback`;
+        const redirectUri = `${callbackBase}${isMobile ? '/auth/sso/callback/microsoft' : '/auth/microsoft/callback'}`;
         const scope = encodeURIComponent('openid profile email offline_access User.Read');
-        authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}`;
+        authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${encodedState}`;
         break;
       }
       case 'github': {
         const clientId = this.configService.get<string>('GITHUB_CLIENT_ID');
-        const redirectUri = `${frontend}/auth/github/callback`;
+        const redirectUri = `${callbackBase}${isMobile ? '/auth/sso/callback/github' : '/auth/github/callback'}`;
         const scope = encodeURIComponent('read:user user:email');
-        authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
+        authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${encodedState}`;
         break;
       }
       default:
         throw new BadRequestException('Unsupported SSO provider');
     }
 
-    return { url: authUrl, state };
+    return { url: authUrl, state: nonce };
   }
 
-  async handleSSOCallback(provider: 'google' | 'microsoft' | 'github', code: string, _state: string, tenantId?: string) {
+  async handleSSOCallback(
+    provider: 'google' | 'microsoft' | 'github',
+    code: string,
+    state: string,
+    tenantId?: string,
+    redirectFromQuery?: string,
+  ) {
     // Exchange code for tokens and fetch profile
     const frontend = this.configService.get<string>('FRONTEND_URL');
     if (!frontend) throw new BadRequestException('FRONTEND_URL not configured');
@@ -828,6 +870,53 @@ export class AuthService {
     );
 
     const { passwordHash, ...userWithoutPassword } = user;
-    return { accessToken: signedAccessToken, refreshToken: signedRefreshToken, user: userWithoutPassword as User, tenant: (user as any).tenant as Tenant, isNewUser };
+
+    // Extract potential mobile redirect target from state or explicit query
+    const redirectCandidate = this.extractRedirectFromState(state) || redirectFromQuery || '';
+    const redirectUrl = this.buildAllowedRedirectUrl(redirectCandidate, signedAccessToken, signedRefreshToken, isNewUser);
+
+    return {
+      accessToken: signedAccessToken,
+      refreshToken: signedRefreshToken,
+      user: userWithoutPassword as User,
+      tenant: (user as any).tenant as Tenant,
+      isNewUser,
+      redirectUrl,
+    } as any;
+  }
+
+  private extractRedirectFromState(state: string | undefined): string | null {
+    if (!state) return null;
+    try {
+      const decoded = Buffer.from(decodeURIComponent(state), 'base64').toString('utf8');
+      const obj = JSON.parse(decoded) as { nonce?: string; redirect?: string };
+      if (obj && typeof obj.redirect === 'string' && obj.redirect.length > 0) return obj.redirect;
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private getRedirectAllowlist(): string[] {
+    const csv = this.configService.get<string>('MOBILE_REDIRECT_ALLOWLIST') || '';
+    return csv
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  }
+
+  private buildAllowedRedirectUrl(baseUrl: string | null, accessToken: string, refreshToken: string, isNewUser: boolean): string | null {
+    if (!baseUrl) return null;
+    const allowed = this.getRedirectAllowlist();
+    if (!allowed.some((prefix) => baseUrl.startsWith(prefix))) return null;
+    try {
+      const u = new URL(baseUrl);
+      u.searchParams.set('accessToken', accessToken);
+      u.searchParams.set('refreshToken', refreshToken);
+      u.searchParams.set('isNewUser', String(isNewUser));
+      return u.toString();
+    } catch {
+      return null;
+    }
   }
 }

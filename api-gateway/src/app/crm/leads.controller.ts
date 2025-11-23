@@ -61,6 +61,31 @@ export class LeadsController {
   rescore(@Param('id') id: string, @Req() req: any) {
     return this.leads.rescore(id, req?.user?.tenantId);
   }
+
+  @Get(':id/activities')
+  @Roles('admin', 'agent')
+  listActivities(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const options = {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    };
+    return this.leads.listActivities(req?.user?.tenantId, id, options);
+  }
+
+  @Post(':id/activities')
+  @Roles('admin', 'agent')
+  createActivity(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() dto: { type: string; description: string; metadata?: Record<string, unknown>; userId?: string }
+  ) {
+    return this.leads.createActivity(req?.user?.tenantId, id, dto);
+  }
 }
 
 

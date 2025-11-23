@@ -75,6 +75,15 @@ export class SegmentsController {
     return { success: true, data: result };
   }
 
+  @Post(':id/send-email')
+  @Roles('admin', 'agent')
+  @ApiOperation({ summary: 'Send an email campaign to this segment (batch)' })
+  async sendEmail(@Param('id') id: string, @Body() body: { subject: string; html: string; fromEmail?: string; fromName?: string }, @Request() req: any) {
+    const tenantId = req.user.tenantId as string;
+    const result = await this.segments.sendEmailToSegment(tenantId, id, body || ({} as any));
+    return { success: true, data: result };
+  }
+
   @Get(':id/export')
   @Roles('admin', 'agent')
   @ApiOperation({ summary: 'Export segment customers' })
@@ -82,6 +91,15 @@ export class SegmentsController {
     const tenantId = req.user.tenantId as string;
     const data = await this.segments.exportSegment(tenantId, id, format);
     return { success: true, data };
+  }
+
+  @Post(':id/add-customers')
+  @Roles('admin', 'agent')
+  @ApiOperation({ summary: 'Add customers to a segment manually' })
+  async addCustomers(@Param('id') id: string, @Body() body: { customerIds: string[] }, @Request() req: any) {
+    const tenantId = req.user.tenantId as string;
+    const result = await this.segments.addCustomersToSegment(tenantId, id, body.customerIds || []);
+    return { success: true, data: result };
   }
 
   @Post(':id/trigger-workflow/:workflowId')

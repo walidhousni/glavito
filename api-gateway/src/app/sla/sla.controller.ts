@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -11,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SLAService } from './sla.service';
-import { CreateSLAPolicyDto, UpdateSLAPolicyDto, SLAQueryDto, TicketEventDto } from './dto/sla.dto';
+import { CreateSLAPolicyDto, UpdateSLAPolicyDto, SLAQueryDto, TicketEventDto, UpdateSLAInstanceDto } from './dto/sla.dto';
 import { CurrentUser } from '@glavito/shared-auth';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -52,9 +53,22 @@ export class SLAController {
   async updatePolicy(
     @Param('id') id: string,
     @Body() updateSLAPolicyDto: UpdateSLAPolicyDto,
-    @CurrentUser() user: unknown
+    @CurrentUser() user: any
   ) {
-    return this.slaService.updatePolicy(id, updateSLAPolicyDto, user.tenantId);
+    return this.slaService.updatePolicy(id, updateSLAPolicyDto, user?.tenantId as string | undefined);
+  }
+
+  // Alias route to support clients using PATCH for partial updates
+  @Patch('policies/:id')
+  @ApiOperation({ summary: 'Partially update an SLA policy' })
+  @ApiResponse({ status: 200, description: 'SLA policy updated successfully' })
+  @ApiResponse({ status: 404, description: 'Policy not found' })
+  async patchPolicy(
+    @Param('id') id: string,
+    @Body() updateSLAPolicyDto: UpdateSLAPolicyDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.slaService.updatePolicy(id, updateSLAPolicyDto, user?.tenantId as string | undefined);
   }
 
   @Delete('policies/:id')
@@ -92,14 +106,14 @@ export class SLAController {
   }
 
   @Post('instances/:id/events')
-  @ApiOperation({ summary: 'Handle ticket events for SLA tracking' })
+  @ApiOperation({ summary: 'Handle SLA events by instance ID' })
   @ApiResponse({ status: 200, description: 'Event processed successfully' })
   @ApiResponse({ status: 404, description: 'Instance not found' })
-  async handleTicketEvent(
+  async handleInstanceEvent(
     @Param('id') id: string,
     @Body() event: TicketEventDto
   ) {
-    return this.slaService.handleTicketEvent(id, event);
+    return this.slaService.handleTicketEventByInstanceId(id, event);
   }
 
   @Post('events/ticket/:ticketId')
@@ -135,6 +149,15 @@ export class SLAController {
     return this.slaService.getPolicyByTicket(ticketId);
   }
 
+  // Alias route for clients calling /sla/policies/ticket/:ticketId
+  @Get('policies/ticket/:ticketId')
+  @ApiOperation({ summary: 'Get applicable SLA policy for a ticket (alias)' })
+  @ApiResponse({ status: 200, description: 'SLA policy details' })
+  @ApiResponse({ status: 404, description: 'Ticket not found' })
+  async getPolicyByTicketAlias(@Param('ticketId') ticketId: string) {
+    return this.slaService.getPolicyByTicket(ticketId);
+  }
+
   @Get('policies/:id/instances')
   @ApiOperation({ summary: 'Get all instances for a specific SLA policy' })
   @ApiResponse({ status: 200, description: 'List of SLA instances' })
@@ -152,5 +175,17 @@ export class SLAController {
   @ApiResponse({ status: 404, description: 'Instance not found' })
   async getTicketInstance(@Param('ticketId') ticketId: string) {
     return this.slaService.getSLAInstanceByTicket(ticketId);
+  }
+
+  // Optional: support partial updates to SLA instances
+  @Patch('instances/:id')
+  @ApiOperation({ summary: 'Partially update an SLA instance' })
+  @ApiResponse({ status: 200, description: 'SLA instance updated successfully' })
+  @ApiResponse({ status: 404, description: 'Instance not found' })
+  async patchInstance(
+    @Param('id') id: string,
+    @Body() updates: UpdateSLAInstanceDto,
+  ) {
+    return this.slaService.updateInstance(id, updates);
   }
 }

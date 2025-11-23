@@ -4,17 +4,18 @@ import { PrismaService } from '@glavito/shared-database';
 import { 
   CreateSLAPolicyDto, 
   UpdateSLAPolicyDto, 
-  SLAQueryDto,
-  TicketEventDto,
-  SLAStatus,
-  Priority
+  SLAQueryDto, 
+  TicketEventDto, 
+  SLAStatus
 } from './dto/sla.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TicketsGateway } from '../tickets/tickets.gateway';
 
 @Injectable()
 export class SLAService {
   private readonly logger = new Logger(SLAService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly notificationsService: NotificationsService, private readonly gateway: TicketsGateway) {}
 
   async createPolicy(dto: CreateSLAPolicyDto & { tenantId?: string }) {
     return this.prisma.sLAPolicy.create({
@@ -199,6 +200,37 @@ export class SLAService {
     });
   }
 
+  /**
+   * Handle SLA event by SLA Instance ID (used by controller route /sla/instances/:id/events)
+   */
+  async handleTicketEventByInstanceId(instanceId: string, event: TicketEventDto) {
+    const instance = await this.prisma.sLAInstance.findUnique({ where: { id: instanceId } });
+    if (!instance) {
+      this.logger.warn(`SLA Instance not found: ${instanceId}`);
+      return;
+    }
+
+    const updates: any = {};
+    const evt = (event as any)?.type || (event as any)?.event || '';
+    switch (evt) {
+      case 'first_response':
+        updates.firstResponseAt = event.timestamp || new Date();
+        break;
+      case 'resolution':
+        updates.resolutionAt = event.timestamp || new Date();
+        updates.status = SLAStatus.COMPLETED;
+        break;
+      case 'pause':
+        updates.status = SLAStatus.PAUSED;
+        break;
+      case 'resume':
+        updates.status = SLAStatus.ACTIVE;
+        break;
+    }
+
+    return this.prisma.sLAInstance.update({ where: { id: instanceId }, data: updates });
+  }
+
   async getSLAInstanceByTicket(ticketId: string) {
     return this.prisma.sLAInstance.findFirst({
       where: { ticketId },
@@ -318,10 +350,15 @@ export class SLAService {
       },
       include: {
         slaPolicy: true,
+        ticket: {
+          include: {
+            assignedAgent: true, // To get agent for notification
+          },
+        },
       },
     });
 
-    const updates = instances.map(instance => {
+    const updates = await Promise.all(instances.map(async (instance) => {
       const breaches = [];
       
       if (instance.firstResponseDue && instance.firstResponseDue < now && !instance.firstResponseAt) {
@@ -332,23 +369,58 @@ export class SLAService {
         breaches.push('resolution_breach');
       }
 
-      return this.prisma.sLAInstance.update({
-        where: { id: instance.id },
-        data: {
-          breachCount: { increment: breaches.length },
-          status: breaches.length > 0 ? SLAStatus.BREACHED : SLAStatus.ACTIVE,
-          notifications: {
-            push: {
-              type: 'breach',
-              timestamp: now,
-              breaches,
-            },
-          },
-        },
-      });
-    });
+      if (breaches.length > 0) {
+        // Escalate if first breach
+        const newEscalationLevel = instance.escalationLevel + 1;
+        
+        // Push to notifications log
+        const notificationLog = [...(instance.notifications || []), {
+          type: 'breach',
+          timestamp: now,
+          breaches,
+          escalatedTo: newEscalationLevel,
+        }];
 
-    return Promise.all(updates);
+        // If we have NotificationsService (inject if not), notify agent
+        if (this.notificationsService && instance.ticket?.assignedAgentId) {
+          try {
+            await this.notificationsService.publishNotification(
+              'sla',
+              `SLA Breach on Ticket ${instance.ticketId}`,
+              `Ticket has breached SLA: ${breaches.join(', ')}. Escalated to level ${newEscalationLevel}.`,
+              'high',
+              instance.ticket.assignedAgentId,
+              { ticketId: instance.ticketId, slaId: instance.slaId },
+              instance.ticket.tenantId // Assume ticket has tenantId
+            );
+          } catch (err) {
+            this.logger.warn(`Failed to notify on SLA breach: ${err}`);
+          }
+        }
+
+        // Broadcast via gateway
+        try {
+          this.gateway.broadcastSlaBreach(instance.ticketId, { breaches, level: newEscalationLevel }, instance.ticket.tenantId);
+        } catch (err) {
+          this.logger.warn(`Failed to broadcast SLA breach: ${err}`);
+        }
+
+        return this.prisma.sLAInstance.update({
+          where: { id: instance.id },
+          data: {
+            breachCount: { increment: breaches.length },
+            status: SLAStatus.BREACHED,
+            escalationLevel: newEscalationLevel,
+            notifications: notificationLog,
+          },
+        });
+      }
+      
+      return null;
+    }));
+
+    // Filter out nulls if needed
+    return updates.filter(Boolean);
   }
 
   // Run every minute to detect breaches and record notifications
@@ -388,7 +460,40 @@ export class SLAService {
     if (!conditions || conditions.length === 0) {
       return true;
     }
-    return true;
+    
+    // AND logic: all conditions must match
+    return conditions.every(condition => {
+      const { field, operator, value } = condition || {};
+      if (!field || !operator) return false;
+      
+      let ticketValue = this.getTicketValue(ticket, field);
+      if (ticketValue === undefined) return false;
+      
+      switch (operator) {
+        case 'equals':
+        case '==':
+          return ticketValue === value;
+        case 'contains':
+          return String(ticketValue).toLowerCase().includes(String(value).toLowerCase());
+        case 'in':
+          return Array.isArray(value) && value.includes(ticketValue);
+        case 'has':
+          return Array.isArray(ticketValue) && ticketValue.includes(value);
+        default:
+          return false;
+      }
+    });
+  }
+
+  private getTicketValue(ticket: any, field: string): any {
+    // Handle dotted notation, e.g., 'customer.email'
+    const parts = field.split('.');
+    let value = ticket;
+    for (const part of parts) {
+      value = value?.[part];
+      if (value === undefined) break;
+    }
+    return value;
   }
 }
   

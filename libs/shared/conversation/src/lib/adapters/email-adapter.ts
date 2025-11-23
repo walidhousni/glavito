@@ -232,11 +232,12 @@ export class EmailAdapter implements ChannelAdapter {
       
       // Add attachments
       if (message.attachments && message.attachments.length > 0) {
-        mailOptions.attachments = message.attachments.map((attachment: any) => ({
-          filename: attachment.filename,
-          content: attachment.url, // Assuming URL points to file content
-          contentType: attachment.mimeType
-        }));
+        mailOptions.attachments = message.attachments.map((attachment: any) => {
+          if (attachment.url && attachment.url.startsWith('http')) {
+            return { filename: attachment.filename, path: attachment.url, contentType: attachment.mimeType } as any;
+          }
+          return { filename: attachment.filename, content: attachment.url, contentType: attachment.mimeType } as any;
+        });
       }
       
       // Add custom headers
@@ -446,6 +447,29 @@ export class EmailAdapter implements ChannelAdapter {
     return 'document';
   }
   
+  /**
+   * Get email account balance/credits
+   * Note: SMTP providers don't typically expose balance API, so we track internally
+   */
+  async getBalance(): Promise<{ balance: number; currency: string; metadata?: Record<string, unknown> }> {
+    try {
+      // Email balance is typically unlimited or based on plan
+      // For now, return a placeholder that can be updated via wallet service
+      return {
+        balance: 10000, // Placeholder - should be tracked internally
+        currency: 'USD',
+        metadata: {
+          provider: 'smtp',
+          from: this.emailConfig.from,
+          host: this.emailConfig.smtp.host,
+        },
+      };
+    } catch (err: any) {
+      this.logger.error('Failed to get Email balance', err?.message || String(err));
+      throw err;
+    }
+  }
+
   private extractSubjectFromMetadata(message: OutgoingMessage): string | undefined {
     return (message.metadata as any)?.['subject'] as string;
   }

@@ -105,6 +105,25 @@ export interface TicketEvent extends EventPayload {
   } & Record<string, any>;
 }
 
+export interface MarketingEventPayload extends EventPayload {
+  eventType: 'marketing.delivery.sent' | 'marketing.delivery.failed' | 'marketing.campaign.launched' | 'marketing.campaign.created' | 'marketing.campaign.updated';
+  data: {
+    deliveryId?: string;
+    campaignId: string;
+    variantId?: string;
+    customerId?: string;
+    channel?: string;
+    error?: string;
+    deliveries?: number;
+    changes?: string[];
+  };
+}
+
+export interface WorkflowEventPayload extends EventPayload {
+  eventType: string; // e.g., 'marketing.delivery.sent'
+  data: Record<string, any>;
+}
+
 @Injectable()
 export class EventPublisherService implements OnModuleInit, OnModuleDestroy {
   private kafka: Kafka;
@@ -186,7 +205,11 @@ export class EventPublisherService implements OnModuleInit, OnModuleDestroy {
     await this.publishEvent('ticket-events', event);
   }
 
-  async publishWorkflowEvent(event: EventPayload): Promise<void> {
+  async publishMarketingEvent(event: MarketingEventPayload): Promise<void> {
+    await this.publishEvent('marketing-events', event);
+  }
+
+  async publishWorkflowEvent(event: WorkflowEventPayload): Promise<void> {
     await this.publishEvent('workflow-events', event);
   }
 
@@ -348,7 +371,7 @@ export class EventPublisherService implements OnModuleInit, OnModuleDestroy {
       await this.consumer.subscribe({ topics, fromBeginning: false });
 
       await this.consumer.run({
-          eachMessage: async ({ topic, partition, message }) => {
+          eachMessage: async ({ message }) => {
             try {
               if (!message.value) {
                 console.warn('Received null message value, skipping');
@@ -372,7 +395,7 @@ export class EventPublisherService implements OnModuleInit, OnModuleDestroy {
   }> {
     return {
       connected: this.isConnected,
-      topics: ['user-events', 'auth-events', 'tenant-events', 'invitation-events', 'ticket-events', 'workflow-events'],
+      topics: ['user-events', 'auth-events', 'tenant-events', 'invitation-events', 'ticket-events', 'workflow-events', 'marketing-events'],
     };
   }
 

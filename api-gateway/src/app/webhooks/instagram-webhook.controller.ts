@@ -168,7 +168,10 @@ export class InstagramWebhookController {
         where: { type: 'instagram', isActive: true },
         select: { tenantId: true },
       });
-      return channel?.tenantId || null;
+      if (channel?.tenantId) return channel.tenantId as string;
+      const active = await prismaAny['channel'].findMany({ where: { type: 'instagram', isActive: true }, select: { tenantId: true } });
+      if (Array.isArray(active) && active.length === 1) return (active[0] as { tenantId: string }).tenantId;
+      return null;
     } catch {
       return null;
     }

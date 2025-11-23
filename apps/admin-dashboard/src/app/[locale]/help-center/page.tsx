@@ -1,651 +1,385 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { publicKnowledgeApi } from '@/lib/api/public-knowledge-client'
-import { publicChatApi } from '@/lib/api/public-chat-client'
 import { Button } from '@/components/ui/button'
-import { useSearchParams } from 'next/navigation'
-import { useToast } from '@/components/ui/toast'
 import { Badge } from '@/components/ui/badge'
-import { Search, MessageCircle, Mail, Phone, ExternalLink, BookOpen, HelpCircle, Sparkles, ArrowRight, Clock, Users, Star } from 'lucide-react'
+import {
+  Search,
+  BookOpen,
+  MessageCircle,
+  Phone,
+  Mail,
+  Instagram,
+  Sparkles,
+  Clock,
+  Users,
+  TrendingUp,
+  ArrowRight,
+  CheckCircle2,
+  HelpCircle,
+  Star,
+} from 'lucide-react'
+import { MultiChannelChat } from '@/components/help-center/multi-channel-chat'
+import { useHelpCenterStore } from '@/lib/store/help-center-store'
 
-export default function PublicHelpCenterPage() {
+export default function HelpCenterRedesigned() {
   const t = useTranslations()
-  const params = useSearchParams()
-  const { success } = useToast()
-  const [q, setQ] = useState('')
-  const [data, setData] = useState<{ articles: Array<{ id: string; title: string; snippet: string }>; faqs: Array<{ id: string; question: string; answer: string }> }>({ articles: [], faqs: [] })
-  const [loading, setLoading] = useState(false)
-  const [selected, setSelected] = useState<{ id: string; title: string; content: string } | null>(null)
-  const [chatSession, setChatSession] = useState<string | null>(null)
-  const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; ts: number }>>([])
-  const [chatSending, setChatSending] = useState(false)
-  const [chatError, setChatError] = useState<string | null>(null)
-  const [suggestions, setSuggestions] = useState<Array<{ id: string; title: string }>>([])
-  const [emailOpen, setEmailOpen] = useState(false)
-  const [emailAddr, setEmailAddr] = useState('')
-  const [emailMsg, setEmailMsg] = useState('')
-  const [resumed, setResumed] = useState(false)
-
-  const sanitize = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string))
-  useEffect(() => {
-    // Resume via token if present
-    const token = params?.get('token') || ''
-    if (token) {
-      (async () => {
-        try {
-          const res = await publicChatApi.resume(token)
-          if (res?.ok && res.sessionId) {
-            setChatSession(res.sessionId)
-            if (typeof window !== 'undefined') localStorage.setItem('helpcenter_session', res.sessionId)
-            setResumed(true)
-            success('Resumed chat session')
-          }
-        } catch {/* ignore */ }
-      })()
-    }
-    // Restore session and connect SSE
-    const sid = (typeof window !== 'undefined') ? (localStorage.getItem('helpcenter_session') || '') : ''
-    if (sid) {
-      setChatSession(sid)
-      const es = publicChatApi.stream(sid)
-      if (es) {
-        es.onmessage = (ev) => {
-          try {
-            const data = JSON.parse(ev.data)
-            if (data?.type === 'message' && data?.message?.text) {
-              setChatMessages(prev => [...prev, { role: data.message.role || 'assistant', text: sanitize(String(data.message.text)), ts: Date.now() }])
-            }
-          } catch { /* ignore */ }
-        }
-        es.onerror = () => { try { es.close() } catch { /* ignore */ } }
-      }
-    }
-  }, [params, success])
+  const [searchQuery, setSearchQuery] = useState('')
+  const { searchKnowledge, searchResults, selectArticle, selectedArticle } = useHelpCenterStore()
 
   useEffect(() => {
-    let cancelled = false
-    async function run() {
-      setLoading(true)
-      try {
-        const res = await publicKnowledgeApi.search(null, q, 10)
-        if (!cancelled) setData(res)
-      } catch {
-        if (!cancelled) setData({ articles: [], faqs: [] })
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+    if (searchQuery) {
+      const timeoutId = setTimeout(() => {
+        searchKnowledge(searchQuery)
+      }, 300)
+      return () => clearTimeout(timeoutId)
     }
-    run()
-    return () => { cancelled = true }
-  }, [q])
+  }, [searchQuery])
+
+  const categories = [
+    {
+      icon: BookOpen,
+      title: 'Getting Started',
+      description: 'Learn the basics and set up your account',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+      articleCount: 15,
+      iconUrl: 'https://img.icons8.com/color/96/book--v1.png',
+    },
+    {
+      icon: MessageCircle,
+      title: 'Integrations',
+      description: 'Connect your favorite tools and platforms',
+      color: 'text-green-600',
+      bgColor: 'bg-green-100 dark:bg-green-900/30',
+      articleCount: 12,
+      iconUrl: 'https://img.icons8.com/color/96/api-settings--v1.png',
+    },
+    {
+      icon: Users,
+      title: 'Team Management',
+      description: 'Invite and manage team members',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+      articleCount: 8,
+      iconUrl: 'https://img.icons8.com/color/96/user-group-man-man--v1.png',
+    },
+    {
+      icon: TrendingUp,
+      title: 'Analytics',
+      description: 'Track performance and insights',
+      color: 'text-pink-600',
+      bgColor: 'bg-pink-100 dark:bg-pink-900/30',
+      articleCount: 10,
+      iconUrl: 'https://img.icons8.com/color/96/statistics--v1.png',
+    },
+  ]
+
+  const popularArticles = [
+    { id: '1', title: 'How to connect WhatsApp Business API', views: 1234, helpful: 95 },
+    { id: '2', title: 'Setting up your first automation', views: 987, helpful: 92 },
+    { id: '3', title: 'Understanding ticket priorities', views: 856, helpful: 89 },
+    { id: '4', title: 'Managing customer conversations', views: 743, helpful: 91 },
+  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
         <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative max-w-6xl mx-auto px-6 py-16">
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium">
-              <Sparkles className="w-4 h-4" />
-              {t('knowledge.aiPowered') || 'AI-Powered Support'}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
+        
+        <div className="relative max-w-7xl mx-auto px-6 py-20">
+          <div className="text-center space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-5 py-2 text-sm font-medium">
+              <Sparkles className="w-4 h-4 animate-pulse" />
+              {t('knowledge.aiPowered') || 'AI-Powered Multi-Channel Support'}
             </div>
-            <h1 className="text-5xl font-bold tracking-tight">
-              {t('knowledge.title') || 'Help Center'}
-            </h1>
-            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-              {t('knowledge.subtitle') || 'Find answers to common questions, get instant help from our AI assistant, or connect with our support team'}
-            </p>
+
+            {/* Title */}
+            <div className="space-y-4">
+              <h1 className="text-6xl font-bold tracking-tight">
+                {t('knowledge.title') || 'How can we help?'}
+              </h1>
+              <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+                {t('knowledge.subtitle') || 'Get instant answers, connect on your preferred channel, or browse our comprehensive knowledge base'}
+              </p>
+            </div>
 
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mt-8">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="max-w-3xl mx-auto">
+              <div className="relative group">
+                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6 group-focus-within:text-blue-500 transition-colors" />
                 <Input
-                  className="pl-12 pr-4 py-4 text-lg bg-white/95 backdrop-blur-sm border-0 shadow-lg rounded-2xl focus:ring-2 focus:ring-white/50"
+                  className="pl-14 pr-6 py-6 text-lg bg-white/95 backdrop-blur-md border-0 shadow-2xl rounded-2xl focus:ring-4 focus:ring-white/50 transition-all"
                   placeholder={t('knowledge.searchPlaceholder') || 'Search for help articles, FAQs, or ask a question...'}
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="flex justify-center gap-8 mt-12 text-sm">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                <span>{t('knowledge.articlesCount') || '150+ Articles'}</span>
+            {/* Stats */}
+            <div className="flex flex-wrap justify-center gap-8 pt-8">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                <BookOpen className="w-5 h-5" />
+                <span className="font-semibold">150+ Articles</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                <span>{t('knowledge.avgResponseTime') || '< 2min Response'}</span>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                <Clock className="w-5 h-5" />
+                <span className="font-semibold">&lt; 2min Response</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span>{t('knowledge.helpedUsers') || '10k+ Users Helped'}</span>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                <Users className="w-5 h-5" />
+                <span className="font-semibold">10k+ Users Helped</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                <Star className="w-5 h-5" />
+                <span className="font-semibold">98% Satisfaction</span>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Wave Separator */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 120" className="w-full h-12">
+            <path
+              fill="currentColor"
+              className="text-white dark:text-gray-900"
+              d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"
+            ></path>
+          </svg>
+        </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 -mt-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 -mt-8 relative z-10 pb-20">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <Card className="glass-card hover-card group cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <MessageCircle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">{t('knowledge.chatWithAI') || 'Chat with AI Assistant'}</h3>
-              <p className="text-sm text-muted-foreground">{t('knowledge.chatDescription') || 'Get instant answers from our intelligent assistant'}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card hover-card group cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <BookOpen className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">{t('knowledge.browseArticles') || 'Browse Articles'}</h3>
-              <p className="text-sm text-muted-foreground">{t('knowledge.articlesDescription') || 'Explore our comprehensive knowledge base'}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card hover-card group cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <Mail className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">{t('knowledge.contactSupport') || 'Contact Support'}</h3>
-              <p className="text-sm text-muted-foreground">{t('knowledge.supportDescription') || 'Reach out to our expert support team'}</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          {categories.map((category, idx) => {
+            const Icon = category.icon
+            return (
+              <Card
+                key={idx}
+                className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700"
+              >
+                <CardContent className="p-6 text-center space-y-4">
+                  <div className={`w-16 h-16 ${category.bgColor} rounded-2xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform`}>
+                    <img src={category.iconUrl} alt={category.title} className="w-10 h-10" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2 text-gray-900 dark:text-gray-100">
+                      {category.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {category.description}
+                    </p>
+                    <Badge variant="secondary" className="text-xs">
+                      {category.articleCount} articles
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 text-sm font-medium">
+                    Browse <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
-        {/* AI Chat Assistant */}
-        <Card className="glass-card shadow-xl mb-8">
-          <CardHeader className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-t-lg">
-            <CardTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+        {/* Popular Articles */}
+        {searchQuery.length === 0 && (
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  {t('knowledge.chat') || 'AI Assistant'}
-                  {resumed ? <Badge variant="secondary" className="bg-green-100 text-green-700">Resumed</Badge> : null}
-                </div>
-                <p className="text-sm text-muted-foreground font-normal">{t('knowledge.chatSubtitle') || 'Get instant answers powered by AI'}</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  Popular Articles
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Most viewed by the community
+                </p>
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            <div className="border rounded-xl p-4 max-h-80 overflow-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-              {(chatMessages || []).map((m, idx) => (
-                <div key={idx} className={`mb-4 ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                  <div className={`inline-block max-w-[80%] px-4 py-2 rounded-2xl ${m.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                      : 'bg-white dark:bg-gray-700 shadow-sm border'
-                    }`}>
-                    <p className="text-sm">{m.text}</p>
-                  </div>
-                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {popularArticles.map((article) => (
+                <Card
+                  key={article.id}
+                  className="group cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-200 dark:hover:border-blue-800"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {article.title}
+                        </h3>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {article.views} views
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-green-600" />
+                            {article.helpful}% helpful
+                          </div>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
-              {!chatMessages.length && (
-                <div className="text-center py-8">
-                  <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">{t('knowledge.chatStart') || 'Start the conversation by asking a question.'}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Search Results */}
+        {searchQuery.length > 0 && (
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                <Search className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  Search Results
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Found {searchResults.articles.length + searchResults.faqs.length} results for "{searchQuery}"
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {searchResults.articles.map((article: any) => (
+                <Card
+                  key={article.id}
+                  onClick={() => selectArticle(article)}
+                  className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-200 dark:hover:border-blue-800"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <Badge variant="secondary" className="mb-2">Article</Badge>
+                        <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">
+                          {article.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {article.snippet}
+                        </p>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {searchResults.faqs.map((faq: any) => (
+                <Card
+                  key={faq.id}
+                  className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-purple-200 dark:hover:border-purple-800"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex gap-4">
+                      <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                        <HelpCircle className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                          {faq.question}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {searchResults.articles.length === 0 && searchResults.faqs.length === 0 && (
+                <div className="text-center py-12">
+                  <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    No results found
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Try different keywords or ask our AI assistant
+                  </p>
                 </div>
               )}
             </div>
+          </div>
+        )}
 
-            {!!suggestions.length && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">{t('knowledge.suggestions') || 'Suggested articles:'}</p>
-                <div className="flex flex-wrap gap-2">
-                  {suggestions.map((s) => (
-                    <Button
-                      key={s.id}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs rounded-full"
-                      onClick={async () => {
-                        try {
-                          const full = await publicKnowledgeApi.getArticle(null, s.id)
-                          setSelected(full)
-                        } catch { /* ignore */ }
-                      }}
-                    >
-                      {s.title}
-                      <ArrowRight className="w-3 h-3 ml-1" />
-                    </Button>
-                  ))}
-                </div>
+        {/* Contact Options */}
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-100 dark:border-blue-900">
+          <CardContent className="p-8">
+            <div className="text-center space-y-6">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  Still need help?
+                </h2>
+                <p className="text-muted-foreground">
+                  Our support team is here for you across multiple channels
+                </p>
               </div>
-            )}
 
-            <div className="flex gap-3">
-              <Input
-                className="flex-1 rounded-xl"
-                placeholder={t('knowledge.chatPlaceholder') || 'Type your question...'}
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={async (e) => {
-                  if (e.key === 'Enter' && chatInput.trim() && !chatSending) {
-                    setChatSending(true)
-                    setChatError(null)
-                    try {
-                      if (!chatSession) {
-                        const started = await publicChatApi.start()
-                        const sid = started.sessionId || null
-                        setChatSession(sid)
-                        if (typeof window !== 'undefined' && sid) localStorage.setItem('helpcenter_session', sid)
-                      }
-                      const now = Date.now()
-                      setChatMessages(prev => [...prev, { role: 'user', text: chatInput, ts: now }])
-                      const res = await publicChatApi.message(chatSession, chatInput)
-                      const sid = res.sessionId || chatSession
-                      if (!chatSession && sid) setChatSession(sid)
-                      const reply = res.reply || ''
-                      setChatMessages(prev => [...prev, { role: 'assistant', text: reply, ts: Date.now() }])
-                      setSuggestions(res.suggestions || [])
-                    } catch {
-                      setChatError(t('common.error') || 'Something went wrong. Please try again.')
-                    } finally {
-                      setChatInput('')
-                      setChatSending(false)
-                    }
-                  }
-                }}
-              />
-              <Button
-                disabled={!chatInput.trim() || chatSending}
-                className="rounded-xl px-6"
-                onClick={async () => {
-                  if (!chatInput.trim()) return
-                  setChatSending(true)
-                  setChatError(null)
-                  try {
-                    if (!chatSession) {
-                      const started = await publicChatApi.start()
-                      const sid = started.sessionId || null
-                      setChatSession(sid)
-                      if (typeof window !== 'undefined' && sid) localStorage.setItem('helpcenter_session', sid)
-                    }
-                    const now = Date.now()
-                    setChatMessages(prev => [...prev, { role: 'user', text: chatInput, ts: now }])
-                    const res = await publicChatApi.message(chatSession, chatInput)
-                    const sid = res.sessionId || chatSession
-                    if (!chatSession && sid) setChatSession(sid)
-                    const reply = res.reply || ''
-                    setChatMessages(prev => [...prev, { role: 'assistant', text: reply, ts: Date.now() }])
-                    setSuggestions(res.suggestions || [])
-                  } catch {
-                    setChatError(t('common.error') || 'Something went wrong. Please try again.')
-                  } finally {
-                    setChatInput('')
-                    setChatSending(false)
-                  }
-                }}
-              >
-                {chatSending ? t('common.sending') || 'Sending...' : t('common.send') || 'Send'}
-              </Button>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+                <Button
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2 hover:scale-105 transition-transform"
+                >
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <Phone className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="font-semibold">WhatsApp</div>
+                    <div className="text-xs text-muted-foreground">Chat instantly</div>
+                  </div>
+                </Button>
 
-            {!!chatError && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">{chatError}</p>
+                <Button
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2 hover:scale-105 transition-transform"
+                >
+                  <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center">
+                    <Instagram className="w-6 h-6 text-pink-600" />
+                  </div>
+                  <div>
+                    <div className="font-semibold">Instagram</div>
+                    <div className="text-xs text-muted-foreground">DM us</div>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2 hover:scale-105 transition-transform"
+                >
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <div className="font-semibold">Email</div>
+                    <div className="text-xs text-muted-foreground">support@example.com</div>
+                  </div>
+                </Button>
               </div>
-            )}
-
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground items-center pt-2 border-t">
-              <button
-                className="flex items-center gap-2 hover:text-green-600 transition-colors"
-                onClick={async (e) => {
-                  e.preventDefault()
-                  try {
-                    // Ensure session so the backend can link WA sender to this session
-                    let sid = chatSession
-                    if (!sid) {
-                      const started = await publicChatApi.start()
-                      sid = started.sessionId || null
-                      setChatSession(sid)
-                      if (typeof window !== 'undefined' && sid) localStorage.setItem('helpcenter_session', sid)
-                    }
-                    const popup = window.open('', '_blank')
-                    const link = await publicChatApi.whatsappLink(sid || undefined)
-                    if (link?.url) {
-                      if (popup) popup.location.href = link.url
-                      else window.location.href = link.url
-                    }
-                  } catch {/* ignore */ }
-                }}
-              >
-                <Phone className="w-4 h-4" />
-                {t('knowledge.continueWhatsapp') || 'Continue on WhatsApp'}
-              </button>
-              <button
-                className="flex items-center gap-2 hover:text-blue-600 transition-colors"
-                onClick={() => setEmailOpen(true)}
-              >
-                <Mail className="w-4 h-4" />
-                {t('knowledge.askByEmail') || 'Ask via Email'}
-              </button>
-              <button
-                className="flex items-center gap-2 hover:text-purple-600 transition-colors"
-                onClick={async () => {
-                  try {
-                    if (!chatSession) {
-                      const started = await publicChatApi.start()
-                      const sid = started.sessionId || null
-                      setChatSession(sid)
-                      if (typeof window !== 'undefined' && sid) localStorage.setItem('helpcenter_session', sid)
-                    }
-                    const sid2 = chatSession || (typeof window !== 'undefined' ? (localStorage.getItem('helpcenter_session') || '') : '')
-                    if (!sid2) return
-                    const res = await publicChatApi.magicLink(sid2)
-                    if (res?.ok && res.token) {
-                      const base = window.location.origin + window.location.pathname
-                      const url = `${base}?token=${encodeURIComponent(res.token)}`
-                      await navigator.clipboard?.writeText(url)
-                      success('Resume link copied')
-                    }
-                  } catch {/* ignore */ }
-                }}
-              >
-                <ExternalLink className="w-4 h-4" />
-                {t('knowledge.getResumeLink') || 'Get resume link'}
-              </button>
             </div>
           </CardContent>
         </Card>
-
-        {emailOpen && (
-          <Card className="glass-card shadow-xl mb-8">
-            <CardHeader className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-t-lg">
-              <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  {t('knowledge.askByEmail') || 'Contact Support via Email'}
-                  <p className="text-sm text-muted-foreground font-normal">{t('knowledge.emailSubtitle') || 'Send us a message and we\'ll get back to you'}</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">{t('knowledge.emailAddress') || 'Email Address'}</Label>
-                <Input
-                  className="rounded-xl"
-                  value={emailAddr}
-                  onChange={(e) => setEmailAddr(e.target.value)}
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">{t('knowledge.message') || 'Message'}</Label>
-                <Input
-                  className="rounded-xl min-h-[100px]"
-                  value={emailMsg}
-                  onChange={(e) => setEmailMsg(e.target.value)}
-                  placeholder={t('knowledge.messagePlaceholder') || 'Describe your question or issue in detail...'}
-                />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <Button
-                  className="rounded-xl"
-                  onClick={async () => {
-                    try {
-                      const res = await publicChatApi.email(chatSession, emailAddr, emailMsg)
-                      if (res?.ok) setEmailOpen(false)
-                    } catch {/* ignore */ }
-                  }}
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  {t('common.send') || 'Send Message'}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-xl"
-                  onClick={() => setEmailOpen(false)}
-                >
-                  {t('common.cancel') || 'Cancel'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Knowledge Base Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Articles Section */}
-          <Card className="glass-card shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-t-lg">
-              <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  {t('knowledge.articles') || 'Help Articles'}
-                  <p className="text-sm text-muted-foreground font-normal">{t('knowledge.articlesSubtitle') || 'Comprehensive guides and tutorials'}</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              {loading && (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-                  <span className="ml-3 text-sm text-muted-foreground">{t('common.loading') || 'Loading...'}</span>
-                </div>
-              )}
-
-              {!loading && ((data?.articles?.length ?? 0) === 0) && (
-                <div className="text-center py-8">
-                  <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">{t('knowledge.noResults') || 'No articles found'}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{t('knowledge.tryDifferentSearch') || 'Try a different search term'}</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {(data?.articles || []).map((a) => (
-                  <div
-                    key={a.id}
-                    className="group p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600 hover:shadow-md transition-all duration-200 cursor-pointer bg-white dark:bg-gray-800/50"
-                    onClick={async () => {
-                      try {
-                        const full = await publicKnowledgeApi.getArticle(null, a.id)
-                        setSelected(full)
-                      } catch {
-                        // ignore
-                      }
-                    }}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-                          {a.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{a.snippet}</p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-green-500 group-hover:translate-x-1 transition-all ml-2 flex-shrink-0" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* FAQs Section */}
-          <Card className="glass-card shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-t-lg">
-              <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                  <HelpCircle className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  {t('knowledge.faqs') || 'Frequently Asked Questions'}
-                  <p className="text-sm text-muted-foreground font-normal">{t('knowledge.faqsSubtitle') || 'Quick answers to common questions'}</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              {loading && (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-                  <span className="ml-3 text-sm text-muted-foreground">{t('common.loading') || 'Loading...'}</span>
-                </div>
-              )}
-
-              {!loading && ((data?.faqs?.length ?? 0) === 0) && (
-                <div className="text-center py-8">
-                  <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">{t('knowledge.noResults') || 'No FAQs found'}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{t('knowledge.tryDifferentSearch') || 'Try a different search term'}</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {(data?.faqs || []).map((f) => (
-                  <div
-                    key={f.id}
-                    className="group p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800/50"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-bold text-purple-600 dark:text-purple-400">Q</span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{f.question}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{f.answer}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Selected Article */}
-        {selected && (
-          <Card className="glass-card shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-t-lg">
-              <CardTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  {selected.title || 'Article'}
-                  <p className="text-sm text-muted-foreground font-normal">{t('knowledge.fullArticle') || 'Complete article content'}</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8">
-              <div className="kb-prose max-w-none" dangerouslySetInnerHTML={{ __html: String(selected.content || '') }} />
-              <div className="mt-8 pt-6 border-t flex items-center justify-between">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <button className="flex items-center gap-2 hover:text-green-600 transition-colors">
-                    <Star className="w-4 h-4" />
-                    {t('knowledge.helpful') || 'Was this helpful?'}
-                  </button>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl"
-                  onClick={() => setSelected(null)}
-                >
-                  {t('knowledge.backToSearch') || 'Back to Search'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Footer */}
-        <div className="text-center py-12">
-          <div className="max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold mb-4">{t('knowledge.stillNeedHelp') || 'Still need help?'}</h3>
-            <p className="text-muted-foreground mb-6">
-              {t('knowledge.contactDescription') || 'Our support team is here to help you with any questions or issues you might have.'}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="rounded-xl" onClick={() => setEmailOpen(true)}>
-                <Mail className="w-4 h-4 mr-2" />
-                {t('knowledge.contactSupport') || 'Contact Support'}
-              </Button>
-              <Button variant="outline" className="rounded-xl">
-                <Phone className="w-4 h-4 mr-2" />
-                {t('knowledge.scheduleCall') || 'Schedule a Call'}
-              </Button>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
-        {/* WhatsApp Floating Button */}
-        <button
-          className="group relative w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center animate-float"
-          onClick={async (e) => {
-            e.preventDefault()
-            try {
-              let sid = chatSession
-              if (!sid) {
-                const started = await publicChatApi.start()
-                sid = started.sessionId || null
-                setChatSession(sid)
-                if (typeof window !== 'undefined' && sid) localStorage.setItem('helpcenter_session', sid)
-              }
-              const popup = window.open('', '_blank')
-              const link = await publicChatApi.whatsappLink(sid || undefined)
-              if (link?.url) {
-                if (popup) popup.location.href = link.url
-                else window.location.href = link.url
-              }
-            } catch {/* ignore */ }
-          }}
-        >
-          <Phone className="w-6 h-6" />
-
-          {/* Tooltip */}
-          <div className="absolute right-16 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-            {t('knowledge.continueWhatsapp') || 'Continue on WhatsApp'}
-            <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
-          </div>
-
-          {/* Pulse animation */}
-          <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-20"></div>
-        </button>
-
-        {/* Email Floating Button */}
-        <button
-          className="group relative w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center animate-float"
-          style={{ animationDelay: '0.5s' }}
-          onClick={() => setEmailOpen(true)}
-        >
-          <Mail className="w-6 h-6" />
-
-          {/* Tooltip */}
-          <div className="absolute right-16 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-            {t('knowledge.askByEmail') || 'Ask via Email'}
-            <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
-          </div>
-
-          {/* Pulse animation */}
-          <div className="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-20"></div>
-        </button>
-      </div>
+      {/* Multi-Channel Chat Widget */}
+      <MultiChannelChat />
     </div>
   )
 }
-
 

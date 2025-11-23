@@ -45,6 +45,12 @@ export class TicketsController {
       } as any;
     }
     const tenantId = req?.user?.tenantId;
+    const role = req?.user?.role as 'admin' | 'agent' | undefined;
+    const userId = req?.user?.id as string | undefined;
+    // Default: agents see their own assigned tickets if no explicit filter provided
+    if (role === 'agent' && !mapped.assignedAgentId && !(mapped as any).unassigned) {
+      (mapped as any).assignedAgentId = userId;
+    }
     return this.ticketsService.findAll(mapped, pagination, tenantId);
   }
 
@@ -120,12 +126,52 @@ export class TicketsController {
   }
 
   @Get('stats')
-  @Roles('admin')
+  @Roles('admin', 'agent')
   @Permissions('tickets.read')
   @ApiOperation({ summary: 'Get ticket stats and trends' })
   @ApiResponse({ status: 200, description: 'Ticket stats' })
-  async stats(@Query('tenantId') tenantId?: string) {
-    return this.ticketsService.getStats(tenantId);
+  async stats(
+    @Req() req: any,
+    @Query('tenantId') tenantId?: string,
+    @Query('range') range?: string,
+    @Query('days') days?: string,
+  ) {
+    const tenantFromAuth = req?.user?.tenantId as string | undefined;
+    const rangeStr = String(range || '').toLowerCase();
+    let numDays = Number(days || 0);
+    if (!Number.isFinite(numDays) || numDays <= 0) {
+      if (rangeStr === '30d') numDays = 30;
+      else if (rangeStr === '90d') numDays = 90;
+      else numDays = 7;
+    }
+    return this.ticketsService.getStats(tenantId || tenantFromAuth, numDays);
+  }
+
+  @Get('feed')
+  @Roles('admin', 'agent')
+  @Permissions('tickets.read')
+  @ApiOperation({ summary: 'Tenant activity feed (optionally scoped to agent)' })
+  async feed(
+    @Req() req: any,
+    @Query('limit') limit?: string,
+    @Query('agentId') agentId?: string,
+  ) {
+    const tenantId = req?.user?.tenantId as string;
+    const effectiveAgentId = (req?.user?.role === 'agent' && !agentId) ? (req?.user?.id as string) : agentId;
+    const lim = Math.max(1, Math.min(100, Number(limit || 20)));
+    const items = await this.ticketsService.getActivityFeed(tenantId, { limit: lim, agentId: effectiveAgentId });
+    return { data: items };
+  }
+
+  @Get('agent/my-stats')
+  @Roles('admin', 'agent')
+  @Permissions('tickets.read')
+  @ApiOperation({ summary: 'Current agent basic stats' })
+  async myStats(@Req() req: any) {
+    const tenantId = req?.user?.tenantId as string;
+    const agentId = req?.user?.id as string;
+    const stats = await this.ticketsService.getAgentStats(tenantId, agentId);
+    return { data: stats };
   }
 
   @Get(':id')
@@ -350,5 +396,20 @@ export class TicketsController {
   ) {
     const tenantId = req?.user?.tenantId as string;
     return this.ticketsService.removeWatcher(id, userId, tenantId);
+  }
+
+  @Get(':id/routing/suggestions')
+  @Roles('admin', 'agent')
+  @Permissions('tickets.read')
+  @ApiOperation({ summary: 'Get smart routing suggestions for a ticket' })
+  @ApiResponse({ status: 200, description: 'Routing suggestions with agent details and reasoning' })
+  async getRoutingSuggestions(
+    @Param('id') id: string,
+    @Query('limit') limit?: string,
+    @Req() req: any,
+  ) {
+    const tenantId = req?.user?.tenantId as string;
+    const limitNum = limit ? Math.min(Math.max(1, parseInt(limit, 10)), 10) : 5;
+    return this.ticketsService.getRoutingSuggestions(id, tenantId, limitNum);
   }
 }

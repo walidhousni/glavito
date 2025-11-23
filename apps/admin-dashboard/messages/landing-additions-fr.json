@@ -1,0 +1,318 @@
+{
+  "landing": {
+    "hero": {
+      "headline": {
+        "industryAgnostic": "Plateforme de Support Tous Secteurs",
+        "multiChannel": "Communication Multi-Canaux"
+      },
+      "selectIndustry": "Sélectionnez Votre Secteur",
+      "chat": {
+        "online": "En ligne"
+      },
+      "industries": {
+        "ecommerce": {
+          "businessName": "Boutique ShopStyle",
+          "customer1": "Bonjour ! J'ai passé une commande #1234 hier. Quand sera-t-elle expédiée ?",
+          "agent1": "Bonjour ! Votre commande #1234 est en cours d'emballage et sera expédiée aujourd'hui. Vous recevrez un numéro de suivi dans 2 heures.",
+          "customer2": "Super ! Puis-je changer l'adresse de livraison ?",
+          "agent2": "Oui ! J'ai mis à jour votre adresse de livraison. Le colis arrivera à votre nouvelle adresse dans 2-3 jours ouvrables."
+        },
+        "automotive": {
+          "businessName": "Centre AutoCare",
+          "customer1": "Je dois planifier un rendez-vous de service pour ma Honda Accord 2020.",
+          "agent1": "Bien sûr ! Nous avons une disponibilité demain à 10h ou vendredi à 14h. Qu'est-ce qui vous convient le mieux ?",
+          "customer2": "Demain à 10h c'est parfait !",
+          "agent2": "Réservé ! Vous êtes prêt pour demain à 10h. Nous vous enverrons un rappel. À demain !"
+        },
+        "healthcare": {
+          "businessName": "Clinique MediCare",
+          "customer1": "Je voudrais prendre rendez-vous avec le Dr. Smith.",
+          "agent1": "Le Dr. Smith est disponible ce jeudi à 15h ou lundi prochain à 11h. Que préférez-vous ?",
+          "customer2": "Jeudi à 15h s'il vous plaît.",
+          "agent2": "Parfait ! Votre rendez-vous est confirmé pour jeudi 14 mars à 15h. Vous recevrez un rappel 24h avant."
+        },
+        "realEstate": {
+          "businessName": "DreamHome Immobilier",
+          "customer1": "Je suis intéressé par la propriété de 3 chambres sur Main Street. Puis-je planifier une visite ?",
+          "agent1": "Absolument ! C'est une belle propriété. Je peux organiser une visite demain à 16h ou samedi à 11h. Qu'est-ce qui vous convient ?",
+          "customer2": "Samedi à 11h serait parfait !",
+          "agent2": "Excellent ! Votre visite est réservée pour samedi à 11h. Je vous retrouverai là-bas. Au plaisir de vous montrer la propriété !"
+        },
+        "hospitality": {
+          "businessName": "Grand Hôtel & Spa",
+          "customer1": "J'ai une réservation pour demain. Puis-je demander un départ tardif ?",
+          "agent1": "Bien sûr ! J'ai noté votre demande de départ tardif jusqu'à 14h. Aucun frais supplémentaire. Bon séjour !",
+          "customer2": "Merci ! Aussi, puis-je réserver un soin au spa ?",
+          "agent2": "Absolument ! Notre spa est ouvert de 9h à 20h. Je vous envoie le menu des soins via WhatsApp maintenant."
+        }
+      },
+      "stats": {
+        "thisMonth": "ce mois-ci",
+        "rating": "note"
+      }
+    },
+    "industries": {
+      "ecommerce": "E-commerce",
+      "automotive": "Automobile",
+      "healthcare": "Santé",
+      "realEstate": "Immobilier",
+      "hospitality": "Hôtellerie"
+    },
+    "useCases": {
+      "title": "Conçu Pour Votre Secteur",
+      "subtitle": "Des solutions sur mesure pour chaque secteur d'activité avec automatisation spécifique",
+      "viewDemo": "Voir la démo",
+      "ecommerce": {
+        "title": "E-commerce",
+        "case1": {
+          "title": "Suivi de commande",
+          "description": "Automatisez les mises à jour de statut et notifications d'expédition",
+          "demo": {
+            "customer1": "Où est ma commande #5678 ?",
+            "agent1": "Votre commande est en cours de livraison et arrivera aujourd'hui avant 17h. Suivez-la ici : [lien]"
+          }
+        },
+        "case2": {
+          "title": "Récupération de panier abandonné",
+          "description": "Réengagez les clients qui ont laissé des articles dans leur panier",
+          "demo": {
+            "agent1": "Bonjour ! Vous avez laissé des articles dans votre panier. Finalisez votre achat maintenant et obtenez 10% de réduction !",
+            "customer1": "Merci pour le rappel ! Je vais le finaliser maintenant."
+          }
+        },
+        "case3": {
+          "title": "Recommandations de produits",
+          "description": "Suggestions de produits personnalisées par IA",
+          "demo": {
+            "customer1": "Avez-vous des articles similaires à ce que je viens d'acheter ?",
+            "agent1": "D'après votre achat, vous pourriez adorer ces accessoires assortis ! [liens produits]"
+          }
+        }
+      },
+      "automotive": {
+        "title": "Automobile",
+        "case1": {
+          "title": "Rappels de service",
+          "description": "Rappels automatiques d'entretien et de rendez-vous",
+          "demo": {
+            "agent1": "Votre véhicule doit être entretenu dans 2 semaines. Réservez maintenant et obtenez 15% de réduction !",
+            "customer1": "Parfait timing ! Je réserve pour vendredi prochain."
+          }
+        },
+        "case2": {
+          "title": "Réservation de rendez-vous",
+          "description": "Planification fluide des rendez-vous de service",
+          "demo": {
+            "customer1": "J'ai besoin d'une vidange cette semaine.",
+            "agent1": "Créneaux disponibles : Mer 14h, Jeu 10h, Ven 15h. Lequel vous convient ?"
+          }
+        },
+        "case3": {
+          "title": "Suivi d'essai routier",
+          "description": "Suivi automatique après les essais routiers",
+          "demo": {
+            "agent1": "Comment s'est passé votre essai routier ? Prêt à faire vôtre cette merveille ?"
+          }
+        }
+      },
+      "healthcare": {
+        "title": "Santé",
+        "case1": {
+          "title": "Planification de rendez-vous",
+          "description": "Réservation et gestion faciles des rendez-vous patients",
+          "demo": {
+            "agent1": "Dr. Johnson a des disponibilités mardi à 9h et jeudi à 14h. Qu'est-ce qui vous convient ?",
+            "customer1": "Mardi à 9h s'il vous plaît !"
+          }
+        },
+        "case2": {
+          "title": "Renouvellement d'ordonnances",
+          "description": "Rappels automatiques de renouvellement d'ordonnances",
+          "demo": {
+            "customer1": "Je dois renouveler mon ordonnance.",
+            "agent1": "J'ai traité votre demande de renouvellement. Elle sera prête à récupérer demain à 15h."
+          }
+        },
+        "case3": {
+          "title": "Résultats d'analyses",
+          "description": "Livraison sécurisée des résultats de laboratoire et suivi",
+          "demo": {
+            "agent1": "Vos résultats d'analyses sont prêts. Veuillez vous connecter au portail patient pour les consulter en toute sécurité."
+          }
+        }
+      },
+      "realEstate": {
+        "title": "Immobilier",
+        "case1": {
+          "title": "Demandes de propriétés",
+          "description": "Réponses instantanées aux questions sur les propriétés",
+          "demo": {
+            "customer1": "Quel est le prix du condo au centre-ville ?",
+            "agent1": "Le condo au centre-ville est affiché à 450 000$. Il a 2 chambres, 2 salles de bain. Voulez-vous planifier une visite ?"
+          }
+        },
+        "case2": {
+          "title": "Planification de visites",
+          "description": "Rendez-vous de visite de propriété automatisés",
+          "demo": {
+            "agent1": "Votre visite est confirmée pour samedi à 10h. Je vous retrouve à la propriété. À samedi !"
+          }
+        },
+        "case3": {
+          "title": "Collecte de documents",
+          "description": "Soumission et suivi simplifiés des documents",
+          "demo": {
+            "customer1": "De quels documents ai-je besoin pour la demande de prêt hypothécaire ?",
+            "agent1": "Vous aurez besoin de : pièce d'identité, preuve de revenu, relevés bancaires (3 mois) et déclarations fiscales. Téléchargez-les ici : [lien]"
+          }
+        }
+      },
+      "hospitality": {
+        "title": "Hôtellerie",
+        "case1": {
+          "title": "Confirmations de réservation",
+          "description": "Confirmations et détails instantanés de réservation",
+          "demo": {
+            "agent1": "Votre réservation est confirmée ! Chambre 305, arrivée le 15 avril, départ le 18 avril. Hâte de vous accueillir !",
+            "customer1": "Parfait ! J'ai hâte !"
+          }
+        },
+        "case2": {
+          "title": "Demandes des clients",
+          "description": "Service client et demandes en temps réel",
+          "demo": {
+            "customer1": "Puis-je avoir des serviettes supplémentaires dans la chambre 203 ?",
+            "agent1": "Absolument ! Le service de ménage vous les apportera dans 10 minutes."
+          }
+        },
+        "case3": {
+          "title": "Occasions spéciales",
+          "description": "Service personnalisé pour les célébrations",
+          "demo": {
+            "agent1": "Nous avons remarqué que c'est votre anniversaire ! Nous avons arrangé un champagne et dessert gratuits dans votre chambre."
+          }
+        }
+      }
+    },
+    "integrations": {
+      "badge": "15+ Intégrations",
+      "title": "Intégrations Transparentes",
+      "subtitle": "Connectez-vous avec vos outils et plateformes préférés en minutes, pas en jours",
+      "connected": "Actif",
+      "connectsIn": "Se connecte en {time}",
+      "moreIntegrations": "Et 50+ autres intégrations disponibles",
+      "categories": {
+        "ecommerce": "E-commerce",
+        "crm": "CRM",
+        "payments": "Paiements",
+        "channels": "Canaux",
+        "support": "Support",
+        "marketing": "Marketing",
+        "automation": "Automatisation",
+        "cms": "CMS"
+      },
+      "features": {
+        "orderSync": "Synchro commandes",
+        "customerData": "Synchro données clients",
+        "inventory": "Suivi inventaire",
+        "productCatalog": "Catalogue produits",
+        "whatsappAPI": "API WhatsApp Business",
+        "instagram": "Messages privés Instagram",
+        "messaging": "Messagerie unifiée",
+        "paymentTracking": "Suivi paiements",
+        "subscriptions": "Abonnements",
+        "invoicing": "Facturation",
+        "contactSync": "Synchro contacts",
+        "dealTracking": "Suivi affaires",
+        "reporting": "Rapports",
+        "emailMarketing": "Marketing par e-mail",
+        "pipelines": "Pipelines de vente",
+        "smsAPI": "API SMS",
+        "voiceAPI": "API vocale",
+        "ticketSync": "Synchro tickets",
+        "knowledgeBase": "Base de connaissances",
+        "emailCampaigns": "Campagnes e-mail",
+        "audienceSync": "Synchro audience",
+        "automation": "Automatisation",
+        "workflows": "Workflows",
+        "multiApp": "Connexion multi-apps",
+        "triggers": "Déclencheurs & actions",
+        "forms": "Formulaires",
+        "userSync": "Synchro utilisateurs",
+        "comments": "Commentaires"
+      }
+    },
+    "roiCalculator": {
+      "title": "Calculez Votre ROI",
+      "subtitle": "Découvrez combien vous pouvez économiser avec la plateforme d'automatisation Glavito",
+      "inputsTitle": "Vos Métriques Actuelles",
+      "resultsTitle": "Vos Économies Potentielles",
+      "disclaimer": "*Estimations basées sur les moyennes du secteur. Les résultats réels peuvent varier.",
+      "inputs": {
+        "monthlyTickets": "Tickets de Support Mensuels",
+        "hourlyRate": "Taux Horaire Agent ($)",
+        "avgTime": "Temps Moyen par Ticket (minutes)",
+        "currentAutomation": "Automatisation Actuelle (%)"
+      },
+      "results": {
+        "hoursSaved": "Heures Économisées",
+        "costSavings": "Économies Annuelles",
+        "ticketsAutomated": "Tickets Automatisés",
+        "roi": "ROI"
+      },
+      "cta": "Commencez à économiser {savings}/an"
+    },
+    "interactiveDemo": {
+      "badge": "Démo Interactive",
+      "title": "Voyez-le en Action",
+      "subtitle": "Regardez comment les conversations circulent dans notre automatisation de flux de travail en temps réel",
+      "flowBuilder": {
+        "title": "Constructeur de Workflow",
+        "live": "En direct",
+        "description": "Constructeur visuel par glisser-déposer avec des nœuds d'automatisation puissants"
+      },
+      "chatPreview": {
+        "title": "Aperçu Chat en Direct",
+        "description": "Voyez comment vos workflows se traduisent en vraies conversations clients"
+      },
+      "channels": {
+        "online": "En ligne",
+        "whatsapp": {
+          "name": "Support WhatsApp"
+        },
+        "instagram": {
+          "name": "Support Instagram"
+        },
+        "email": {
+          "name": "Support Email"
+        }
+      },
+      "demo": {
+        "whatsapp": {
+          "customer1": "Bonjour, j'ai besoin d'aide avec ma commande",
+          "agent1": "Bonjour ! Je serais ravi de vous aider. Pouvez-vous fournir votre numéro de commande ?",
+          "customer2": "#ORD-5678",
+          "agent2": "Merci ! Votre commande est en cours d'emballage et sera expédiée aujourd'hui. Vous recevrez les infos de suivi dans 2 heures."
+        },
+        "instagram": {
+          "customer1": "Livrez-vous à l'international ?",
+          "agent1": "Oui ! Nous livrons dans plus de 150 pays. Où souhaitez-vous que nous livrions ?",
+          "customer2": "En France",
+          "agent2": "Super ! L'expédition vers la France prend généralement 5-7 jours ouvrables et coûte 15$. Voulez-vous continuer ?"
+        },
+        "email": {
+          "customer1": "Je voudrais retourner un article acheté la semaine dernière.",
+          "agent1": "Je peux vous aider avec ça. Notre politique de retour permet les retours dans les 30 jours. Je vous envoie une étiquette de retour prépayée.",
+          "customer2": "Parfait, merci !"
+        }
+      },
+      "cta": {
+        "text": "Prêt à construire votre propre automatisation ?",
+        "feature1": "Constructeur sans code",
+        "feature2": "Tests en temps réel",
+        "feature3": "Workflows illimités"
+      }
+    }
+  }
+}
+

@@ -14,7 +14,8 @@ export class DomainService {
   constructor(private readonly db: DatabaseService) {}
 
   async listDomains(tenantId: string) {
-    return this.db.customDomain.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+    const domains = await this.db.customDomain.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+    return Array.isArray(domains) ? domains : [];
   }
 
   async createDomain(tenantId: string, payload: CreateDomainRequest) {
@@ -90,12 +91,28 @@ export class DomainService {
   async requestSSL(tenantId: string, id: string) {
     const record = await this.db.customDomain.findFirst({ where: { id, tenantId } });
     if (!record) throw new NotFoundException('Domain not found');
-    if (record.status !== 'active') throw new BadRequestException('Domain must be verified before requesting SSL');
+    if (record.status !== 'active') {
+      throw new BadRequestException('Domain must be verified before requesting SSL. Please verify DNS configuration first.');
+    }
+    if (record.sslStatus === 'active') {
+      throw new BadRequestException('SSL certificate already active for this domain');
+    }
 
-    // Placeholder: In production integrate with ACME (Let\'s Encrypt) and chosen DNS provider/API
+    // Update status to indicate SSL request is in progress
+    // In production, integrate with ACME (Let's Encrypt) and chosen DNS provider/API
+    // For now, mark as active with a note that this is a placeholder
     const updated = await this.db.customDomain.update({
       where: { id },
-      data: { sslStatus: 'active', sslCertificate: { issuedAt: new Date(), provider: 'internal', note: 'Placeholder certificate' } as any },
+      data: {
+        sslStatus: 'active',
+        sslCertificate: {
+          issuedAt: new Date(),
+          provider: 'internal',
+          note: 'Placeholder certificate - ACME integration pending',
+          expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days placeholder
+        } as any,
+        lastCheckedAt: new Date(),
+      },
     });
     return updated;
   }
@@ -106,45 +123,88 @@ export class DomainService {
     const settings: any = (tenant as any)?.whiteLabelSettings || {};
     const smtp: any = settings?.smtp || {};
     const host: string = String(smtp?.host || '').toLowerCase();
-    const isBrevo = host.includes('brevo');
+    const isBrevo = host.includes('brevo') || host.includes('sendinblue');
+    const isSendgrid = host.includes('sendgrid');
+    const isPostmark = host.includes('postmark');
+    const isMailgun = host.includes('mailgun');
     const records: Array<{ type: 'TXT' | 'CNAME'; name: string; value: string; ttl: number; purpose: string }> = [];
     // SPF
-    const spfValue = isBrevo ? 'v=spf1 include:spf.brevo.com ~all' : 'v=spf1 mx ~all';
+    const spfValue = isBrevo
+      ? 'v=spf1 include:spf.brevo.com ~all'
+      : isSendgrid
+      ? 'v=spf1 include:sendgrid.net ~all'
+      : isPostmark
+      ? 'v=spf1 a mx include:spf.mtasv.net ~all'
+      : isMailgun
+      ? 'v=spf1 include:mailgun.org ~all'
+      : 'v=spf1 mx ~all';
     records.push({ type: 'TXT', name: domain, value: spfValue, ttl: 300, purpose: 'SPF' });
     // DKIM (recommend default selector "mail")
     if (isBrevo) {
       records.push({ type: 'CNAME', name: `mail._domainkey.${domain}`, value: 'mail.domainkey.brevo.com', ttl: 300, purpose: 'DKIM' });
+    } else if (isSendgrid) {
+      records.push({ type: 'CNAME', name: `s1._domainkey.${domain}`, value: 's1.domainkey.uXXXXXXX.wl.sendgrid.net', ttl: 300, purpose: 'DKIM (example, replace uXXXXXXX)' });
+      records.push({ type: 'CNAME', name: `s2._domainkey.${domain}`, value: 's2.domainkey.uXXXXXXX.wl.sendgrid.net', ttl: 300, purpose: 'DKIM (example, replace uXXXXXXX)' });
+    } else if (isPostmark) {
+      records.push({ type: 'CNAME', name: `pm._domainkey.${domain}`, value: 'pm.mtasv.net', ttl: 300, purpose: 'DKIM' });
+    } else if (isMailgun) {
+      records.push({ type: 'CNAME', name: `smtp._domainkey.${domain}`, value: 'smtp.mailgun.org', ttl: 300, purpose: 'DKIM' });
     } else {
       records.push({ type: 'CNAME', name: `mail._domainkey.${domain}`, value: 'provider-domainkey.example.com', ttl: 300, purpose: 'DKIM' });
     }
     // DMARC guidance (optional safe default)
     records.push({ type: 'TXT', name: `_dmarc.${domain}`, value: 'v=DMARC1; p=none; rua=mailto:dmarc@' + domain, ttl: 300, purpose: 'DMARC' });
-    return { domain, provider: isBrevo ? 'brevo' : 'custom', records } as const;
+    const provider = isBrevo ? 'brevo' : isSendgrid ? 'sendgrid' : isPostmark ? 'postmark' : isMailgun ? 'mailgun' : 'custom';
+    return { domain, provider, records } as const;
   }
 
   async validateEmailDns(tenantId: string, domain: string) {
+    // Validate domain format
+    if (!domain || !domain.includes('.')) {
+      throw new BadRequestException('Invalid domain format');
+    }
+    
     const guidance = await this.getEmailDnsGuidance(tenantId, domain);
     const isBrevo = guidance.provider === 'brevo';
-    const results: any = { domain, checks: { spf: null, dkim: null, dmarc: null }, passed: false };
+    const isSendgrid = guidance.provider === 'sendgrid';
+    const isPostmark = guidance.provider === 'postmark';
+    const isMailgun = guidance.provider === 'mailgun';
+    const results: any = { domain, provider: guidance.provider, checks: { spf: null, dkim: null, dmarc: null }, passed: false };
     // SPF check
     try {
       const txts = await dns.resolveTxt(domain);
       const flat = txts.map((chunks) => chunks.join(''));
       const spf = flat.find((t) => t.toLowerCase().startsWith('v=spf1')) || '';
       const hasSpf = !!spf;
-      const includesBrevo = isBrevo ? spf.includes('include:spf.brevo.com') : true;
-      results.checks.spf = { found: hasSpf, value: spf || null, includesBrevo };
+      const okInclude = isBrevo
+        ? spf.includes('include:spf.brevo.com')
+        : isSendgrid
+        ? spf.includes('include:sendgrid.net')
+        : isPostmark
+        ? spf.includes('include:spf.mtasv.net')
+        : isMailgun
+        ? spf.includes('include:mailgun.org')
+        : true;
+      results.checks.spf = { found: hasSpf, value: spf || null, includeOk: okInclude };
     } catch (e: any) {
       results.checks.spf = { found: false, error: e?.message };
     }
     // DKIM check (selector: mail)
-    const dkimHost = `mail._domainkey.${domain}`;
+    const dkimHost = isBrevo ? `mail._domainkey.${domain}` : isSendgrid ? `s1._domainkey.${domain}` : isPostmark ? `pm._domainkey.${domain}` : isMailgun ? `smtp._domainkey.${domain}` : `mail._domainkey.${domain}`;
     try {
       const cname = await dns.resolveCname(dkimHost);
       const value = cname?.[0] || '';
       const ok = !!value;
-      const brevoTargetOk = isBrevo ? value.includes('domainkey.brevo.com') : true;
-      results.checks.dkim = { found: ok, type: 'CNAME', value: value || null, targetOk: brevoTargetOk };
+      const providerTargetOk = isBrevo
+        ? value.includes('domainkey.brevo.com')
+        : isSendgrid
+        ? value.includes('sendgrid.net')
+        : isPostmark
+        ? value.includes('mtasv.net')
+        : isMailgun
+        ? value.includes('mailgun.org')
+        : true;
+      results.checks.dkim = { found: ok, type: 'CNAME', value: value || null, targetOk: providerTargetOk };
     } catch {
       try {
         const txts = await dns.resolveTxt(dkimHost);
@@ -165,7 +225,18 @@ export class DomainService {
     } catch (e: any) {
       results.checks.dmarc = { found: false, error: e?.message };
     }
-    results.passed = !!(results.checks.spf?.found && (isBrevo ? results.checks.spf?.includesBrevo : true) && results.checks.dkim?.found && results.checks.dmarc?.found);
+    const includeOk = (results.checks.spf && (results.checks.spf as any).includeOk) !== false;
+    const spfOk = results.checks.spf?.found && includeOk;
+    const dkimOk = results.checks.dkim?.found && (results.checks.dkim as any)?.targetOk !== false;
+    const dmarcOk = results.checks.dmarc?.found;
+    
+    results.passed = !!(spfOk && dkimOk && dmarcOk);
+    results.summary = {
+      spf: spfOk ? 'valid' : 'missing_or_invalid',
+      dkim: dkimOk ? 'valid' : 'missing_or_invalid',
+      dmarc: dmarcOk ? 'valid' : 'missing_or_invalid',
+    };
+    
     return results;
   }
 }

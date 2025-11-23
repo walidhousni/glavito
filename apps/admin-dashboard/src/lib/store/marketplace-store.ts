@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { marketplaceApi, type MarketplaceItem } from '@/lib/api/marketplace-client';
 
-interface MarketplaceFilters {
+export interface MarketplaceFilters {
   search?: string;
   category?: string;
   tag?: string;
@@ -18,10 +18,16 @@ interface MarketplaceState {
   error: string | null;
   filters: MarketplaceFilters;
   installLoading: Record<string, boolean>;
+  installed: any[];
+  installedLoading: boolean;
 
   setFilters: (updates: Partial<MarketplaceFilters>) => void;
   load: () => Promise<void>;
   install: (slug: string, configuration?: Record<string, unknown>) => Promise<void>;
+  seedDemo: () => Promise<void>;
+  loadInstalled: () => Promise<void>;
+  updateInstallation: (id: string, updates: { status?: 'installed' | 'enabled' | 'disabled'; configuration?: Record<string, unknown> }) => Promise<void>;
+  uninstall: (id: string) => Promise<void>;
 }
 
 export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
@@ -30,6 +36,8 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
   error: null,
   filters: { page: 1, limit: 30, sort: 'updated' },
   installLoading: {},
+  installed: [],
+  installedLoading: false,
 
   setFilters: (updates) => set((state) => ({ filters: { ...state.filters, ...updates } })),
 
@@ -48,9 +56,38 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
     set((s) => ({ installLoading: { ...s.installLoading, [slug]: true } }));
     try {
       await marketplaceApi.install(slug, configuration);
+      // refresh installed list best-effort
+      void get().loadInstalled();
     } finally {
       set((s) => ({ installLoading: { ...s.installLoading, [slug]: false } }));
     }
+  },
+
+  seedDemo: async () => {
+    await marketplaceApi.seedDemo();
+    // reload marketplace & installed after seeding
+    await get().load();
+    await get().loadInstalled();
+  },
+
+  loadInstalled: async () => {
+    set({ installedLoading: true });
+    try {
+      const list = await marketplaceApi.listInstalled();
+      set({ installed: Array.isArray(list) ? list : [], installedLoading: false });
+    } catch {
+      set({ installed: [], installedLoading: false });
+    }
+  },
+
+  updateInstallation: async (id, updates) => {
+    await marketplaceApi.updateInstallation(id, updates);
+    await get().loadInstalled();
+  },
+
+  uninstall: async (id) => {
+    await marketplaceApi.uninstall(id);
+    await get().loadInstalled();
   },
 }));
 

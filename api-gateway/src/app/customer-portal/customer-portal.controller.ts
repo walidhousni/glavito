@@ -1,9 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentTenant } from '@glavito/shared-auth';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard, Roles, CurrentTenant } from '@glavito/shared-auth';
 import { CustomerPortalService } from './customer-portal.service';
 
 @ApiTags('Customer Portal')

@@ -48,7 +48,7 @@ export default function CoachingDashboardPage() {
         }
       } catch (e) {
         const err = e as { message?: string };
-        if (!cancelled) setError(err?.message || 'Failed to load coaching data');
+        if (!cancelled) setError(err?.message || t('failedToLoad'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -88,15 +88,15 @@ export default function CoachingDashboardPage() {
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-blue-600" />
           <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <Badge variant="secondary" className="ml-2">{trends?.totals?.count ?? 0} analyses</Badge>
+          <Badge variant="secondary" className="ml-2">{trends?.totals?.count ?? 0} {t('analyses')}</Badge>
         </div>
         <div className="flex items-center gap-2">
           <Select value={agentId} onValueChange={setAgentId}>
             <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="All agents" />
+              <SelectValue placeholder={t('allAgents')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All">All agents</SelectItem>
+              <SelectItem value="All">{t('allAgents')}</SelectItem>
               {agents.map(a => (
                 <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
               ))}
@@ -114,31 +114,31 @@ export default function CoachingDashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-blue-600" /> Clarity</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-blue-600" /> {t('clarity')}</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{isFinite(avgClarity) ? `${avgClarity}%` : '—'}</div>
             <Progress value={isFinite(avgClarity) ? avgClarity : 0} className="mt-2" />
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-purple-600" /> Filler</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-purple-600" /> {t('filler')}</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{isFinite(avgFiller) ? `${avgFiller}%` : '—'}</div>
             <Progress value={isFinite(avgFiller) ? avgFiller : 0} className="mt-2" />
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-green-600" /> Sentiment</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-green-600" /> {t('sentiment')}</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{isFinite(avgSentiment) ? `${avgSentiment}%` : '—'}</div>
             <Progress value={isFinite(avgSentiment) ? avgSentiment : 0} className="mt-2" />
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-emerald-600" /> Effectiveness</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-emerald-600" /> {t('effectiveness')}</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{typeof effectiveness?.score === 'number' ? `${effectiveness.score}` : '—'}</div>
-            <div className="text-xs text-gray-500 mt-1">Δ clarity {(Math.round(((effectiveness?.metrics?.clarityDelta ?? 0) * 100)))}%, Δ filler {(Math.round(((effectiveness?.metrics?.fillerDelta ?? 0) * 100)))}%, Δ sentiment {(Math.round(((effectiveness?.metrics?.sentimentDelta ?? 0) * 100)))}%</div>
+            <div className="text-xs text-gray-500 mt-1">{t('clarityDelta')} {(Math.round(((effectiveness?.metrics?.clarityDelta ?? 0) * 100)))}%, {t('fillerDelta')} {(Math.round(((effectiveness?.metrics?.fillerDelta ?? 0) * 100)))}%, {t('sentimentDelta')} {(Math.round(((effectiveness?.metrics?.sentimentDelta ?? 0) * 100)))}%</div>
           </CardContent>
         </Card>
       </div>
@@ -147,7 +147,7 @@ export default function CoachingDashboardPage() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4 text-blue-600" /> {t('trends')}</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {loading && <div className="text-sm text-gray-500">Loading...</div>}
+            {loading && <div className="text-sm text-gray-500">{t('loading')}</div>}
             {!loading && (trends?.byDay?.length ? (
               <div className="space-y-2">
                 {trends.byDay.slice(-14).map((p) => (
@@ -161,7 +161,7 @@ export default function CoachingDashboardPage() {
                 ))}
                 {/* Sparkline */}
                 <div className="mt-4">
-                  <div className="text-xs text-gray-500 mb-1">Clarity (14d)</div>
+                  <div className="text-xs text-gray-500 mb-1">{t('clarity14d')}</div>
                   <div className="h-12 w-full">
                     <svg viewBox="0 0 100 24" preserveAspectRatio="none" className="w-full h-full">
                       {(() => {
@@ -176,14 +176,14 @@ export default function CoachingDashboardPage() {
                   </div>
                 </div>
               </div>
-            ) : <div className="text-sm text-gray-500">No data</div>)}
+            ) : <div className="text-sm text-gray-500">{t('noData')}</div>)}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><ListChecks className="h-4 w-4 text-sky-600" /> Recent analyses{agentId ? ' (agent)' : ''}</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><ListChecks className="h-4 w-4 text-sky-600" /> {agentId ? t('recentAnalysesAgent') : t('recentAnalyses')}</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {loading && <div className="text-sm text-gray-500">Loading...</div>}
+            {loading && <div className="text-sm text-gray-500">{t('loading')}</div>}
             {!loading && (recent?.length ? (
               <ul className="text-sm space-y-2">
                 {recent.slice(0, 10).map(r => (
@@ -196,7 +196,7 @@ export default function CoachingDashboardPage() {
                   </li>
                 ))}
               </ul>
-            ) : <div className="text-sm text-gray-500">No recent analyses</div>)}
+            ) : <div className="text-sm text-gray-500">{t('noRecentAnalyses')}</div>)}
           </CardContent>
         </Card>
       </div>

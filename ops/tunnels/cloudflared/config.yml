@@ -1,0 +1,21 @@
+# Cloudflare Tunnel configuration for exposing the API Gateway (NestJS) on localhost:3001
+# Quick start (ephemeral, no pre-created tunnel):
+#   cloudflared tunnel --url http://localhost:3001
+#
+# Managed tunnel (recommended):
+#   1) cloudflared tunnel create <NAME>
+#   2) Note the tunnel UUID (TUNNEL_ID) and credentials file path
+#   3) Set CLOUDFLARE_DOMAIN to your DNS hostname (e.g. api.example.dev)
+#   4) Update the values below, then run:
+#        cloudflared tunnel --config ops/tunnels/cloudflared/config.yml run
+
+tunnel: ${CLOUDFLARE_TUNNEL_ID}
+credentials-file: ${HOME}/.cloudflared/${CLOUDFLARE_TUNNEL_ID}.json
+
+ingress:
+  # Primary hostname -> local API Gateway
+  - hostname: ${CLOUDFLARE_DOMAIN}
+    service: http://localhost:3001
+  # Default catch-all
+  - service: http_status:404
+

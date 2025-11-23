@@ -3,6 +3,360 @@ import { WorkflowDefinition, NodeType, TriggerType } from '../interfaces/workflo
 export class WorkflowTemplates {
   
   /**
+   * Order Processing Automation (eGrow-like)
+   * Trigger: New order (ticket created) → Assign to confirmation team → Notify agent → WhatsApp confirmation to customer → Result
+   */
+  static getOrderProcessingAutomationWorkflow(tenantId: string): WorkflowDefinition {
+    return {
+      tenantId,
+      name: 'Order Processing Automation',
+      description: 'Auto-assign new orders, notify agents, and confirm with customer on WhatsApp',
+      version: '1.0',
+      status: 'active' as any,
+      category: 'order_processing',
+      tags: ['orders', 'assignment', 'whatsapp', 'confirmation'],
+      createdBy: 'system',
+      triggers: [
+        {
+          id: 'new-order',
+          type: TriggerType.EVENT,
+          name: 'Trigger: New Order Received',
+          configuration: {
+            eventType: 'order.created',
+          },
+          enabled: true,
+        },
+      ],
+      nodes: [
+        { id: 'start', type: NodeType.START, name: 'Start', position: { x: 100, y: 100 }, configuration: {}, inputs: [], outputs: [{ name: 'default', type: 'main' }] },
+        {
+          id: 'assign-team',
+          type: NodeType.TICKET_ASSIGNMENT,
+          name: 'Action: Assign to Team Agent',
+          position: { x: 320, y: 100 },
+          configuration: {
+            assignmentStrategy: 'team_based',
+            teamFilter: 'confirmation',
+            notifyAgent: true,
+            setSLA: true,
+            slaPolicy: 'standard_support',
+          },
+          inputs: [{ name: 'ticket', type: 'main', required: true }],
+          outputs: [{ name: 'assigned', type: 'main' }],
+        },
+        {
+          id: 'notify-agent',
+          type: NodeType.SEND_NOTIFICATION,
+          name: 'Send Notification to Agent',
+          position: { x: 560, y: 60 },
+          configuration: {
+            notificationType: 'inapp',
+            template: 'order_assigned',
+            urgency: 'low',
+          },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'sent', type: 'main' }],
+        },
+        {
+          id: 'wa-confirm',
+          type: NodeType.SEND_NOTIFICATION,
+          name: 'Send WhatsApp to Customer',
+          position: { x: 560, y: 150 },
+          configuration: {
+            notificationType: 'template',
+            channel: 'whatsapp',
+            template: 'order_confirmation',
+            templateParams: {
+              orderId: '{{ $node.data.orderId }}',
+            },
+          },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'sent', type: 'main' }],
+        },
+        {
+          id: 'result',
+          type: NodeType.LOG_EVENT,
+          name: 'Result: Order Ready for Processing',
+          position: { x: 820, y: 100 },
+          configuration: { eventType: 'order.ready_for_processing', logLevel: 'info', includeContext: true },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'logged', type: 'main' }],
+        },
+        { id: 'end', type: NodeType.END, name: 'End', position: { x: 1040, y: 100 }, configuration: {}, inputs: [{ name: 'default', type: 'main', required: true }], outputs: [] },
+      ],
+      connections: [
+        { id: 's-assign', sourceNodeId: 'start', sourceOutput: 'default', targetNodeId: 'assign-team', targetInput: 'ticket' },
+        { id: 'assign-notify-agent', sourceNodeId: 'assign-team', sourceOutput: 'assigned', targetNodeId: 'notify-agent', targetInput: 'data' },
+        { id: 'assign-wa', sourceNodeId: 'assign-team', sourceOutput: 'assigned', targetNodeId: 'wa-confirm', targetInput: 'data' },
+        { id: 'to-result', sourceNodeId: 'wa-confirm', sourceOutput: 'sent', targetNodeId: 'result', targetInput: 'data' },
+        { id: 'result-end', sourceNodeId: 'result', sourceOutput: 'logged', targetNodeId: 'end', targetInput: 'default' },
+      ],
+      settings: {
+        timeout: 300000,
+        maxRetries: 2,
+        errorHandling: 'continue',
+        logging: 'detailed',
+        executionMode: 'async',
+        priority: 'high',
+        permissions: [ { role: 'admin', actions: ['read','write','execute'] }, { role: 'supervisor', actions: ['read','execute'] } ],
+        allowedIntegrations: ['notification','whatsapp']
+      },
+      variables: []
+    }
+  }
+
+  /**
+   * Order Confirmation Ticket
+   * Trigger: order.created → Create ticket → Send confirmation → Log
+   */
+  static getOrderConfirmationTicketWorkflow(tenantId: string): WorkflowDefinition {
+    return {
+      tenantId,
+      name: 'Order Confirmation Ticket',
+      description: 'Creates a confirmation ticket and sends an order confirmation message when an order is created',
+      version: '1.0',
+      status: 'active' as any,
+      category: 'order_processing',
+      tags: ['orders', 'confirmation', 'ticket'],
+      createdBy: 'system',
+      triggers: [
+        {
+          id: 'order-created',
+          type: TriggerType.EVENT,
+          name: 'Order Created',
+          configuration: { eventType: 'order.created' },
+          enabled: true,
+        },
+      ],
+      nodes: [
+        { id: 'start', type: NodeType.START, name: 'Start', position: { x: 100, y: 100 }, configuration: {}, inputs: [], outputs: [{ name: 'default', type: 'main' }] },
+        {
+          id: 'create-ticket',
+          type: NodeType.API_CALL,
+          name: 'Create Confirmation Ticket',
+          position: { x: 320, y: 100 },
+          configuration: {
+            method: 'POST',
+            url: '/api/tickets',
+            headers: { 'Content-Type': 'application/json' },
+            body: {
+              subject: 'Order {{ $node.data.orderId }} confirmation',
+              description: 'Auto-created confirmation for order {{ $node.data.orderId }}',
+              priority: 'medium',
+              tags: ['order', 'confirmation'],
+              customerId: '{{ $node.data.customerId }}',
+              channelId: '{{ $node.data.channelId || "" }}'
+            }
+          },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'created', type: 'main' }]
+        },
+        {
+          id: 'send-confirmation',
+          type: NodeType.SEND_NOTIFICATION,
+          name: 'Send Order Confirmation',
+          position: { x: 580, y: 80 },
+          configuration: {
+            notificationType: 'template',
+            channel: 'auto',
+            template: 'order_confirmation',
+            templateParams: { orderId: '{{ $node.data.orderId }}' }
+          },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'sent', type: 'main' }]
+        },
+        {
+          id: 'log',
+          type: NodeType.LOG_EVENT,
+          name: 'Log Confirmation',
+          position: { x: 840, y: 100 },
+          configuration: { eventType: 'order.confirmation_ticket_created', includeContext: true, logLevel: 'info' },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'logged', type: 'main' }]
+        },
+        { id: 'end', type: NodeType.END, name: 'End', position: { x: 1040, y: 100 }, configuration: {}, inputs: [{ name: 'default', type: 'main', required: true }], outputs: [] }
+      ],
+      connections: [
+        { id: 's-ct', sourceNodeId: 'start', sourceOutput: 'default', targetNodeId: 'create-ticket', targetInput: 'data' },
+        { id: 'ct-send', sourceNodeId: 'create-ticket', sourceOutput: 'created', targetNodeId: 'send-confirmation', targetInput: 'data' },
+        { id: 'send-log', sourceNodeId: 'send-confirmation', sourceOutput: 'sent', targetNodeId: 'log', targetInput: 'data' },
+        { id: 'log-end', sourceNodeId: 'log', sourceOutput: 'logged', targetNodeId: 'end', targetInput: 'default' }
+      ],
+      settings: { timeout: 300000, maxRetries: 2, errorHandling: 'continue', logging: 'detailed', executionMode: 'async', priority: 'high', permissions: [], allowedIntegrations: ['notification','api'] },
+      variables: []
+    }
+  }
+
+  /**
+   * Order Canceled Notification
+   * Trigger: order.updated with status=canceled → Send cancellation message → Log
+   */
+  static getOrderCanceledNotificationWorkflow(tenantId: string): WorkflowDefinition {
+    return {
+      tenantId,
+      name: 'Order Canceled Notification',
+      description: 'Sends a cancellation message to customer when an order is canceled',
+      version: '1.0',
+      status: 'active' as any,
+      category: 'order_processing',
+      tags: ['orders', 'cancellation'],
+      createdBy: 'system',
+      triggers: [
+        {
+          id: 'order-updated-canceled',
+          type: TriggerType.EVENT,
+          name: 'Order Updated (Canceled)',
+          configuration: {
+            eventType: 'order.updated',
+            conditions: [ { field: 'status', operator: 'equals', value: 'canceled' } ]
+          },
+          enabled: true,
+        },
+      ],
+      nodes: [
+        { id: 'start', type: NodeType.START, name: 'Start', position: { x: 100, y: 100 }, configuration: {}, inputs: [], outputs: [{ name: 'default', type: 'main' }] },
+        {
+          id: 'send-cancel',
+          type: NodeType.SEND_NOTIFICATION,
+          name: 'Send Cancellation Message',
+          position: { x: 320, y: 100 },
+          configuration: {
+            notificationType: 'template',
+            channel: 'auto',
+            template: 'order_canceled',
+            templateParams: { orderId: '{{ $node.data.orderId }}', reason: '{{ $node.data.reason || "" }}' }
+          },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'sent', type: 'main' }]
+        },
+        {
+          id: 'log',
+          type: NodeType.LOG_EVENT,
+          name: 'Log Cancellation Notice',
+          position: { x: 580, y: 100 },
+          configuration: { eventType: 'order.cancellation_notified', includeContext: true, logLevel: 'info' },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'logged', type: 'main' }]
+        },
+        { id: 'end', type: NodeType.END, name: 'End', position: { x: 800, y: 100 }, configuration: {}, inputs: [{ name: 'default', type: 'main', required: true }], outputs: [] }
+      ],
+      connections: [
+        { id: 's-send', sourceNodeId: 'start', sourceOutput: 'default', targetNodeId: 'send-cancel', targetInput: 'data' },
+        { id: 'send-log', sourceNodeId: 'send-cancel', sourceOutput: 'sent', targetNodeId: 'log', targetInput: 'data' },
+        { id: 'log-end', sourceNodeId: 'log', sourceOutput: 'logged', targetNodeId: 'end', targetInput: 'default' }
+      ],
+      settings: { timeout: 300000, maxRetries: 2, errorHandling: 'continue', logging: 'detailed', executionMode: 'async', priority: 'high', permissions: [], allowedIntegrations: ['notification'] },
+      variables: []
+    }
+  }
+
+  /**
+   * Delivery Issue Automation (eGrow-like)
+   * Trigger: Delivery issue reported → Escalate to shipping team → Alert team → WhatsApp message to customer → Result
+   */
+  static getDeliveryIssueAutomationWorkflow(tenantId: string): WorkflowDefinition {
+    return {
+      tenantId,
+      name: 'Delivery Issue Automation',
+      description: 'Escalate delivery issues to shipping team and notify customer via WhatsApp',
+      version: '1.0',
+      status: 'active' as any,
+      category: 'delivery_management',
+      tags: ['shipping', 'escalation', 'whatsapp'],
+      createdBy: 'system',
+      triggers: [
+        {
+          id: 'delivery-issue',
+          type: TriggerType.EVENT,
+          name: 'Trigger: Delivery Issue Reported',
+          configuration: {
+            eventType: 'ticket.status.changed',
+            // Expect newStatus like 'delivery_issue' or 'cannot_deliver'
+            conditions: [{ field: 'newStatus', operator: 'in', value: ['delivery_issue', 'cannot_deliver'] }],
+          },
+          enabled: true,
+        },
+      ],
+      nodes: [
+        { id: 'start', type: NodeType.START, name: 'Start', position: { x: 100, y: 100 }, configuration: {}, inputs: [], outputs: [{ name: 'default', type: 'main' }] },
+        {
+          id: 'escalate',
+          type: NodeType.TICKET_ESCALATION,
+          name: 'Action: Escalate to Shipping Team',
+          position: { x: 320, y: 100 },
+          configuration: {
+            escalationType: 'team',
+            team: 'shipping',
+            notifyEscalatee: true,
+            updatePriority: true,
+            addNote: true,
+            noteTemplate: 'Delivery issue escalation to shipping',
+          },
+          inputs: [{ name: 'ticket', type: 'main', required: true }],
+          outputs: [{ name: 'escalated', type: 'main' }],
+        },
+        {
+          id: 'alert-team',
+          type: NodeType.SEND_NOTIFICATION,
+          name: 'Alert Shipping Team',
+          position: { x: 560, y: 60 },
+          configuration: {
+            notificationType: 'inapp',
+            template: 'shipping_issue_alert',
+            urgency: 'high',
+          },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'sent', type: 'main' }],
+        },
+        {
+          id: 'wa-customer',
+          type: NodeType.SEND_NOTIFICATION,
+          name: 'Send WhatsApp to Customer',
+          position: { x: 560, y: 150 },
+          configuration: {
+            notificationType: 'template',
+            channel: 'whatsapp',
+            template: 'delivery_issue_update',
+            templateParams: {
+              ticketId: '{{ $node.ticket.id }}',
+            },
+          },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'sent', type: 'main' }],
+        },
+        {
+          id: 'result',
+          type: NodeType.LOG_EVENT,
+          name: 'Result: Issue Resolution Initiated',
+          position: { x: 820, y: 100 },
+          configuration: { eventType: 'delivery.issue_resolution_initiated', logLevel: 'info', includeContext: true },
+          inputs: [{ name: 'data', type: 'main', required: true }],
+          outputs: [{ name: 'logged', type: 'main' }],
+        },
+        { id: 'end', type: NodeType.END, name: 'End', position: { x: 1040, y: 100 }, configuration: {}, inputs: [{ name: 'default', type: 'main', required: true }], outputs: [] },
+      ],
+      connections: [
+        { id: 's-esc', sourceNodeId: 'start', sourceOutput: 'default', targetNodeId: 'escalate', targetInput: 'ticket' },
+        { id: 'esc-alert', sourceNodeId: 'escalate', sourceOutput: 'escalated', targetNodeId: 'alert-team', targetInput: 'data' },
+        { id: 'esc-wa', sourceNodeId: 'escalate', sourceOutput: 'escalated', targetNodeId: 'wa-customer', targetInput: 'data' },
+        { id: 'to-result-2', sourceNodeId: 'wa-customer', sourceOutput: 'sent', targetNodeId: 'result', targetInput: 'data' },
+        { id: 'result-end-2', sourceNodeId: 'result', sourceOutput: 'logged', targetNodeId: 'end', targetInput: 'default' },
+      ],
+      settings: {
+        timeout: 300000,
+        maxRetries: 2,
+        errorHandling: 'continue',
+        logging: 'detailed',
+        executionMode: 'async',
+        priority: 'high',
+        permissions: [ { role: 'admin', actions: ['read','write','execute'] }, { role: 'supervisor', actions: ['read','execute'] } ],
+        allowedIntegrations: ['notification','whatsapp']
+      },
+      variables: []
+    }
+  }
+
+  /**
    * Intelligent Ticket Routing Workflow
    * Automatically routes tickets based on content, customer, and agent availability
    */
@@ -363,7 +717,7 @@ export class WorkflowTemplates {
       triggers: [
         {
           id: 'sla-check-trigger',
-          type: TriggerType.SCHEDULED,
+          type: TriggerType.SCHEDULE,
           name: 'SLA Check Schedule',
           configuration: {
             schedule: '*/15 * * * *', // Every 15 minutes
@@ -1008,6 +1362,10 @@ export class WorkflowTemplates {
    */
   static getAllTemplates(tenantId: string): WorkflowDefinition[] {
     return [
+      this.getOrderConfirmationTicketWorkflow(tenantId),
+      this.getOrderCanceledNotificationWorkflow(tenantId),
+      this.getOrderProcessingAutomationWorkflow(tenantId),
+      this.getDeliveryIssueAutomationWorkflow(tenantId),
       this.getIntelligentTicketRoutingWorkflow(tenantId),
       this.getSLAMonitoringWorkflow(tenantId),
       this.getCustomerOnboardingWorkflow(tenantId),
@@ -1020,6 +1378,10 @@ export class WorkflowTemplates {
    */
   static getTemplate(name: string, tenantId: string): WorkflowDefinition | null {
     const templates: Record<string, (tenantId: string) => WorkflowDefinition> = {
+      'order-confirmation-ticket': this.getOrderConfirmationTicketWorkflow,
+      'order-canceled-notification': this.getOrderCanceledNotificationWorkflow,
+      'order-processing-automation': this.getOrderProcessingAutomationWorkflow,
+      'delivery-issue-automation': this.getDeliveryIssueAutomationWorkflow,
       'intelligent-ticket-routing': this.getIntelligentTicketRoutingWorkflow,
       'sla-monitoring': this.getSLAMonitoringWorkflow,
       'customer-onboarding': this.getCustomerOnboardingWorkflow,

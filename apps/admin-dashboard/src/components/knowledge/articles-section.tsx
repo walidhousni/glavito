@@ -3,8 +3,12 @@
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Clock, Eye, TrendingUp } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { 
+  FaFileAlt, 
+  FaClock, 
+  FaEye, 
+  FaChartLine 
+} from 'react-icons/fa'
 
 interface Article {
   id: string
@@ -37,74 +41,73 @@ export function ArticlesSection({ articles, loading, onArticleClick }: ArticlesS
   }
 
   return (
-    <Card className="shadow-xl bg-white/90 dark:bg-slate-900/90 rounded-2xl overflow-hidden border-slate-200/60 dark:border-slate-700/60">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-slate-200/60 dark:border-slate-700/60">
-        <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-800 dark:text-slate-200">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl">
-            <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50">
+            <FaFileAlt className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
           </div>
           {t('articles', { fallback: 'Articles' })}
-          <Badge variant="secondary" className="ml-auto bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+          <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-0 shadow-sm">
             {articles.length}
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-4 pt-0">
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-full mb-2"></div>
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                <div className="h-3 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-2.5 bg-muted rounded w-full mb-2"></div>
+                <div className="h-2.5 bg-muted rounded w-1/2"></div>
               </div>
             ))}
           </div>
         ) : articles.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+          <div className="text-center py-8">
+            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 w-fit mx-auto mb-3">
+              <FaFileAlt className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <p className="text-xs text-muted-foreground">
               {t('noArticles', { fallback: 'No articles found' })}
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {articles.map((article, index) => (
-              <motion.div
+          <div className="space-y-3">
+            {articles.map((article) => (
+              <div
                 key={article.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="group p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-300/60 dark:hover:border-blue-600/60 hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800"
+                className="group p-3 rounded-lg border-0 shadow-sm hover:shadow-md transition-all cursor-pointer bg-muted/30 hover:bg-muted/50"
                 onClick={() => onArticleClick?.(article)}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 flex-1">
                     {article.title}
                   </h3>
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center gap-2 ml-2">
                     {article.views && (
-                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                        <Eye className="h-3 w-3" />
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <FaEye className="h-2.5 w-2.5" />
                         {formatViews(article.views)}
                       </div>
                     )}
                     {article.helpful && (
-                      <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                        <TrendingUp className="h-3 w-3" />
+                      <div className="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400">
+                        <FaChartLine className="h-2.5 w-2.5" />
                         {article.helpful}%
                       </div>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
+                <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
                   {article.snippet}
                 </p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                     {article.updatedAt && (
                       <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                        <FaClock className="h-2.5 w-2.5" />
                         {formatDate(article.updatedAt)}
                       </div>
                     )}
@@ -115,20 +118,20 @@ export function ArticlesSection({ articles, loading, onArticleClick }: ArticlesS
                         <Badge
                           key={tag}
                           variant="outline"
-                          className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                          className="text-[10px] h-4 px-1.5 border-0 shadow-sm"
                         >
                           {tag}
                         </Badge>
                       ))}
                       {article.tags.length > 2 && (
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-[10px] text-muted-foreground">
                           +{article.tags.length - 2}
                         </span>
                       )}
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         )}

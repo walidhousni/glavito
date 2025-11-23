@@ -3,9 +3,10 @@
  * Handles agent profiles, skills, availability, and performance tracking
  */
 
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from '@glavito/shared-database';
+import { SubscriptionService } from '../subscriptions/subscriptions.service';
 
 export interface CreateAgentProfileRequest {
   userId: string;
@@ -97,6 +98,7 @@ export class AgentProfileService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly configService: ConfigService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   /**
@@ -108,6 +110,26 @@ export class AgentProfileService {
   ): Promise<AgentProfileInfo> {
     try {
       this.logger.log(`Creating agent profile for user: ${request.userId}`);
+
+      // Check subscription limits for agents
+      const currentAgentCount = await this.databaseService.user.count({
+        where: {
+          tenantId,
+          role: { in: ['agent', 'admin'] },
+        },
+      });
+
+      const limitCheck = await this.subscriptionService.checkUsageLimits(
+        tenantId,
+        'agents',
+        currentAgentCount
+      );
+
+      if (!limitCheck.allowed) {
+        throw new ForbiddenException(
+          limitCheck.message || `You've reached your plan limit of ${limitCheck.limit} agents. Please upgrade to add more agents.`
+        );
+      }
 
       // Verify user exists and belongs to tenant
       const user = await this.databaseService.user.findFirst({
@@ -161,7 +183,7 @@ export class AgentProfileService {
       return this.mapToAgentProfileInfo(profile);
     } catch (error) {
       this.logger.error(`Failed to create agent profile: ${error.message}`);
-      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+      if (error instanceof NotFoundException || error instanceof BadRequestException || error instanceof ForbiddenException) throw error;
       throw new BadRequestException('Failed to create agent profile');
     }
   }

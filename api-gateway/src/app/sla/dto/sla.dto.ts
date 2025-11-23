@@ -240,7 +240,7 @@ export class UpdateSLAPolicyDto {
   @ApiProperty({ description: 'Priority level' })
   @IsEnum(Priority)
   @IsOptional()
-  priority?: string;
+  priority?: Priority;
 
   @ApiProperty({ description: 'Whether the policy is active' })
   @IsBoolean()
@@ -250,7 +250,7 @@ export class UpdateSLAPolicyDto {
   @ApiProperty({ description: 'Conditions to apply this SLA' })
   @IsArray()
   @IsOptional()
-  conditions?: any[];
+  conditions?: Array<Record<string, unknown>>;
 
   @ApiProperty({ description: 'Response and resolution time targets' })
   @ValidateNested()
@@ -265,17 +265,17 @@ export class UpdateSLAPolicyDto {
   @ApiProperty({ description: 'Holiday calendar' })
   @IsArray()
   @IsOptional()
-  holidays?: any[];
+  holidays?: string[];
 
   @ApiProperty({ description: 'Escalation configuration' })
   @IsArray()
   @IsOptional()
-  escalationRules?: any[];
+  escalationRules?: Array<EscalationRuleDto>;
 
   @ApiProperty({ description: 'Notification settings' })
   @IsArray()
   @IsOptional()
-  notifications?: any[];
+  notifications?: Array<NotificationSettingDto>;
 
   @ApiProperty({ description: 'Additional metadata' })
   @IsOptional()
@@ -412,11 +412,13 @@ export class SLAQueryDto {
   endDate?: Date;
 
   @ApiProperty({ description: 'Page number' })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   page = 1;
 
   @ApiProperty({ description: 'Page size' })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   limit = 20;

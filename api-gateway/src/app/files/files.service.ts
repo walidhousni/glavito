@@ -251,4 +251,15 @@ export class FilesService {
       return this.buildPublicS3Url(bucket, key);
     }
   }
+
+  async getSignedUrlByKey(key: string, ttlSeconds: number) {
+    const bucket = this.config.get<string>('S3_BUCKET')
+    if (this.s3 && bucket) {
+      const url = await this.buildSignedUrl(bucket, key, ttlSeconds)
+      return { url, key, storage: 's3', ttlSeconds }
+    }
+    const publicBase = this.config.get<string>('PUBLIC_UPLOAD_BASE_URL') || ''
+    const url = publicBase ? `${publicBase}/${key}` : `/uploads/${key}`
+    return { url, key, storage: 'local', ttlSeconds }
+  }
 }

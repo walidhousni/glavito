@@ -71,6 +71,17 @@ export class Customer360Controller {
     return healthScore;
   }
 
+  @Get('analytics/trends')
+  @ApiOperation({ summary: 'Get CSAT/CLV trends for dashboard mini-cards' })
+  @ApiResponse({ status: 200, description: 'Trends retrieved successfully' })
+  async getTrends(
+    @Req() req: { user: { tenantId: string } }
+  ) {
+    const anyReq = req as any
+    const timeframe = (anyReq?.query?.timeframe || '30d') as '7d' | '30d' | '90d' | '1y'
+    return this.customerAnalyticsService.getTrends(req.user.tenantId, timeframe)
+  }
+
   @Get(':id/lifetime-value')
   @ApiOperation({ summary: 'Get customer lifetime value analysis' })
   @ApiResponse({ status: 200, description: 'Lifetime value calculated successfully' })
@@ -144,9 +155,10 @@ export class Customer360Controller {
   @ApiOperation({ summary: 'Get customer analytics dashboard data' })
   @ApiResponse({ status: 200, description: 'Analytics dashboard data retrieved successfully' })
   async getAnalyticsDashboard(
-    @Req() req: { user: { tenantId: string } }
+    @Req() req: any
   ) {
-    return this.customerAnalyticsService.getAnalyticsDashboard(req.user.tenantId);
+    const timeframe = (req?.query?.timeframe || '30d') as '7d'|'30d'|'90d'|'1y'
+    return this.customerAnalyticsService.getAnalyticsDashboard(req.user.tenantId, timeframe);
   }
 
   @Post(':id/update-health-score')
@@ -184,9 +196,10 @@ export class Customer360Controller {
   async getBehavioralAnalytics(
     @Req() req: { user: { tenantId: string } },
   ) {
-    // Swagger decorators are declared above on the method
-    const timeframe = undefined as unknown as '7d' | '30d' | '90d' | '1y' | undefined;
-    const segment = undefined as unknown as string | undefined;
+    // Pull from query via global framework binding (Next/Nest adapters pass query in req in many apps)
+    const anyReq = req as any
+    const timeframe = (anyReq?.query?.timeframe || undefined) as '7d' | '30d' | '90d' | '1y' | undefined
+    const segment = (anyReq?.query?.segment || undefined) as string | undefined
     return this.customerAnalyticsService.getBehavioralAnalytics(req.user.tenantId, timeframe as any, segment);
   }
 

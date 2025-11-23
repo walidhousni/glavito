@@ -22,8 +22,8 @@ export default async function LocaleLayout({
   }
 
   const messages = await getMessages();
-  const hdrs = headers();
-  const cookieStore = cookies();
+  const hdrs = await headers();
+  const cookieStore = await cookies();
   const currency = hdrs.get('x-currency') || cookieStore.get('currency')?.value || 'USD';
 
   return (

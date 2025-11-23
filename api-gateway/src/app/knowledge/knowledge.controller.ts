@@ -1,8 +1,7 @@
 import { Controller, Get, Query, Param, UseGuards, Req, Post, Body, Patch, Delete, Header } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard, Roles } from '@glavito/shared-auth';
 import { KnowledgeService } from './knowledge.service';
 
 @ApiTags('knowledge')

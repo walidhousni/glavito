@@ -1,0 +1,25 @@
+version: "2"
+
+# Unified ngrok configuration for both API Gateway and Admin Dashboard
+# Usage:
+#   ngrok start --config ops/tunnels/ngrok.yml api-gateway admin-dashboard
+#
+# This starts both tunnels in a single ngrok agent session (free tier compatible)
+
+authtoken: 2prvz9bDhfX8flGcrQAADepSpJt_27usiXLHUh4z6mSwgVMub
+region: us
+
+tunnels:
+  api-gateway:
+    # Backend API (port 3001) - uses reserved domain
+    addr: http://localhost:3001
+    proto: http
+    domain: skunk-driving-oddly.ngrok-free.app
+    host_header: rewrite
+
+  admin-dashboard:
+    # Frontend Admin Dashboard (port 3004) - uses ephemeral domain
+    # Free tier: ngrok will assign a random subdomain
+    addr: http://localhost:3004
+    proto: http
+    host_header: rewrite

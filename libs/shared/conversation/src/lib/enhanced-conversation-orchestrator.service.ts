@@ -24,12 +24,17 @@ import {
   ChannelType,
   OutgoingMessage,
   MessageDeliveryResult,
-  WebhookPayload
+  WebhookPayload,
+  DomainEvent
 } from '@glavito/shared-types';
 import { WhatsAppAdapter } from './adapters/whatsapp-adapter';
 import { InstagramAdapter } from './adapters/instagram-adapter';
 import { EmailAdapter } from './adapters/email-adapter';
+import { MessengerAdapter } from './adapters/messenger-adapter';
+import { WebAdapter } from './adapters/web-adapter';
 import { v4 as uuidv4 } from 'uuid';
+import { AdapterRegistryService } from './adapter-registry.service';
+import { SessionContextService } from './session-context.service';
 
 @Injectable()
 export class EnhancedConversationOrchestratorService implements OnModuleInit {
@@ -41,14 +46,31 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
     private readonly eventBus: AdvancedEventBusService,
     private readonly whatsappAdapter: WhatsAppAdapter,
     private readonly instagramAdapter: InstagramAdapter,
-    private readonly emailAdapter: EmailAdapter
+    private readonly emailAdapter: EmailAdapter,
+    private readonly messengerAdapter: MessengerAdapter,
+    private readonly webAdapter: WebAdapter,
+    private readonly adapterRegistry: AdapterRegistryService,
+    private readonly sessionContext: SessionContextService
   ) {}
 
   async onModuleInit() {
-    // Register channel adapters
+    // Register channel adapters (local map for backward-compat)
     this.channelAdapters.set(ChannelType.WHATSAPP, this.whatsappAdapter);
     this.channelAdapters.set(ChannelType.INSTAGRAM, this.instagramAdapter);
     this.channelAdapters.set(ChannelType.EMAIL, this.emailAdapter as ChannelAdapter);
+    this.channelAdapters.set(ChannelType.MESSENGER, this.messengerAdapter);
+    this.channelAdapters.set(ChannelType.CHAT, this.webAdapter as ChannelAdapter);
+
+    // Register into central registry for other services
+    try {
+      this.adapterRegistry.addAdapter(ChannelType.WHATSAPP, this.whatsappAdapter);
+      this.adapterRegistry.addAdapter(ChannelType.INSTAGRAM, this.instagramAdapter);
+      this.adapterRegistry.addAdapter(ChannelType.EMAIL, this.emailAdapter as ChannelAdapter);
+      this.adapterRegistry.addAdapter(ChannelType.MESSENGER, this.messengerAdapter);
+      this.adapterRegistry.addAdapter(ChannelType.CHAT, this.webAdapter as ChannelAdapter);
+    } catch (err) {
+      this.logger.debug(`Failed to register adapters: ${(err as Error).message}`);
+    }
     
     this.logger.log('Enhanced Conversation Orchestrator initialized with channel adapters');
   }
@@ -160,7 +182,14 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
       // Update conversation metrics
       await this.updateConversationMetrics(conversation.id, processedMessage);
 
-      // AI Autopilot (non-blocking best-effort): publish a request for downstream AI worker
+      // Record inbound in session context (best-effort)
+      try { 
+        this.sessionContext.recordInbound(tenantId, conversation.id, channelMessage.id, channelMessage.channel); 
+      } catch (err) {
+        this.logger.debug(`Failed to record inbound: ${(err as Error).message}`);
+      }
+
+      // AI Autopilot (best-effort): publish request for downstream AI worker
       try {
         const cfg = await (this.prisma as any).aISettings.findUnique({ where: { tenantId } });
         const mode = (cfg?.mode || 'off') as 'off'|'draft'|'auto';
@@ -235,10 +264,45 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
   // Send message through appropriate channel
   async sendMessage(conversationId: string, dto: SendMessageDto, tenantId: string, agentId: string): Promise<ApiResponse<MessageDeliveryResult>> {
     try {
+        const asyncEnabled = (process.env['ENABLE_ASYNC_OUTBOUND'] || '').toLowerCase() === 'true';
+      if (asyncEnabled) {
+        // Publish outbound event to Kafka for async dispatch
+        const event: DomainEvent = {
+          eventId: uuidv4(),
+          eventType: 'outbound.message.requested',
+          aggregateId: conversationId,
+          aggregateType: 'outbound',
+          tenantId,
+          timestamp: new Date(),
+          version: '1.0',
+          eventData: {
+            conversationId,
+            tenantId,
+            agentId,
+            dto
+          },
+          metadata: { source: 'enhanced-conversation-orchestrator' }
+        } as any;
+        try { await (this.eventBus as any).publish(event); } catch { /* noop */ }
+        return { success: true, data: { messageId: event.eventId, status: 'sent', timestamp: new Date() } as any };
+      }
       // Get conversation details
       const conversation = await this.getConversationById(conversationId, tenantId);
       if (!conversation) {
         throw new NotFoundException(`Conversation ${conversationId} not found`);
+      }
+
+      // Validate channel exists
+      if (!conversation.channel) {
+        throw new BadRequestException(`Channel not found for conversation ${conversationId}. ChannelId: ${conversation.channelId}`);
+      }
+
+      // Validate customer exists
+      if (!conversation.customer) {
+        throw new BadRequestException(
+          `Customer not found for conversation ${conversationId}. ` +
+          `CustomerId: ${conversation.customerId}. Cannot send message without customer information.`
+        );
       }
 
       // Get channel adapter
@@ -247,17 +311,49 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
       // Create outgoing message with channel-aware recipient resolution
       const recipientId = (() => {
         const channel = (conversation.channel?.type || '').toString().toLowerCase();
-        const customer = conversation.customer || {};
+        const customer = conversation.customer;
+        
+        this.logger.debug(`Resolving recipient ID for channel ${channel}, customer: ${JSON.stringify({ 
+          id: customer.id, 
+          phone: customer.phone, 
+          email: customer.email,
+          customFields: customer.customFields 
+        })}`);
+        
         if (channel === 'instagram') {
-          return (customer.customFields as any)?.instagramId || customer.customerId || customer.id;
+          const instagramId = (customer.customFields as any)?.instagramId;
+          if (instagramId) return String(instagramId);
+          if (customer.customerId) return String(customer.customerId);
+          if (customer.id) return String(customer.id);
         }
+        
         if (channel === 'whatsapp') {
-          const phone: string = (customer.phone || '').toString();
-          const digits = phone.replace(/\D/g, '');
-          return digits || phone || customer.customerId || customer.id;
+          const phone = customer.phone;
+          if (phone) {
+            const phoneStr = String(phone);
+            const digits = phoneStr.replace(/\D/g, '');
+            if (digits) return digits;
+            if (phoneStr) return phoneStr;
+          }
+          if (customer.customerId) return String(customer.customerId);
+          if (customer.id) return String(customer.id);
         }
-        return customer.email || customer.customerId || customer.id;
+        
+        // Default: email or fallback IDs
+        if (customer.email) return String(customer.email);
+        if (customer.customerId) return String(customer.customerId);
+        if (customer.id) return String(customer.id);
+        
+        // Last resort: throw error if no recipient ID found
+        throw new BadRequestException(
+          `Cannot determine recipient ID for conversation ${conversationId}. ` +
+          `Channel: ${channel}, Customer ID: ${customer.id}. ` +
+          `Required: ${channel === 'whatsapp' ? 'phone number' : channel === 'instagram' ? 'Instagram ID in customFields' : 'email or phone'}. ` +
+          `Customer has: phone=${customer.phone || 'none'}, email=${customer.email || 'none'}, customFields=${JSON.stringify(customer.customFields || {})}`
+        );
       })();
+      
+      this.logger.debug(`Resolved recipient ID: ${recipientId} for channel ${conversation.channel.type}`);
 
       const outgoingMessage: OutgoingMessage = {
         content: dto.content,
@@ -311,9 +407,10 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
       (processedMessage as any).channel = conversation.channel.type;
       (processedMessage as any).channelMessageId = deliveryResult.channelMessageId;
       (processedMessage as any).metadata = {
+        ...(dto.metadata || {}),
         ...(processedMessage as any).metadata,
         deliveryStatus: deliveryResult.status,
-        provider: conversation.channel.type,
+        provider: conversation.channel.type
       };
 
       // Save message to database
@@ -322,8 +419,19 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
       // Update conversation metrics
       await this.updateConversationMetrics(conversationId, processedMessage);
 
+      // Record outbound in session context (best-effort)
+      try { 
+        this.sessionContext.recordOutbound(tenantId, conversationId, processedMessage.id, conversation.channel.type); 
+      } catch (err) {
+        this.logger.debug(`Failed to record outbound: ${(err as Error).message}`);
+      }
+
       // Publish message sent event
       await this.publishMessageSentEvent(processedMessage, tenantId);
+
+      const payload = this.prepareMessagePayload(processedMessage);
+      // TODO: Broadcast via injected gateway in api-gateway layer
+      this.broadcastMessageEvent('message.created', payload, processedMessage.conversationId, tenantId);
 
       return {
         success: true,
@@ -922,7 +1030,24 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
 
   // Helper methods
   private getChannelAdapter(channelType: ChannelType): ChannelAdapter {
-    const adapter = this.channelAdapters.get(channelType);
+    // Normalize incoming channel types (string values) to known ChannelType
+    try {
+      const raw = (channelType as unknown as string)?.toLowerCase?.() || String(channelType);
+      if (raw === 'web' || raw === 'chat' || raw === 'webchat') {
+        channelType = ChannelType.CHAT as any;
+      } else if (raw === 'sms') {
+        channelType = ChannelType.SMS as any;
+      } else if (raw === 'email') {
+        channelType = ChannelType.EMAIL as any;
+      } else if (raw === 'whatsapp') {
+        channelType = ChannelType.WHATSAPP as any;
+      } else if (raw === 'instagram') {
+        channelType = ChannelType.INSTAGRAM as any;
+      } else if (raw === 'messenger' || raw === 'facebook') {
+        channelType = ChannelType.MESSENGER as any;
+      }
+    } catch { /* noop */ }
+    const adapter = this.adapterRegistry.getAdapter(channelType) || this.channelAdapters.get(channelType);
     if (!adapter) {
       throw new BadRequestException(`Channel adapter not found for ${channelType}`);
     }
@@ -1159,6 +1284,41 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
   }
 
   private async getConversationById(conversationId: string, tenantId: string): Promise<any> {
+    // Handle pseudo IDs like conv_ticket_<ticketId> by materializing a ConversationAdvanced record
+    try {
+      if (conversationId.startsWith('conv_ticket_')) {
+        const existing = await (this.prisma['conversationAdvanced'] as any).findUnique({
+          where: { id: conversationId, tenantId }
+        });
+        if (!existing) {
+          const ticketId = conversationId.replace('conv_ticket_', '');
+          const ticket = await (this.prisma['ticket'] as any).findUnique({
+            where: { id: ticketId },
+            select: { id: true, tenantId: true, customerId: true, channelId: true, subject: true, priority: true, assignedAgentId: true, teamId: true, tags: true }
+          });
+          if (ticket && (ticket as any).tenantId === tenantId) {
+            await (this.prisma['conversationAdvanced'] as any).create({
+              data: {
+                id: conversationId, // keep pseudo id stable for UI/websocket room
+                tenantId,
+                customerId: (ticket as any).customerId,
+                channelId: (ticket as any).channelId,
+                subject: (ticket as any).subject || 'Ticket Conversation',
+                status: 'active',
+                priority: (ticket as any).priority || 'medium',
+                assignedAgentId: (ticket as any).assignedAgentId,
+                teamId: (ticket as any).teamId,
+                tags: Array.isArray((ticket as any).tags) ? (ticket as any).tags : [],
+                messageCount: 0,
+                metadata: { ticketId: (ticket as any).id, createdFrom: 'conv_ticket_pseudo' },
+              }
+            });
+          }
+        }
+      }
+    } catch {
+      // best-effort only
+    }
     const conv = await (this.prisma['conversationAdvanced'] as any).findUnique({
       where: {
         id: conversationId,
@@ -1167,12 +1327,49 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
     });
     if (!conv) return null;
     // Load related entities manually since ConversationAdvanced has no relations in schema
-    const [customer, channel, assignedAgent, team] = await Promise.all([
+    const [customerAdvancedRow, channelAdvanced, assignedAgent, team] = await Promise.all([
       (this.prisma['customerAdvanced'] as any).findUnique?.({ where: { id: (conv as any).customerId } }).catch(() => null),
       (this.prisma['channelAdvanced'] as any).findUnique?.({ where: { id: (conv as any).channelId } }).catch(() => null),
       (this.prisma['user'] as any).findUnique?.({ where: { id: (conv as any).assignedAgentId } }).catch(() => null),
       (this.prisma['team'] as any).findUnique?.({ where: { id: (conv as any).teamId } }).catch(() => null)
     ]);
+    // Fallback to base Customer table when CustomerAdvanced is missing
+    let customer = customerAdvancedRow;
+    if (!customer && (conv as any).customerId) {
+      try {
+        customer = await this.prisma.customer.findUnique({
+          where: { id: (conv as any).customerId },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            company: true,
+            tags: true,
+            customFields: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        });
+      } catch {
+        // ignore fallback errors
+      }
+    }
+    
+    // Fallback to base Channel table if ChannelAdvanced not found
+    let channel = channelAdvanced;
+    if (!channel && (conv as any).channelId) {
+      try {
+        channel = await this.prisma.channel.findUnique({
+          where: { id: (conv as any).channelId },
+          select: { id: true, name: true, type: true }
+        });
+      } catch {
+        // Ignore fallback errors
+      }
+    }
+    
     return { ...conv, customer, channel, assignedAgent, team };
   }
 
@@ -1208,6 +1405,7 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
       normalizedContent: message.normalizedContent,
       messageType: message.messageType,
       timestamp: message.createdAt,
+      metadata: message.metadata || {},
       threadingContext: {
         threadId: message.threadId,
         parentMessageId: message.parentMessageId,
@@ -1457,5 +1655,25 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
     };
 
     try { await this.eventBus.publish(event); } catch (e) { this.logger.warn(`Publish conversation.assigned failed: ${(e as Error).message}`); }
+  }
+
+  public prepareMessagePayload(message: ProcessedMessage) {
+    return {
+      event: 'message.created',
+      message: {
+        id: message.id,
+        conversationId: message.conversationId,
+        senderType: message.senderType,
+        content: message.content,
+        messageType: message.messageType,
+        createdAt: message.timestamp,
+      },
+      conversationId: message.conversationId,
+    };
+  }
+
+  broadcastMessageEvent(event: string, payload: any, conversationId?: string, tenantId?: string) {
+    // TODO: Inject gateway in api-gateway layer and call gateway.broadcast(event, payload, tenantId, conversationId)
+    this.logger.warn(`Broadcast event ${event} for conversation ${conversationId || 'unknown'}: Implement in gateway context`);
   }
 }

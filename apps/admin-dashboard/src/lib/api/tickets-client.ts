@@ -11,10 +11,12 @@ export interface TicketStats {
   overdue: number;
   unassigned: number;
   slaAtRisk: number;
+  activeAgents?: number;
+  weekTrendPct?: number;
   averageResolutionTime: number; // minutes
   averageFirstResponseTime: number; // minutes
   customerSatisfactionScore: number; // 0..5 or 0..100 depending backend (we normalize client-side)
-  trendsData: Array<{ status: string; _count: { status: number } }>;
+  trendsData: Array<{ status: string; _count: { status: number } }> | Array<{ date: string; total: number; resolved: number; avgFirstResponseMinutes: number }>;
   statusCounts?: Record<string, number>;
   priorityCounts?: Record<string, number>;
   satisfactionBreakdown?: {
@@ -54,10 +56,36 @@ export interface TicketQuery {
   slaAtRisk?: boolean;
 }
 
+export type ActivityFeedItem = {
+  id: string;
+  type: 'ticket' | 'agent' | 'customer' | 'system' | 'message' | 'sla';
+  title: string;
+  description?: string;
+  user: string;
+  time: string; // ISO
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  metadata?: Record<string, unknown>;
+};
+
 export class TicketsApiClient {
   protected basePath: string;
   constructor(basePath = '/tickets') {
     this.basePath = basePath;
+  }
+
+  // Safely unwrap API responses supporting both { data } and { data: { data } } envelopes
+  private unwrap<T>(res: unknown): T {
+    const r = res as Record<string, unknown> | undefined;
+    if (r && typeof r === 'object') {
+      if (typeof (r as { data?: unknown }).data !== 'undefined') {
+        const inner = (r as { data?: unknown }).data as Record<string, unknown> | undefined;
+        if (inner && typeof inner === 'object' && typeof (inner as { data?: unknown }).data !== 'undefined') {
+          return ((inner as { data?: unknown }).data) as T;
+        }
+        return inner as unknown as T;
+      }
+    }
+    return r as unknown as T;
   }
 
   async list(params: TicketQuery = {}) {
@@ -76,13 +104,16 @@ export class TicketsApiClient {
 
   async stats(tenantId?: string) {
     const res = await api.get(`${this.basePath}/stats`, { params: { tenantId } });
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
-  async getStats(tenantId?: string): Promise<TicketStats> {
-    const res = await api.get(`${this.basePath}/stats`, { params: { tenantId } });
-    const payload = (res as any)?.data?.data ?? res.data;
-    return payload as TicketStats;
+  async getStats(params?: { tenantId?: string; range?: '7d' | '30d' | '90d'; days?: number }): Promise<TicketStats> {
+    const qp: Record<string, unknown> = {};
+    if (params?.tenantId) qp.tenantId = params.tenantId;
+    if (params?.range) qp.range = params.range;
+    if (params?.days != null) qp.days = params.days;
+    const res = await api.get(`${this.basePath}/stats`, { params: qp });
+    return this.unwrap<TicketStats>(res);
   }
 
   async advancedSearch(params: TicketQuery & { q?: string; semantic?: boolean; page?: number; limit?: number }) {
@@ -98,7 +129,7 @@ export class TicketsApiClient {
     const res = await api.get(`${this.basePath}/search/advanced`, {
       params: { q, semantic, ...cleanedParams },
     });
-    return ((res as any)?.data?.data ?? res.data) as { data: unknown[]; total: number; page: number; limit: number; facets: { status: Record<string, number>; priority: Record<string, number>; tags: Record<string, number> } };
+    return this.unwrap(res) as { data: unknown[]; total: number; page: number; limit: number; facets: { status: Record<string, number>; priority: Record<string, number>; tags: Record<string, number> } };
   }
 
   async suggest(q: string) {
@@ -106,124 +137,168 @@ export class TicketsApiClient {
     return ((res as any)?.data?.data ?? res.data) as { subjects: string[]; tags: string[]; customers: Array<{ id: string; name: string; email?: string; company?: string }> };
   }
 
+  // Activity feed and agent stats
+  async activityFeed(options?: { limit?: number; agentId?: string }): Promise<ActivityFeedItem[]> {
+    const res = await api.get(`${this.basePath}/feed`, { params: { limit: options?.limit, agentId: options?.agentId } });
+    const payload = this.unwrap<ActivityFeedItem[] | { data: ActivityFeedItem[] }>(res);
+    return (Array.isArray(payload) ? payload : (payload as { data?: ActivityFeedItem[] })?.data) ?? [];
+  }
+
+  async myStats(): Promise<{ assigned: number; open: number; waiting: number; urgent: number; resolvedToday: number }> {
+    const res = await api.get(`${this.basePath}/agent/my-stats`);
+    return this.unwrap(res) as { assigned: number; open: number; waiting: number; urgent: number; resolvedToday: number };
+  }
+
   async listSavedSearches() {
     const res = await api.get(`${this.basePath}/search/saved`);
-    return ((res as any)?.data?.data ?? res.data) as Array<{ id: string; name: string; query?: string; filters?: Record<string, unknown>; semantic?: boolean; alertsEnabled?: boolean; updatedAt: string }>;
+    return this.unwrap(res) as Array<{ id: string; name: string; query?: string; filters?: Record<string, unknown>; semantic?: boolean; alertsEnabled?: boolean; updatedAt: string }>;
   }
 
   async createSavedSearch(payload: { name: string; query?: string; filters?: Record<string, unknown>; semantic?: boolean; alertsEnabled?: boolean }) {
     const res = await api.post(`${this.basePath}/search/saved`, payload);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async updateSavedSearch(id: string, payload: { name?: string; query?: string; filters?: Record<string, unknown>; semantic?: boolean; alertsEnabled?: boolean }) {
     const res = await api.patch(`${this.basePath}/search/saved/${id}`, payload);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async deleteSavedSearch(id: string) {
     const res = await api.delete(`${this.basePath}/search/saved/${id}`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async get(id: string) {
     const res = await api.get(`${this.basePath}/${id}`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async create(payload: Record<string, unknown>) {
     const res = await api.post(this.basePath, payload);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async update(id: string, payload: Record<string, unknown>) {
     const res = await api.patch(`${this.basePath}/${id}`, payload);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async assign(id: string, agentId: string) {
     const res = await api.patch(`${this.basePath}/${id}/assign`, { agentId });
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async resolve(id: string) {
     const res = await api.patch(`${this.basePath}/${id}/resolve`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async snooze(id: string, payload: { until: string; reason?: string }) {
     const res = await api.patch(`${this.basePath}/${id}/snooze`, payload);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async reopen(id: string) {
     const res = await api.patch(`${this.basePath}/${id}/reopen`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async autoAssign(id: string) {
     const res = await api.patch(`${this.basePath}/${id}/assign/auto`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async remove(id: string) {
     const res = await api.delete(`${this.basePath}/${id}`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async addNote(id: string, payload: { content: string; userId: string; tenantId: string; isPrivate?: boolean }) {
     const res = await api.post(`${this.basePath}/${id}/notes`, payload);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async listNotes(id: string, limit = 50) {
     const res = await api.get(`${this.basePath}/${id}/notes`, { params: { limit } });
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async listWatchers(id: string) {
     const res = await api.get(`${this.basePath}/${id}/watchers`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async addWatcher(id: string, userId?: string) {
     const res = await api.post(`${this.basePath}/${id}/watchers`, userId ? { userId } : {});
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async removeWatcher(id: string, userId: string) {
     const res = await api.delete(`${this.basePath}/${id}/watchers/${userId}`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async updateTags(id: string, payload: { add?: string[]; remove?: string[]; tenantId: string }) {
     const res = await api.patch(`${this.basePath}/${id}/tags`, payload);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async timeline(id: string, tenantId: string) {
     const res = await api.get(`${this.basePath}/${id}/timeline`, { params: { tenantId } });
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async similar(id: string, tenantId: string) {
     const res = await api.get(`${this.basePath}/${id}/similar`, { params: { tenantId } });
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async export(id: string, tenantId: string) {
     const res = await api.get(`${this.basePath}/${id}/export`, { params: { tenantId } });
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async aiAnalysis(id: string, tenantId: string) {
     const res = await api.get(`${this.basePath}/${id}/ai`, { params: { tenantId } });
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
   }
 
   async analyzeNow(id: string) {
     const res = await api.post(`${this.basePath}/${id}/ai/analyze`);
-    return (res as any)?.data?.data ?? res.data;
+    return this.unwrap(res);
+  }
+
+  async getRoutingSuggestions(id: string, limit = 5) {
+    const res = await api.get(`${this.basePath}/${id}/routing/suggestions`, {
+      params: { limit },
+    });
+    return this.unwrap(res) as Array<{
+      agentId: string;
+      score: number;
+      agent: {
+        id: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        avatar: string | null;
+        skills: string[];
+        languages: string[];
+      } | null;
+      reasoning: {
+        capacityScore: number;
+        skillMatch: number;
+        languageMatch: number;
+        teamAlign: number;
+        performanceScore: number;
+        matchedSkills: string[];
+        missingSkills: string[];
+        currentLoad: number;
+        maxCapacity: number;
+        languageMatchDetails?: string;
+        teamMatchDetails?: string;
+      };
+    }>;
   }
 }
 

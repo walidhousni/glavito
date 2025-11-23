@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 
 export function WhiteLabelTemplatesPanel() {
+  const t = useTranslations('settings.whiteLabel');
   const { templates, loadTemplates, upsertTemplate, deleteTemplate, previewTemplate, loading } = useWhiteLabel();
   const [typeFilter, setTypeFilter] = useState<string>('email');
   const [name, setName] = useState('welcome_email');
@@ -15,7 +17,7 @@ export function WhiteLabelTemplatesPanel() {
   const [preview, setPreview] = useState<string>('');
 
   useEffect(() => {
-    loadTemplates(typeFilter).catch(() => {});
+    loadTemplates(typeFilter).catch((err) => console.error(err));
   }, [typeFilter, loadTemplates]);
 
   const variables = useMemo(() => {
@@ -40,60 +42,60 @@ export function WhiteLabelTemplatesPanel() {
   return (
     <Card className="border-slate-200/60 dark:border-slate-700/60">
       <CardHeader>
-        <CardTitle>Templates</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Type</label>
+            <label className="text-sm font-medium">{t('type')}</label>
             <Input value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} placeholder="email | portal_page | ..." />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Name</label>
+            <label className="text-sm font-medium">{t('name')}</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="welcome_email" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Variables (k:v, comma separated)</label>
+            <label className="text-sm font-medium">{t('variables')}</label>
             <Input value={varsText} onChange={(e) => setVarsText(e.target.value)} placeholder="firstName:John, company:ACME" />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Content</label>
+          <label className="text-sm font-medium">{t('content')}</label>
           <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={8} className="font-mono" />
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={handlePreview} disabled={loading}>Preview</Button>
-          <Button onClick={handleSave} variant="secondary" disabled={loading}>Save</Button>
+          <Button onClick={handlePreview} disabled={loading}>{t('previewButton')}</Button>
+          <Button onClick={handleSave} variant="secondary" disabled={loading}>{t('save')}</Button>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Preview</label>
+          <label className="text-sm font-medium">{t('previewLabel')}</label>
           <div className="p-4 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" dangerouslySetInnerHTML={{ __html: preview }} />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Existing</label>
+          <label className="text-sm font-medium">{t('existing')}</label>
           <div className="grid gap-2">
-            {templates.map((t) => (
-              <div key={t.id} className="flex items-center justify-between p-3 rounded-md border border-slate-200 dark:border-slate-700">
+            {(Array.isArray(templates) ? templates : []).map((template) => (
+              <div key={template.id} className="flex items-center justify-between p-3 rounded-md border border-slate-200 dark:border-slate-700">
                 <div className="text-sm">
-                  <div className="font-medium">{t.type} / {t.name}</div>
-                  <div className="text-slate-500 text-xs">v{t.version} • {new Date(t.updatedAt).toLocaleString()}</div>
+                  <div className="font-medium">{template.type} / {template.name}</div>
+                  <div className="text-slate-500 text-xs">v{template.version} • {new Date(template.updatedAt).toLocaleString()}</div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={() => { setName(t.name); setContent(t.content); setTypeFilter(t.type); }}>Edit</Button>
-                  <Button size="sm" variant="destructive" onClick={() => deleteTemplate(t.id)}>Delete</Button>
+                  <Button size="sm" onClick={() => { setName(template.name); setContent(template.content); setTypeFilter(template.type); }}>{t('edit')}</Button>
+                  <Button size="sm" variant="destructive" onClick={() => deleteTemplate(template.id)}>{t('delete')}</Button>
                 </div>
               </div>
             ))}
-            {templates.length === 0 && <div className="text-sm text-slate-500">No templates yet.</div>}
+            {(!Array.isArray(templates) || templates.length === 0) && <div className="text-sm text-slate-500">{t('noTemplates')}</div>}
           </div>
         </div>
       </CardContent>
       <CardFooter className="justify-end text-xs text-slate-500">
-        Handlebars rendering is used when available, with fallback replacement.
+        {t('footer')}
       </CardFooter>
     </Card>
   );

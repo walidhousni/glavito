@@ -21,11 +21,19 @@ export interface Message {
   id: string;
   content: string;
   senderType: 'customer' | 'agent' | 'system';
-  messageType: 'text' | 'image' | 'file' | 'template' | 'voice' | 'video';
+  messageType: 'text' | 'image' | 'file' | 'template' | 'voice' | 'video' | 'audio' | 'internal_note';
   createdAt: string;
   attachments?: Attachment[];
   templateId?: string;
   templateParams?: Record<string, string>;
+  reactions?: Array<{
+    emoji: string;
+    userId: string;
+    timestamp?: string;
+  }>;
+  audioUrl?: string;
+  audioDuration?: number;
+  isInternalNote?: boolean;
 }
 
 export interface Attachment {
@@ -80,6 +88,7 @@ export interface ConversationFilters {
   priority?: string;
   channel?: string;
   assignedTo?: string;
+  teamId?: string;
   search?: string;
   dateFrom?: string;
   dateTo?: string;

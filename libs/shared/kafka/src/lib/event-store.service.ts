@@ -14,7 +14,7 @@ export class EventStoreService {
 
   async saveEvent(event: DomainEvent): Promise<void> {
     try {
-      await this.databaseService.eventStore.create({
+      await (this.databaseService as any)['eventStore'].create({
         data: {
           eventId: event.eventId,
           eventType: event.eventType,
@@ -60,7 +60,7 @@ export class EventStoreService {
 
           for (const event of aggregateEvents) {
             currentVersion++;
-            await tx.eventStore.create({
+            await (tx as any)['eventStore'].create({
               data: {
                 eventId: event.eventId,
                 eventType: event.eventType,
@@ -268,7 +268,7 @@ export class EventStoreService {
 
   async getAggregateVersion(aggregateId: string, aggregateType: string): Promise<number> {
     try {
-      const result = await this.databaseService.eventStore.findFirst({
+      const result = await (this.databaseService as any)['eventStore'].findFirst({
         where: {
           aggregateId,
           aggregateType
@@ -315,7 +315,7 @@ export class EventStoreService {
           where: whereClause,
           _count: true
         }),
-        this.databaseService.eventStore.findFirst({
+        (this.databaseService as any)['eventStore'].findFirst({
           where: whereClause,
           orderBy: { timestamp: 'asc' },
           select: { timestamp: true }

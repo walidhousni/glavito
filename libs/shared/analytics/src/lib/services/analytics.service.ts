@@ -23,7 +23,8 @@ import {
   CustomReport,
   ReportResult,
   ReportSchedule,
-  ScheduledReport
+  ScheduledReport,
+  BusinessInsights
 } from '../interfaces/analytics.interface'
 
 @Injectable()
@@ -104,6 +105,35 @@ export class AnalyticsService implements AnalyticsServiceInterface {
         }
       })
 
+      // Cross-channel activity (WhatsApp, Instagram, Email)
+      const messagesByChannel = await (this.prisma['messageAdvanced'] as any).groupBy({
+        by: ['channel'],
+        where: { tenantId, createdAt: { gte: startTime, lte: endTime } },
+        _count: { id: true }
+      }).catch(() => []) as Array<{ channel: string; _count: { id: number } }>
+      const ticketsByChannel = await (this.prisma['ticket'] as any).groupBy({
+        by: ['channelId'],
+        where: { tenantId, createdAt: { gte: startTime, lte: endTime } },
+        _count: { id: true }
+      }).catch(() => []) as Array<{ channelId: string | null; _count: { id: number } }>
+      const channelMap = new Map<string, { id?: string; name?: string; type?: string }>()
+      try {
+        const channels = await this.prisma['channel'].findMany({ where: { tenantId, isActive: true }, select: { id: true, name: true, type: true } })
+        for (const ch of channels as any[]) channelMap.set(ch.id, ch)
+      } catch { /* noop */ }
+      const channelActivity = messagesByChannel.map((m) => {
+        const type = (m.channel || 'web').toString()
+        return {
+          channelId: type,
+          channelName: type.toUpperCase(),
+          channelType: type,
+          messageCount: m._count.id,
+          ticketCount: ticketsByChannel.reduce((s, t) => s + (t.channelId && (channelMap.get(t.channelId)?.type || '').toLowerCase() === type ? t._count.id : 0), 0),
+          averageResponseTime: 0,
+          activeConversations: 0
+        }
+      })
+
       return {
         timestamp: now,
         metrics: {
@@ -118,8 +148,8 @@ export class AnalyticsService implements AnalyticsServiceInterface {
           averageResponseTime: responseTimeData._avg.firstResponseTime || 0,
           totalCustomers: 0,
           newCustomersToday: 0,
-           satisfactionScore: (satisfactionData._avg?.rating as number) || 0,
-          channelActivity: [],
+          satisfactionScore: (satisfactionData._avg?.rating as number) || 0,
+          channelActivity,
           revenueToday: 0,
           conversionRate: 0
         },
@@ -402,8 +432,36 @@ export class AnalyticsService implements AnalyticsServiceInterface {
     }
 
     // Non-breaking extensions for UI consumption
+    // Compute per-channel averages and simple trends (per-day average rating)
+    try {
+      const channelList = Array.from(new Set(byChannelArr.map((c: any) => c.channel)))
+      for (const ch of channelList) {
+        const chAgg: any = await (this.prisma['customerSatisfactionSurvey'] as any).aggregate({ where: { tenantId, createdAt: { gte: startDate, lte: endDate }, channel: ch, respondedAt: { not: null } }, _avg: { rating: true }, _count: { id: true } })
+        const chAll = await (this.prisma['customerSatisfactionSurvey'] as any).findMany({ where: { tenantId, createdAt: { gte: startDate, lte: endDate }, channel: ch, respondedAt: { not: null } }, select: { respondedAt: true, createdAt: true, rating: true } })
+        const byDay = new Map<string, { sum: number; count: number }>()
+        for (const row of chAll) {
+          const d = new Date((row.respondedAt as Date) || (row.createdAt as Date))
+          const key = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString()
+          const curr = byDay.get(key) || { sum: 0, count: 0 }
+          curr.sum += (row as any).rating || 0
+          curr.count += 1
+          byDay.set(key, curr)
+        }
+        const trendSeries = Array.from(byDay.entries())
+          .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+          .map(([key, v]) => ({ date: new Date(key), value: v.count ? v.sum / v.count : 0 }))
+        const target = byChannelArr.find((c: any) => c.channel === ch)
+        if (target) {
+          target.averageScore = (chAgg?._avg?.rating as number) || 0
+          target.responseCount = (chAgg?._count?.id as number) || target.responseCount
+          ;(target as any).trendSeries = trendSeries
+        }
+      }
+    } catch { /* noop */ }
+
     return {
       ...(result as any),
+      byChannel: byChannelArr as any,
       ratingDistribution,
       recentSurveys,
       _meta: { sentCount: sentCount }
@@ -548,6 +606,16 @@ export class AnalyticsService implements AnalyticsServiceInterface {
       const results: ChannelEffectiveness['channels'] = []
       for (const ch of channels) {
         const totalTickets = await this.prisma['ticket'].count({ where: { tenantId, channelId: ch.id, createdAt: { gte: startDate, lte: endDate } } })
+        // Count messages for this channel (via conversation relation)
+        const totalMessages = await this.prisma['message'].count({
+          where: {
+            conversation: {
+              channelId: ch.id,
+              tenantId,
+              createdAt: { gte: startDate, lte: endDate }
+            }
+          }
+        })
         const avgResp = await this.prisma['ticket'].aggregate({
           where: { tenantId, channelId: ch.id, firstResponseAt: { not: null }, createdAt: { gte: startDate, lte: endDate } },
           _avg: { firstResponseTime: true }
@@ -556,13 +624,26 @@ export class AnalyticsService implements AnalyticsServiceInterface {
           where: { tenantId, channelId: ch.id, resolvedAt: { not: null }, createdAt: { gte: startDate, lte: endDate } },
           _avg: { resolutionTime: true }
         })
+        // Estimate channel costs (WhatsApp specialized; Instagram/Email generic per-message if configured)
+        let costPerTicket = 0
+        try {
+          const type = (ch.type || '').toString().toLowerCase()
+          if (type === 'whatsapp') {
+            const waCost = await this.estimateWhatsAppCostsForChannel(tenantId, ch.id, dateRange)
+            costPerTicket = totalTickets > 0 ? waCost / totalTickets : 0
+          } else if (type === 'instagram' || type === 'email') {
+            const msgCosts = await this.estimateGenericPerMessageCost(tenantId, type, { tenantId, channelId: ch.id, dateRange })
+            costPerTicket = totalTickets > 0 ? msgCosts.total / Math.max(1, totalTickets) : 0
+          }
+        } catch { /* noop */ }
+
         results.push({
           channelId: ch.id,
           channelName: ch.name,
           channelType: ch.type,
-          totalMessages: 0,
+          totalMessages,
           totalTickets,
-          averageMessagesPerTicket: 0,
+          averageMessagesPerTicket: totalTickets > 0 ? totalMessages / totalTickets : 0,
           averageResponseTime: (avgResp as any)._avg?.firstResponseTime || 0,
           averageResolutionTime: (avgRes as any)._avg?.resolutionTime || 0,
           firstContactResolution: 0,
@@ -571,7 +652,7 @@ export class AnalyticsService implements AnalyticsServiceInterface {
           reopenRate: 0,
           conversionRate: 0,
           revenueAttribution: 0,
-          costPerTicket: 0,
+          costPerTicket,
           trends: { volume: [], performance: [], satisfaction: [] }
         })
       }
@@ -596,6 +677,12 @@ export class AnalyticsService implements AnalyticsServiceInterface {
       const attribution = await this.getRevenueAttribution(tenantId, dateRange)
       const revenueTotal = attribution.byChannel.reduce((s, c) => s + c.revenue, 0)
       const costs = await this.getCostAnalysis(tenantId, dateRange)
+      // Add WhatsApp variable costs based on message categories
+      try {
+        const waCosts = await this.estimateWhatsAppCosts(tenantId, dateRange)
+        costs.totalCosts += waCosts.total
+        costs.breakdown.external += waCosts.total
+      } catch { /* noop */ }
 
       const byChannelRoi = attribution.byChannel.map((c) => {
         // Estimate investment per channel from marketing budgets if available
@@ -636,6 +723,124 @@ export class AnalyticsService implements AnalyticsServiceInterface {
         productivity: { ticketsPerAgent: 0, revenuePerAgent: 0, costPerTicket: 0, efficiencyScore: 0 }
       }
     }
+  }
+
+  // Estimate WhatsApp costs by counting WA messages with metadata.waCategory and applying per-category rates.
+  private async estimateWhatsAppCosts(tenantId: string, dateRange: DateRange): Promise<{ total: number; byCategory: Record<string, number> }> {
+    const { startDate, endDate } = dateRange
+    // Rates in USD; adjust as needed or fetch from settings later
+    const rates: Record<string, number> = {
+      marketing: 0.0,
+      utility: 0.0,
+      authentication: 0.0,
+      service: 0.0,
+      // fallback
+      other: 0.0
+    }
+    // Try to load rates from settings table or environment variable
+    try {
+      const cfg = await (this.prisma as any)['settings']?.findFirst?.({ where: { tenantId, key: 'whatsapp_pricing' } })
+      if (cfg?.value) {
+        const parsed = typeof cfg.value === 'string' ? JSON.parse(cfg.value) : cfg.value
+        Object.assign(rates, parsed?.rates || {})
+      }
+    } catch { /* noop */ }
+    try {
+      const envJson = process.env['WHATSAPP_PRICING_RATES']
+      if (envJson) {
+        const parsed = JSON.parse(envJson)
+        Object.assign(rates, parsed?.rates || parsed)
+      }
+    } catch { /* ignore malformed env */ }
+
+    // Count messages per category using MessageAdvanced
+    type GroupRow = { metadata: any; _count: { id: number } }
+    const messages: GroupRow[] = await (this.prisma['messageAdvanced'] as any).findMany({
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        channel: 'whatsapp'
+      },
+      select: { metadata: true }
+    })
+    const byCategory: Record<string, number> = {}
+    for (const row of messages) {
+      const meta = (row?.metadata || {}) as any
+      const cat = String(meta.waCategory || meta.category || 'other').toLowerCase()
+      byCategory[cat] = (byCategory[cat] || 0) + 1
+    }
+    let total = 0
+    for (const [cat, count] of Object.entries(byCategory)) {
+      const rate = rates[cat] ?? rates['other'] ?? 0
+      total += rate * count
+    }
+    return { total, byCategory }
+  }
+
+  private async estimateWhatsAppCostsForChannel(tenantId: string, channelId: string, dateRange: DateRange): Promise<number> {
+    const { startDate, endDate } = dateRange
+    // Fetch category counts for this channel via conversation relation on MessageAdvanced
+    const messages: Array<{ metadata: any }> = await (this.prisma['messageAdvanced'] as any).findMany({
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        channel: 'whatsapp',
+        conversationId: { in: (await this.prisma['conversationAdvanced'].findMany({ where: { channelId, tenantId }, select: { id: true } })).map((c: any) => c.id) }
+      },
+      select: { metadata: true }
+    })
+    const byCategory: Record<string, number> = {}
+    for (const row of messages) {
+      const meta = (row?.metadata || {}) as any
+      const cat = String(meta.waCategory || meta.category || 'other').toLowerCase()
+      byCategory[cat] = (byCategory[cat] || 0) + 1
+    }
+    // Resolve rates same as estimateWhatsAppCosts
+    const rates: Record<string, number> = { marketing: 0, utility: 0, authentication: 0, service: 0, other: 0 }
+    try {
+      const cfg = await (this.prisma as any)['settings']?.findFirst?.({ where: { tenantId, key: 'whatsapp_pricing' } })
+      if (cfg?.value) {
+        const parsed = typeof cfg.value === 'string' ? JSON.parse(cfg.value) : cfg.value
+        Object.assign(rates, parsed?.rates || {})
+      }
+    } catch { /* noop */ }
+    try {
+      const envJson = process.env['WHATSAPP_PRICING_RATES']
+      if (envJson) {
+        const parsed = JSON.parse(envJson)
+        Object.assign(rates, parsed?.rates || parsed)
+      }
+    } catch { /* ignore malformed env */ }
+    let total = 0
+    for (const [cat, count] of Object.entries(byCategory)) {
+      total += (rates[cat] ?? rates['other'] ?? 0) * count
+    }
+    return total
+  }
+
+  // Generic per-message cost estimator for channels like Instagram/Email based on settings or env
+  private async estimateGenericPerMessageCost(
+    tenantId: string,
+    channelType: 'instagram' | 'email',
+    opts: { tenantId: string; channelId?: string; dateRange: DateRange }
+  ): Promise<{ total: number; count: number; unit: number }> {
+    const { startDate, endDate } = opts.dateRange
+    // Default unit costs can be configured via settings or env
+    let unit = 0
+    try {
+      const cfg = await (this.prisma as any)['settings']?.findFirst?.({ where: { tenantId, key: `${channelType}_pricing` } })
+      if (cfg?.value) {
+        const parsed = typeof cfg.value === 'string' ? JSON.parse(cfg.value) : cfg.value
+        if (typeof parsed?.unit === 'number') unit = parsed.unit
+      }
+    } catch { /* noop */ }
+    try {
+      const envKey = channelType === 'instagram' ? 'INSTAGRAM_MESSAGE_UNIT_COST' : 'EMAIL_MESSAGE_UNIT_COST'
+      const env = process.env[envKey]
+      if (env && !Number.isNaN(Number(env))) unit = Number(env)
+    } catch { /* noop */ }
+    const where: any = { channel: channelType, createdAt: { gte: startDate, lte: endDate } }
+    if (opts.channelId) where.conversationId = { in: (await this.prisma['conversationAdvanced'].findMany({ where: { id: { not: undefined }, channelId: opts.channelId, tenantId }, select: { id: true } })).map((c: any) => c.id) }
+    const count = await this.prisma['messageAdvanced'].count({ where }).catch(() => 0)
+    return { total: unit * count, count, unit }
   }
 
   async getRevenueAttribution(tenantId: string, dateRange: DateRange): Promise<RevenueAttribution> {
@@ -763,7 +968,20 @@ export class AnalyticsService implements AnalyticsServiceInterface {
       const technology = 200 + agents * 5
       const infrastructure = 150
       const training = 50
-      const external = 0
+      // External costs include channel variable costs (WhatsApp priced by category, IG/Email per-message if configured)
+      let external = 0
+      try {
+        const wa = await this.estimateWhatsAppCosts(tenantId, dateRange)
+        external += wa.total
+      } catch { /* noop */ }
+      try {
+        const ig = await this.estimateGenericPerMessageCost(tenantId, 'instagram', { tenantId, dateRange })
+        external += ig.total
+      } catch { /* noop */ }
+      try {
+        const em = await this.estimateGenericPerMessageCost(tenantId, 'email', { tenantId, dateRange })
+        external += em.total
+      } catch { /* noop */ }
       const overhead = Math.round((personnel + technology + infrastructure + training + external) * 0.15)
 
       const totalCosts = personnel + technology + infrastructure + training + external + overhead
@@ -797,6 +1015,104 @@ export class AnalyticsService implements AnalyticsServiceInterface {
         costPerAgent: 0,
         optimizations: []
       }
+    }
+  }
+
+  // Business Insights: orders, confirmations, deliveries, earnings derived from Deals and PaymentIntents
+  async getBusinessInsights(tenantId: string, dateRange: DateRange): Promise<BusinessInsights> {
+    const { startDate, endDate } = dateRange
+    // Orders: count of deals created in range
+    const orders = await this.prisma['deal'].count({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } } })
+    // Confirmations: deals moved to QUALIFIED/PROPOSAL (as proxy)
+    const confirmations = await this.prisma['deal'].count({ where: { tenantId, createdAt: { gte: startDate, lte: endDate }, stage: { in: ['QUALIFIED','PROPOSAL','NEGOTIATION','WON'] } as any } })
+    // Deliveries: deals WON in range
+    const deliveries = await this.prisma['deal'].count({ where: { tenantId, actualCloseDate: { not: null, gte: startDate, lte: endDate } } })
+    // Earnings: sum successful payment intents in range (cents to dollars)
+    const paymentsAgg: any = await (this.prisma['paymentIntent'] as any).aggregate({ where: { tenantId, status: 'succeeded', createdAt: { gte: startDate, lte: endDate } }, _sum: { amount: true } })
+    const earnings = Math.round(((paymentsAgg?._sum?.amount || 0) as number) / 100)
+
+    // Daily trend buckets
+    const dayMap = new Map<string, { orders: number; confirmations: number; deliveries: number; earnings: number }>()
+    const normalize = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString().substring(0,10)
+
+    const dealsCreated = await this.prisma['deal'].findMany({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } }, select: { createdAt: true, stage: true } })
+    for (const d of dealsCreated) {
+      const key = normalize(d.createdAt as Date)
+      const curr = dayMap.get(key) || { orders: 0, confirmations: 0, deliveries: 0, earnings: 0 }
+      curr.orders += 1
+      if (['QUALIFIED','PROPOSAL','NEGOTIATION','WON'].includes(String(d.stage || '').toUpperCase())) curr.confirmations += 1
+      dayMap.set(key, curr)
+    }
+
+    const dealsWon = await this.prisma['deal'].findMany({ where: { tenantId, actualCloseDate: { not: null, gte: startDate, lte: endDate } }, select: { actualCloseDate: true } })
+    for (const d of dealsWon) {
+      const key = normalize(d.actualCloseDate as Date)
+      const curr = dayMap.get(key) || { orders: 0, confirmations: 0, deliveries: 0, earnings: 0 }
+      curr.deliveries += 1
+      dayMap.set(key, curr)
+    }
+
+    const paymentEvents = await this.prisma['paymentIntent'].findMany({ where: { tenantId, status: 'succeeded', createdAt: { gte: startDate, lte: endDate } }, select: { createdAt: true, amount: true } })
+    for (const p of paymentEvents) {
+      const key = normalize(p.createdAt as Date)
+      const curr = dayMap.get(key) || { orders: 0, confirmations: 0, deliveries: 0, earnings: 0 }
+      curr.earnings += Math.round((Number((p as any).amount) || 0) / 100)
+      dayMap.set(key, curr)
+    }
+
+    const daily = Array.from(dayMap.entries())
+      .sort((a,b) => a[0] < b[0] ? -1 : 1)
+      .map(([date, v]) => ({ date, orders: v.orders, confirmations: v.confirmations, deliveries: v.deliveries, earnings: v.earnings }))
+
+    // Customer-centric metrics
+    const newCustomers = await this.prisma['customer'].count({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } } })
+    // Active = any activity in range: ticket created, deal created/closed, payment succeeded
+    const activeCustomerIds = new Set<string>()
+    const [ticketCusts, dealCusts, paymentCusts] = await Promise.all([
+      this.prisma['ticket'].findMany({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } }, select: { customerId: true } }),
+      this.prisma['deal'].findMany({ where: { tenantId, OR: [{ createdAt: { gte: startDate, lte: endDate } }, { actualCloseDate: { gte: startDate, lte: endDate } }] }, select: { customerId: true } }),
+      this.prisma['paymentIntent'].findMany({ where: { tenantId, status: 'succeeded', createdAt: { gte: startDate, lte: endDate } }, select: { customerId: true } })
+    ])
+    for (const r of ticketCusts) if ((r as any).customerId) activeCustomerIds.add((r as any).customerId as string)
+    for (const r of dealCusts) if ((r as any).customerId) activeCustomerIds.add((r as any).customerId as string)
+    for (const r of paymentCusts) if ((r as any).customerId) activeCustomerIds.add((r as any).customerId as string)
+    const activeCustomers = activeCustomerIds.size
+
+    const revenuePerCustomer = activeCustomers > 0 ? earnings / activeCustomers : 0
+    const averageOrderValue = orders > 0 ? earnings / orders : 0
+
+    // Repeat purchase rate: customers with >= 2 deals overall (or within range)
+    const dealsByCustomer = await (this.prisma['deal'] as any).groupBy({ by: ['customerId'], where: { tenantId, createdAt: { gte: startDate, lte: endDate } }, _count: { id: true } }) as Array<{ customerId: string | null, _count: { id: number } }>
+    const repeatCustomers = dealsByCustomer.filter(d => (d.customerId && d._count.id >= 2)).length
+    const customersWithAnyDeal = dealsByCustomer.filter(d => d.customerId && d._count.id >= 1).length
+    const repeatPurchaseRate = customersWithAnyDeal > 0 ? repeatCustomers / customersWithAnyDeal : 0
+
+    // Segment revenue (by Customer Segment memberships)
+    const segmentRevenueMap = new Map<string, { revenue: number, customers: Set<string> }>()
+    for (const p of paymentEvents) {
+      if (!(p as any).customerId) continue
+      const segs = await (this.prisma['customerSegmentMembership'] as any).findMany({ where: { customerId: (p as any).customerId }, select: { segmentId: true } })
+      for (const s of segs) {
+        const seg = await (this.prisma['customerSegment'] as any).findUnique({ where: { id: s.segmentId }, select: { name: true } })
+        const key = seg?.name || s.segmentId
+        const curr = segmentRevenueMap.get(key) || { revenue: 0, customers: new Set<string>() }
+        curr.revenue += Math.round((Number((p as any).amount) || 0) / 100)
+        curr.customers.add((p as any).customerId)
+        segmentRevenueMap.set(key, curr)
+      }
+    }
+    const segments = Array.from(segmentRevenueMap.entries()).map(([segment, v]) => ({ segment, revenue: v.revenue, customers: v.customers.size }))
+
+    // CSAT
+    const csatAgg: any = await (this.prisma['customerSatisfactionSurvey'] as any).aggregate({ where: { tenantId, createdAt: { gte: startDate, lte: endDate }, respondedAt: { not: null } }, _avg: { rating: true }, _count: { id: true } })
+    const csat = { averageRating: (csatAgg?._avg?.rating as number) || 0, totalResponses: (csatAgg?._count?.id as number) || 0 }
+
+    return {
+      summary: { orders, confirmations, deliveries, earnings },
+      trends: { daily },
+      customers: { newCustomers, activeCustomers, revenuePerCustomer, averageOrderValue, repeatPurchaseRate },
+      segments,
+      csat
     }
   }
 
@@ -886,16 +1202,27 @@ export class AnalyticsService implements AnalyticsServiceInterface {
     const tenantId = _tenantId
     const reportId = _reportId
     const format = _schedule.format || 'pdf'
-    const job = await (this.prisma['analyticsExportJob'] as any).create({
-      data: {
-        tenantId,
-        type: 'metric',
-        sourceId: null,
-        templateId: reportId,
-        format,
-        status: 'pending'
+    // Defensive: prisma or delegate may be missing if client is outdated; fall back gracefully
+    let job: any = { id: `job-${Date.now()}` }
+    try {
+      const client: any = this.prisma as any
+      if (client && client.analyticsExportJob) {
+        job = await client.analyticsExportJob.create({
+          data: {
+            tenantId,
+            type: 'metric',
+            sourceId: null,
+            templateId: reportId,
+            format,
+            status: 'pending'
+          }
+        })
+      } else {
+        this.logger.warn('analyticsExportJob delegate not available on Prisma client; returning synthetic schedule entry')
       }
-    })
+    } catch (err) {
+      this.logger.warn(`Failed to persist scheduled report, fallback to synthetic entry: ${err instanceof Error ? err.message : String(err)}`)
+    }
     const scheduled: ScheduledReport = {
       id: job.id,
       reportId,
@@ -910,16 +1237,26 @@ export class AnalyticsService implements AnalyticsServiceInterface {
 
   async getScheduledReports(_tenantId: string): Promise<ScheduledReport[]> {
     const tenantId = _tenantId
-    const jobs = await (this.prisma['analyticsExportJob'] as any).findMany({ where: { tenantId, templateId: { not: null } }, orderBy: { createdAt: 'desc' } })
-    return jobs.map((j: any) => ({
-      id: j.id,
-      reportId: j.templateId,
-      schedule: { frequency: 'weekly', time: '09:00', timezone: 'UTC', recipients: [], format: j.format },
-      nextExecution: new Date(),
-      lastExecution: j.completedAt || undefined,
-      status: j.status === 'failed' ? 'error' : 'active',
-      executionHistory: []
-    }))
+    try {
+      const client: any = this.prisma as any
+      if (!client || !client.analyticsExportJob) {
+        this.logger.warn('analyticsExportJob delegate not available on Prisma client; returning empty schedules list')
+        return []
+      }
+      const jobs = await client.analyticsExportJob.findMany({ where: { tenantId, templateId: { not: null } }, orderBy: { createdAt: 'desc' } })
+      return jobs.map((j: any) => ({
+        id: j.id,
+        reportId: j.templateId,
+        schedule: { frequency: 'weekly', time: '09:00', timezone: 'UTC', recipients: [], format: j.format },
+        nextExecution: new Date(),
+        lastExecution: j.completedAt || undefined,
+        status: j.status === 'failed' ? 'error' : 'active',
+        executionHistory: []
+      }))
+    } catch (err) {
+      this.logger.warn(`getScheduledReports failed, returning empty list: ${err instanceof Error ? err.message : String(err)}`)
+      return []
+    }
   }
 
   // Private helper methods

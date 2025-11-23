@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from './use-auth';
 import { ticketsApi } from '../api/tickets-client';
 
@@ -45,14 +45,34 @@ interface TicketStats {
   overdue: number;
   unassigned: number;
   slaAtRisk: number;
+  activeAgents?: number;
+  weekTrendPct?: number;
   averageResolutionTime: number;
   averageFirstResponseTime: number;
   customerSatisfactionScore: number;
-  trendsData: any[];
+  trendsData: Array<Record<string, unknown>>;
+}
+
+interface TicketLite {
+  id: string;
+  subject: string;
+  description: string;
+  status: string;
+  priority: string;
+  customerId?: string;
+  assignedAgentId?: string | null;
+  channelId?: string;
+  teamId?: string;
+  tags: string[];
+  dueDate?: string | Date | null;
+  createdAt?: string | Date;
+  customer?: { firstName: string; lastName: string; email: string; company?: string };
+  assignedAgent?: { firstName?: string; lastName?: string } | null;
+  slaInstance?: { breachCount?: number } | null;
 }
 
 interface PaginatedTickets {
-  data: any[];
+  data: TicketLite[];
   total: number;
   page: number;
   limit: number;
@@ -69,9 +89,9 @@ interface SearchFacets {
 
 export function useTickets(options: UseTicketsOptions = {}) {
   const { user } = useAuth();
-  const role: 'admin' | 'agent' | undefined = (user as any)?.role as any;
+  const role = (user?.role ?? undefined) as 'admin' | 'agent' | undefined;
   const capabilities = {
-    canViewStats: role === 'admin',
+    canViewStats: role === 'admin' || role === 'agent',
     canDelete: role === 'admin',
     canAutoAssign: role === 'admin',
     canAssign: role === 'admin' || role === 'agent',
@@ -92,210 +112,37 @@ export function useTickets(options: UseTicketsOptions = {}) {
     semantic = false,
   } = options;
 
-  // Mock data fallback for demonstration
-  const mockTickets = [
-    {
-      id: '1',
-      subject: 'Unable to access premium features after subscription upgrade',
-      description: 'I upgraded my subscription to premium yesterday but I still cannot access the premium features.',
-      status: 'in_progress',
-      priority: 'high',
-      customerId: '1',
-      channelId: '1',
-      assignedAgentId: '1',
-      teamId: '1',
-      tags: ['billing', 'premium', 'urgent'],
-      createdAt: '2024-01-15T10:30:00Z',
-      updatedAt: '2024-01-15T14:20:00Z',
-      dueDate: '2024-01-17T17:00:00Z',
-      customer: {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@acme.com',
-        company: 'Acme Corp'
-      },
-      channel: {
-        id: '1',
-        name: 'Email Support',
-        type: 'email'
-      },
-      assignedAgent: {
-        id: '1',
-        firstName: 'Alice',
-        lastName: 'Wilson',
-        email: 'alice@company.com'
-      },
-      aiAnalysis: {
-        classification: 'billing_issue',
-        sentiment: 'frustrated',
-        urgencyScore: 0.8
-      },
-      slaInstance: {
-        status: 'active',
-        breachCount: 0
-      },
-      _count: {
-        conversations: 1,
-        timelineEvents: 4
-      }
-    },
-    {
-      id: '2',
-      subject: 'Integration API returning 500 errors',
-      description: 'Our integration with your API started returning 500 errors this morning. This is affecting our production system.',
-      status: 'open',
-      priority: 'critical',
-      customerId: '2',
-      channelId: '2',
-      assignedAgentId: null,
-      teamId: '1',
-      tags: ['api', 'integration', 'critical', 'production'],
-      createdAt: '2024-01-15T09:15:00Z',
-      updatedAt: '2024-01-15T09:15:00Z',
-      dueDate: '2024-01-15T17:00:00Z',
-      customer: {
-        id: '2',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane@techstart.com',
-        company: 'TechStart Inc'
-      },
-      channel: {
-        id: '2',
-        name: 'WhatsApp Business',
-        type: 'whatsapp'
-      },
-      assignedAgent: null,
-      aiAnalysis: {
-        classification: 'technical_issue',
-        sentiment: 'urgent',
-        urgencyScore: 0.95
-      },
-      slaInstance: {
-        status: 'active',
-        breachCount: 0
-      },
-      _count: {
-        conversations: 0,
-        timelineEvents: 1
-      }
-    },
-    {
-      id: '3',
-      subject: 'Request for custom dashboard features',
-      description: 'We would like to request some custom dashboard features for our team. Can we schedule a call to discuss?',
-      status: 'waiting',
-      priority: 'medium',
-      customerId: '3',
-      channelId: '3',
-      assignedAgentId: '2',
-      teamId: '2',
-      tags: ['feature-request', 'dashboard', 'custom'],
-      createdAt: '2024-01-14T16:45:00Z',
-      updatedAt: '2024-01-15T11:30:00Z',
-      dueDate: '2024-01-18T17:00:00Z',
-      customer: {
-        id: '3',
-        firstName: 'Mike',
-        lastName: 'Johnson',
-        email: 'mike@global.com',
-        company: 'Global Solutions'
-      },
-      channel: {
-        id: '3',
-        name: 'Instagram DM',
-        type: 'instagram'
-      },
-      assignedAgent: {
-        id: '2',
-        firstName: 'Bob',
-        lastName: 'Brown',
-        email: 'bob@company.com'
-      },
-      aiAnalysis: {
-        classification: 'feature_request',
-        sentiment: 'positive',
-        urgencyScore: 0.3
-      },
-      slaInstance: {
-        status: 'active',
-        breachCount: 0
-      },
-      _count: {
-        conversations: 2,
-        timelineEvents: 3
-      }
-    },
-    {
-      id: '4',
-      subject: 'Billing discrepancy in last invoice',
-      description: 'There seems to be a discrepancy in our last invoice. We were charged for features we did not use.',
-      status: 'resolved',
-      priority: 'high',
-      customerId: '1',
-      channelId: '1',
-      assignedAgentId: '3',
-      teamId: '3',
-      tags: ['billing', 'invoice', 'discrepancy'],
-      createdAt: '2024-01-13T14:20:00Z',
-      updatedAt: '2024-01-14T10:15:00Z',
-      resolvedAt: '2024-01-14T10:15:00Z',
-      dueDate: '2024-01-16T17:00:00Z',
-      customer: {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@acme.com',
-        company: 'Acme Corp'
-      },
-      channel: {
-        id: '1',
-        name: 'Email Support',
-        type: 'email'
-      },
-      assignedAgent: {
-        id: '3',
-        firstName: 'Carol',
-        lastName: 'Davis',
-        email: 'carol@company.com'
-      },
-      aiAnalysis: {
-        classification: 'billing_issue',
-        sentiment: 'concerned',
-        urgencyScore: 0.7
-      },
-      slaInstance: {
-        status: 'completed',
-        breachCount: 0
-      },
-      _count: {
-        conversations: 3,
-        timelineEvents: 6
-      }
+  // If agent and no assignedAgentId/unassigned provided, default to own queue
+  const effectiveFilters: TicketFilters = useMemo(() => {
+    const base = { ...filters } as TicketFilters
+    if (role === 'agent' && !base.assignedAgentId && !base.unassigned) {
+      base.assignedAgentId = (user as any)?.id as string | undefined
     }
-  ];
+    return base
+  }, [filters, role, user])
 
-  const mockStats: TicketStats = {
-    total: 4,
-    open: 1,
-    inProgress: 1,
-    waiting: 1,
-    resolved: 1,
+  // Minimal fallback data for when API is unavailable
+  const mockTickets = useMemo<TicketLite[]>(() => [], []);
+
+  const mockStats = useMemo<TicketStats>(() => ({
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    waiting: 0,
+    resolved: 0,
     closed: 0,
     overdue: 0,
-    unassigned: 1,
+    unassigned: 0,
     slaAtRisk: 0,
-    averageResolutionTime: 1440, // 24 hours in minutes
-    averageFirstResponseTime: 120, // 2 hours in minutes
-    customerSatisfactionScore: 4.2,
-    trendsData: [
-      { status: 'open', _count: { status: 1 } },
-      { status: 'in_progress', _count: { status: 1 } },
-      { status: 'waiting', _count: { status: 1 } },
-      { status: 'resolved', _count: { status: 1 } }
-    ]
-  };
+    activeAgents: 0,
+    weekTrendPct: 0,
+    averageResolutionTime: 0,
+    averageFirstResponseTime: 0,
+    customerSatisfactionScore: 0,
+    trendsData: []
+  }), []);
+
+  const statsLoadedRef = useRef<boolean>(false)
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -303,21 +150,21 @@ export function useTickets(options: UseTicketsOptions = {}) {
       setError(null);
 
       // Try real API
-      let filteredTickets: any[] | null = null;
+      let filteredTickets: TicketLite[] | null = null;
       try {
         const response = await ticketsApi.advancedSearch({
-          ...filters,
-          q: (filters as any).search,
+          ...effectiveFilters,
+          q: (filters as { search?: string }).search,
           page: pagination.page,
           limit: pagination.limit,
           sortBy: pagination.sortBy,
           sortOrder: pagination.sortOrder,
           semantic,
-        } as any);
+        } as Record<string, unknown>);
         if (response && Array.isArray(response.data)) {
           setTickets({
-            data: response.data,
-            total: response.total ?? response.data.length,
+            data: response.data as TicketLite[],
+            total: response.total ?? (response.data as TicketLite[]).length,
             page: (response.page ?? pagination.page) || 1,
             limit: (response.limit ?? pagination.limit) || 20,
             totalPages: Math.ceil((response.total ?? response.data.length) / ((response.limit ?? pagination.limit) || 20)),
@@ -325,17 +172,32 @@ export function useTickets(options: UseTicketsOptions = {}) {
             hasPrev: (response.page ?? 1) > 1,
           });
           setFacets(response.facets || null);
+          // Fetch stats only once on first load to avoid loops; subsequent refreshes every N seconds already handled by auto-refresh caller
           try {
-            const s = await ticketsApi.stats();
-            setStats(s);
+            if (!statsLoadedRef.current) {
+              if (capabilities.canViewStats) {
+                const s = await ticketsApi.stats();
+                setStats(s);
+              } else {
+                setStats(mockStats);
+              }
+              statsLoadedRef.current = true
+            }
           } catch {
             setStats(mockStats);
+            statsLoadedRef.current = true
           }
           setLoading(false);
           return;
         }
-      } catch {
-        // fallback to mock
+      } catch (apiErr) {
+        const status = (apiErr as any)?.response?.status as number | undefined;
+        const message = status === 401
+          ? 'You are not authenticated. Please sign in.'
+          : ((apiErr as Error)?.message || 'Failed to fetch tickets');
+        setError(message);
+        setLoading(false);
+        return; // Stop here on API error, don't show empty mock silently
       }
 
       if (!filteredTickets) {
@@ -346,14 +208,14 @@ export function useTickets(options: UseTicketsOptions = {}) {
       // Status filter
       if (filters.status && filters.status.length > 0) {
         filteredTickets = filteredTickets.filter(ticket => 
-          filters.status!.includes(ticket.status)
+          (filters.status as string[]).includes(ticket.status)
         );
       }
 
       // Priority filter
       if (filters.priority && filters.priority.length > 0) {
         filteredTickets = filteredTickets.filter(ticket => 
-          filters.priority!.includes(ticket.priority)
+          (filters.priority as string[]).includes(ticket.priority)
         );
       }
 
@@ -388,7 +250,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
       // Tags filter
       if (filters.tags && filters.tags.length > 0) {
         filteredTickets = filteredTickets.filter(ticket => 
-          filters.tags!.some(tag => ticket.tags.includes(tag))
+          (filters.tags as string[]).some(tag => (ticket.tags || []).includes(tag))
         );
       }
 
@@ -413,30 +275,29 @@ export function useTickets(options: UseTicketsOptions = {}) {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         filteredTickets = filteredTickets.filter(ticket => 
-          ticket.subject.toLowerCase().includes(searchLower) ||
-          ticket.description.toLowerCase().includes(searchLower) ||
-          ticket.customer.firstName.toLowerCase().includes(searchLower) ||
-          ticket.customer.lastName.toLowerCase().includes(searchLower) ||
-          ticket.customer.email.toLowerCase().includes(searchLower) ||
-          ticket.customer.company.toLowerCase().includes(searchLower)
+          (ticket.subject || '').toLowerCase().includes(searchLower) ||
+          (ticket.description || '').toLowerCase().includes(searchLower) ||
+          (ticket.customer?.firstName || '').toLowerCase().includes(searchLower) ||
+          (ticket.customer?.lastName || '').toLowerCase().includes(searchLower) ||
+          (ticket.customer?.email || '').toLowerCase().includes(searchLower) ||
+          (ticket.customer?.company || '').toLowerCase().includes(searchLower)
         );
       }
 
       // Apply sorting with null-safe comparisons
       filteredTickets.sort((a, b) => {
-        const sortKey = (pagination.sortBy as keyof typeof a) || 'createdAt';
+        const sortKey = (pagination.sortBy as keyof TicketLite) || 'createdAt';
         const aValue = (a?.[sortKey] ?? null) as unknown as string | number | Date | null;
         const bValue = (b?.[sortKey] ?? null) as unknown as string | number | Date | null;
 
-        const normalize = (v: any) => {
-          if (v === null || v === undefined) return null;
+        const normalize = (v: unknown) => {
+          if (v === null || v === undefined) return null as number | string | null;
           if (typeof v === 'string') {
-            // Try parse ISO date strings; fallback to string
             const date = new Date(v);
             return !isNaN(date.getTime()) ? date.getTime() : v.toLowerCase();
           }
           if (v instanceof Date) return v.getTime();
-          return v;
+          return v as number | string;
         };
 
         const av = normalize(aValue);
@@ -472,43 +333,45 @@ export function useTickets(options: UseTicketsOptions = {}) {
       };
 
       setTickets(result);
-      if (!stats) {
-        try {
-          const s = await ticketsApi.stats();
-          setStats(s);
-        } catch {
-          setStats(mockStats);
+      try {
+        if (!statsLoadedRef.current) {
+          if (capabilities.canViewStats) {
+            const s = await ticketsApi.stats();
+            setStats(s);
+          } else {
+            setStats(mockStats);
+          }
+          statsLoadedRef.current = true
         }
+      } catch {
+        setStats(mockStats);
+        statsLoadedRef.current = true
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch tickets');
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.page, pagination.limit, pagination.sortBy, pagination.sortOrder, semantic]);
+  }, [effectiveFilters, filters, pagination.page, pagination.limit, pagination.sortBy, pagination.sortOrder, semantic, capabilities.canViewStats, mockTickets, mockStats]);
 
   const refetch = useCallback(() => {
     fetchTickets();
   }, [fetchTickets]);
 
-  const createTicket = useCallback(async (ticketData: any) => {
+  const createTicket = useCallback(async (ticketData: Record<string, unknown>) => {
     try {
       await ticketsApi.create(ticketData);
-      
-      // Refresh tickets after creation
       refetch();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to create ticket');
     }
   }, [refetch]);
 
-  const updateTicket = useCallback(async (ticketId: string, updates: any) => {
+  const updateTicket = useCallback(async (ticketId: string, updates: Record<string, unknown>) => {
     try {
       await ticketsApi.update(ticketId, updates);
-      
-      // Refresh tickets after update
       refetch();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to update ticket');
     }
   }, [refetch]);
@@ -516,25 +379,18 @@ export function useTickets(options: UseTicketsOptions = {}) {
   const deleteTicket = useCallback(async (ticketId: string) => {
     try {
       await ticketsApi.remove(ticketId);
-      
-      // Refresh tickets after deletion
       refetch();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to delete ticket');
     }
   }, [refetch]);
 
-  const bulkAction = useCallback(async (actionData: any) => {
+  const bulkAction = useCallback(async (actionData: Record<string, unknown>) => {
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In real app, make API call for bulk action
       console.log('Performing bulk action:', actionData);
-      
-      // Refresh tickets after bulk action
       refetch();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to perform bulk action');
     }
   }, [refetch]);
@@ -542,10 +398,8 @@ export function useTickets(options: UseTicketsOptions = {}) {
   const assignTicket = useCallback(async (ticketId: string, agentId: string) => {
     try {
       await ticketsApi.assign(ticketId, agentId);
-      
-      // Refresh tickets after assignment
       refetch();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to assign ticket');
     }
   }, [refetch]);
@@ -559,10 +413,8 @@ export function useTickets(options: UseTicketsOptions = {}) {
       } else {
         await ticketsApi.update(ticketId, { status, reason });
       }
-      
-      // Refresh tickets after status update
       refetch();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to update ticket status');
     }
   }, [refetch]);
@@ -570,10 +422,8 @@ export function useTickets(options: UseTicketsOptions = {}) {
   const updatePriority = useCallback(async (ticketId: string, priority: string, reason?: string) => {
     try {
       await ticketsApi.update(ticketId, { priority, reason });
-      
-      // Refresh tickets after priority update
       refetch();
-    } catch (err) {
+    } catch {
       throw new Error('Failed to update ticket priority');
     }
   }, [refetch]);

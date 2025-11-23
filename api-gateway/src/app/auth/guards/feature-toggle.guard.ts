@@ -30,7 +30,7 @@ export class FeatureToggleGuard implements CanActivate {
 
     const toggles = await this.db.featureToggle.findMany({ where: { tenantId } });
     const enabled = isFeatureEnabled(
-      toggles.map((t: any) => ({ featureKey: t.featureKey, isEnabled: t.isEnabled, configuration: t.configuration, restrictions: t.restrictions })),
+      Array.isArray(toggles) ? toggles.map((t: any) => ({ featureKey: t.featureKey, isEnabled: t.isEnabled, configuration: t.configuration, restrictions: t.restrictions })) : [],
       featureKey,
       { role }
     );

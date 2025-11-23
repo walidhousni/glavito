@@ -14,9 +14,21 @@ export interface IntegrationAdapter {
     redirectUri: string;
   }): Promise<{ connected: boolean; config: Record<string, unknown> }>;
 
+  refreshToken(args: {
+    tenantId: string;
+    refreshToken: string;
+    redirectUri?: string;
+  }): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number; tokenType?: string; scope?: string }>;
+
+  revokeToken?(args: {
+    tenantId: string;
+    token: string;
+  }): Promise<boolean>;
+
   syncEntity(args: {
     tenantId: string;
     entity: string;
+    lastSyncAt?: Date | null;
   }): Promise<{ exported?: number; imported?: number; updated?: number; skipped?: number }>;
 
   getDocs(): {

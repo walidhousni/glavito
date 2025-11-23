@@ -1,240 +1,255 @@
 export interface WorkflowRule {
-  id: string
-  tenantId: string
-  name: string
-  description?: string
-  type: string
-  priority: number
-  isActive: boolean
-  conditions: any
-  actions: any
-  triggers: any
-  schedule?: any
-  metadata: WorkflowMetadata
-  executionCount?: number
-  lastExecuted?: Date | string
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface WorkflowMetadata {
-  // Legacy fields for backward compatibility
-  category?: string
-  tags?: string[]
-  version?: string
-  createdBy?: string
-  status?: 'draft' | 'active' | 'inactive'
-  
-  // New node-based structure
-  nodes?: WorkflowNode[]
-  connections?: WorkflowConnection[]
-  settings?: WorkflowSettings
-  variables?: WorkflowVariable[]
-  
-  // Analytics and execution data
-  avgExecutionTime?: number
-  successRate?: number
-  lastExecutionStatus?: string
-  errorCount?: number
-  
-  // N8N integration
-  n8nWorkflowId?: string
-  n8nExecutionId?: string
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  type: 'routing' | 'escalation' | 'automation' | 'sla';
+  priority: number;
+  isActive: boolean;
+  conditions: any[];
+  actions: WorkflowAction[];
+  triggers: WorkflowTrigger[];
+  schedule?: any;
+  metadata: Record<string, any>;
+  executionCount: number;
+  lastExecuted?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  executions?: WorkflowExecution[];
 }
 
 export interface WorkflowExecution {
-  id: string
-  workflowId: string
-  tenantId: string
-  triggeredBy: string
-  triggerType: string
-  triggerData: any
-  status: ExecutionStatus
-  input: any
-  output?: any
-  contextData: any
-  metadata: any
-  startedAt: Date
-  completedAt?: Date
-  duration?: number
-  errorMessage?: string
-  errorDetails?: any
-  createdAt: Date
-  updatedAt: Date
-  // Additional fields for better tracking
-  ticketId?: string
-  nodeExecutions?: NodeExecution[]
-  n8nExecutionId?: string
+  id: string;
+  workflowId: string;
+  tenantId?: string;
+  triggeredBy: string;
+  triggerType: string;
+  triggerData: Record<string, any>;
+  status: ExecutionStatus;
+  input: Record<string, any>;
+  output?: Record<string, any>;
+  startedAt: Date;
+  completedAt?: Date;
+  duration?: number;
+  errorMessage?: string;
+  errorDetails?: any;
+  contextData: Record<string, any>;
+  metadata: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WorkflowTrigger {
+  id: string;
+  type: TriggerType;
+  name: string;
+  enabled: boolean;
+  configuration: Record<string, any>;
+  conditions?: any[];
+}
+
+export interface WorkflowAction {
+  id: string;
+  type: ActionType;
+  name: string;
+  enabled: boolean;
+  configuration: Record<string, any>;
+  onError?: {
+    action: 'continue' | 'stop' | 'retry';
+    retryCount?: number;
+    retryDelay?: number;
+  };
+}
+
+export interface WorkflowInput {
+  data: Record<string, any>;
+  context?: Record<string, any>;
+  triggerData?: Record<string, any>;
 }
 
 export interface NodeExecution {
-  nodeId: string
-  nodeName: string
-  status: ExecutionStatus
-  input?: any
-  output?: any
-  error?: string
-  startedAt: Date
-  completedAt?: Date
+  nodeId: string;
+  nodeName: string;
+  status: ExecutionStatus;
+  input: Record<string, any>;
+  output: Record<string, any>;
+  startedAt: Date;
+  completedAt: Date;
+  duration?: number;
+  errorMessage?: string;
 }
 
 export enum ExecutionStatus {
   PENDING = 'pending',
   RUNNING = 'running',
-  SUCCESS = 'success',
+  COMPLETED = 'completed',
   FAILED = 'failed',
   CANCELLED = 'cancelled',
-  COMPLETED = 'completed',
   TIMEOUT = 'timeout'
 }
 
+export enum TriggerType {
+  EVENT = 'event',
+  SCHEDULE = 'schedule',
+  WEBHOOK = 'webhook',
+  MANUAL = 'manual',
+  TIME_BASED = 'time_based',
+  SLA_BREACH = 'sla_breach'
+}
+
+export enum ActionType {
+  ASSIGN_TICKET = 'assign_ticket',
+  UPDATE_FIELD = 'update_field',
+  ADD_TAG = 'add_tag',
+  REMOVE_TAG = 'remove_tag',
+  SEND_EMAIL = 'send_email',
+  SEND_NOTIFICATION = 'send_notification',
+  CREATE_TICKET = 'create_ticket',
+  ESCALATE_TICKET = 'escalate_ticket',
+  CLOSE_TICKET = 'close_ticket',
+  API_CALL = 'api_call',
+  DELAY = 'delay',
+  CONDITION = 'condition',
+  // Extended actions supported by services
+  ADD_TICKET_NOTE = 'add_ticket_note',
+  ADD_TICKET_TIMELINE = 'add_ticket_timeline',
+  CHANGE_STATUS = 'change_status',
+  NOTIFY_TEAM = 'notify_team',
+  SEND_TEMPLATE_MESSAGE = 'send_template_message',
+  CREATE_OR_UPDATE_TICKET = 'create_or_update_ticket',
+  FETCH_INVOICE = 'fetch_invoice'
+}
+
+export interface WorkflowCondition {
+  field: string;
+  operator: ConditionOperator;
+  value?: any;
+  values?: any[];
+  logic?: 'AND' | 'OR';
+  conditions?: WorkflowCondition[];
+}
+
+export enum ConditionOperator {
+  EQUALS = 'equals',
+  NOT_EQUALS = 'not_equals',
+  GREATER_THAN = 'greater_than',
+  GREATER_THAN_OR_EQUAL = 'greater_than_or_equal',
+  LESS_THAN = 'less_than',
+  LESS_THAN_OR_EQUAL = 'less_than_or_equal',
+  CONTAINS = 'contains',
+  NOT_CONTAINS = 'not_contains',
+  STARTS_WITH = 'starts_with',
+  ENDS_WITH = 'ends_with',
+  IN = 'in',
+  NOT_IN = 'not_in',
+  EXISTS = 'exists',
+  NOT_EXISTS = 'not_exists',
+  REGEX = 'regex'
+}
+
+export interface WorkflowTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  tags: string[];
+  triggers: WorkflowTrigger[];
+  actions: WorkflowAction[];
+  conditions?: WorkflowCondition[];
+  metadata: Record<string, any>;
+  isSystem: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WorkflowMetrics {
+  totalExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  averageExecutionTime: number;
+  successRate: number;
+  lastExecuted?: Date;
+  executionsToday: number;
+  executionsThisWeek: number;
+  executionsThisMonth: number;
+}
+
+export interface WorkflowValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export interface WorkflowExecutionContext {
+  tenantId: string;
+  userId?: string;
+  ticketId?: string;
+  customerId?: string;
+  conversationId?: string;
+  timestamp: Date;
+  metadata?: Record<string, any>;
+}
+
+export interface WorkflowExecutionLog {
+  id: string;
+  executionId: string;
+  level: 'debug' | 'info' | 'warn' | 'error';
+  message: string;
+  data?: Record<string, any>;
+  timestamp: Date;
+}
+
+// Node types for node-based workflow definitions
 export enum NodeType {
   START = 'start',
   END = 'end',
   CONDITION = 'condition',
-  API_CALL = 'api_call',
-  EMAIL = 'email',
-  SEND_EMAIL = 'send_email',
-  DATABASE_QUERY = 'database_query',
   DELAY = 'delay',
-  WEBHOOK = 'webhook',
-  TICKET_ESCALATION = 'ticket_escalation',
-  TICKET_ASSIGNMENT = 'ticket_assignment',
-  LOG_EVENT = 'log_event',
-  CUSTOMER_LOOKUP = 'customer_lookup',
   LOOP = 'loop',
+  SEND_EMAIL = 'send_email',
   SEND_NOTIFICATION = 'send_notification',
-  CUSTOMER_SCORING = 'customer_scoring',
-  AI_ANALYSIS = 'ai_analysis'
-}
-
-export enum TriggerType {
-  MANUAL = 'manual',
-  SCHEDULED = 'scheduled',
-  EVENT = 'event',
+  TEMPLATE_MESSAGE = 'template_message',
+  API_CALL = 'api_call',
   WEBHOOK = 'webhook',
-  API = 'api'
+  LOG_EVENT = 'log_event',
+  DATABASE_QUERY = 'database_query',
+  CUSTOMER_LOOKUP = 'customer_lookup',
+  CUSTOMER_SCORING = 'customer_scoring',
+  AI_ANALYSIS = 'ai_analysis',
+  TICKET_ASSIGNMENT = 'ticket_assignment',
+  TICKET_ESCALATION = 'ticket_escalation'
 }
 
-export interface WorkflowNode {
-  id: string
-  type: NodeType
-  name: string
-  position: { x: number; y: number }
-  configuration: any
-  inputs: Array<{ name: string; type: string; required: boolean }>
-  outputs: Array<{ name: string; type: string; description?: string }>
+export interface WorkflowNodeDefinition {
+  id: string;
+  type: NodeType;
+  name: string;
+  position: { x: number; y: number };
+  configuration: Record<string, any>;
+  inputs: Array<{ name: string; type: string; required?: boolean }>;
+  outputs: Array<{ name: string; type: string; description?: string }>;
 }
 
-export interface WorkflowConnection {
-  id: string
-  sourceNodeId: string
-  sourceOutput: string
-  targetNodeId: string
-  targetInput: string
+export interface WorkflowConnectionDefinition {
+  id: string;
+  sourceNodeId: string;
+  sourceOutput: string;
+  targetNodeId: string;
+  targetInput: string;
 }
 
 export interface WorkflowDefinition {
-  id?: string
-  tenantId?: string
-  name: string
-  description: string
-  version: string
-  status?: string
-  category: string
-  tags: string[]
-  createdBy?: string
-  trigger?: {
-    type: TriggerType
-    configuration: any
-  }
-  triggers?: Array<{
-    id: string
-    type: TriggerType
-    name: string
-    configuration: any
-    enabled: boolean
-  }>
-  nodes: WorkflowNode[]
-  connections: WorkflowConnection[]
-  settings?: {
-    timeout: number
-    maxRetries: number
-    errorHandling: string
-    logging: string
-    executionMode: string
-    priority: string
-    permissions: Array<{ role: string; actions: string[] }>
-    allowedIntegrations: string[]
-  }
-  variables?: Array<{
-    name: string
-    type: string
-    defaultValue: any
-    required: boolean
-    description: string
-  }>
-}
-
-export interface WorkflowInput {
-  data?: any
-  triggerData?: any
-  context?: any
-}
-
-export interface WorkflowTrigger {
-  type: string
-  conditions: any
-  configuration: any
-}
-
-export interface WorkflowAction {
-  type: string
-  configuration: any
-  order: number
-}
-
-export interface WorkflowTemplate {
-  id: string
-  name: string
-  description: string
-  category: string
-  triggers: WorkflowTrigger[]
-  actions: WorkflowAction[]
-  configuration: any
-  isPublic: boolean
-}
-
-export interface WorkflowExecutionContext {
-  tenantId: string
-  userId?: string
-  conversationId?: string
-  messageId?: string
-  metadata?: any
-}
-
-export interface WorkflowEvent {
-  type: string
-  data: any
-  context: WorkflowExecutionContext
-  timestamp: Date
-}
-
-export interface WorkflowSettings {
-  timeout: number
-  maxRetries: number
-  errorHandling: string
-  logging: string
-  executionMode: string
-  priority: string
-  permissions: Array<{ role: string; actions: string[] }>
-  allowedIntegrations: string[]
-}
-
-export interface WorkflowVariable {
-  name: string
-  type: string
-  defaultValue: any
-  required: boolean
-  description?: string
+  tenantId: string;
+  name: string;
+  description?: string;
+  version?: string;
+  status?: 'active' | 'inactive' | 'draft' | string;
+  category?: string;
+  tags?: string[];
+  createdBy?: string;
+  triggers: WorkflowTrigger[];
+  nodes: WorkflowNodeDefinition[];
+  connections: WorkflowConnectionDefinition[];
+  settings?: Record<string, any>;
+  variables?: Array<{ name: string; type: string; defaultValue?: any; required?: boolean; description?: string }>;
 }

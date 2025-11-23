@@ -3,26 +3,9 @@
  * Handles team invitation API endpoints
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, Request, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import {
-  InvitationService,
-  SendInvitationRequest,
-  BulkInviteRequest,
-  AcceptInvitationRequest
-} from './invitation.service';
+import { InvitationService, type SendInvitationRequest, type BulkInviteRequest, type AcceptInvitationRequest } from './invitation.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('invitations')
@@ -42,8 +25,8 @@ export class InvitationController {
     @Request() req: any,
     @Body() request: SendInvitationRequest
   ) {
-    const { tenantId, userId } = req.user;
-    return this.invitationService.sendInvitation(tenantId, request, userId);
+    const { tenantId, id } = req.user;
+    return this.invitationService.sendInvitation(tenantId, id, request);
   }
 
   @Post('bulk')
@@ -58,8 +41,8 @@ export class InvitationController {
     @Request() req: any,
     @Body() request: BulkInviteRequest
   ) {
-    const { tenantId, userId } = req.user;
-    return this.invitationService.sendBulkInvitations(tenantId, request, userId);
+    const { tenantId, id } = req.user;
+    return this.invitationService.sendBulkInvitations(tenantId, request, id);
   }
 
   @Get()
@@ -71,23 +54,12 @@ export class InvitationController {
     description: 'Invitations retrieved successfully',
   })
   @ApiQuery({ name: 'status', required: false, description: 'Filter by status' })
-  @ApiQuery({ name: 'role', required: false, description: 'Filter by role' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of results per page' })
-  @ApiQuery({ name: 'offset', required: false, description: 'Number of results to skip' })
   async getInvitations(
     @Request() req: any,
     @Query('status') status?: string,
-    @Query('role') role?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string
   ) {
     const { tenantId } = req.user;
-    return this.invitationService.getInvitations(tenantId, {
-      status,
-      role,
-      limit: limit ? parseInt(limit) : undefined,
-      offset: offset ? parseInt(offset) : undefined,
-    });
+    return this.invitationService.getInvitations(tenantId, status);
   }
 
   @Post(':invitationId/resend')
@@ -102,8 +74,8 @@ export class InvitationController {
     @Request() req: any,
     @Param('invitationId') invitationId: string
   ) {
-    const { tenantId, userId } = req.user;
-    return this.invitationService.resendInvitation(tenantId, invitationId, userId);
+    const { tenantId } = req.user;
+    return this.invitationService.resendInvitation(tenantId, invitationId);
   }
 
   @Delete(':invitationId')
@@ -118,8 +90,8 @@ export class InvitationController {
     @Request() req: any,
     @Param('invitationId') invitationId: string
   ) {
-    const { tenantId, userId } = req.user;
-    await this.invitationService.cancelInvitation(tenantId, invitationId, userId);
+    const { tenantId } = req.user;
+    await this.invitationService.cancelInvitation(tenantId, invitationId);
     return { success: true, message: 'Invitation cancelled successfully' };
   }
 
@@ -151,7 +123,7 @@ export class InvitationController {
     status: HttpStatus.OK,
     description: 'Invitation statistics retrieved successfully',
   })
-  async getInvitationStats(@Request() req: unknown) {
+  async getInvitationStats(@Request() req: any) {
     const { tenantId } = req.user;
     return this.invitationService.getInvitationStats(tenantId);
   }

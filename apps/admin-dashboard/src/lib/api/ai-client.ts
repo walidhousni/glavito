@@ -1,4 +1,63 @@
-import { api } from './config'
+'use client';
+
+import { api } from './config';
+
+
+export interface AISuggestionOptions {
+  improveTone?: boolean;
+  tone?: string;
+  fixGrammar?: boolean;
+  format?: 'paragraph' | 'bullets' | 'email' | 'whatsapp';
+  context?: Record<string, unknown>;
+}
+
+export async function aiGetResponseSuggestions(content: string, options?: AISuggestionOptions) {
+  const { data } = await api.post('/ai/suggestions/response', {
+    content,
+    context: options?.context,
+    actions: {
+      improveTone: options?.improveTone,
+      tone: options?.tone,
+      fixGrammar: options?.fixGrammar,
+      format: options?.format,
+    },
+  });
+  return data as {
+    responses: Array<{ response: string; tone: string; confidence: number; reasoning: string }>;
+    templates: Array<{ templateId: string; title: string; content: string; relevanceScore: number }>;
+    knowledgeArticles: Array<{ id: string; title: string; snippet: string; relevanceScore: number }>;
+    faqs: Array<{ id: string; question: string; answer: string; relevanceScore: number }>;
+    rewrite?: string;
+    grammarFix?: string;
+  };
+}
+
+export async function aiSummarizeThread(messages: Array<{ content: string; senderType?: string }>, maxBullets = 5) {
+  const { data } = await api.post('/ai/summarize/thread', { messages, maxBullets });
+  return data as { success: boolean; data: { short: string; bullets: string[] } };
+}
+
+export async function aiSuggestKB(query: string) {
+  const { data } = await api.post('/ai/kb/suggest', { query });
+  return data as { success: boolean; data: { articles: any[]; faqs: any[] } };
+}
+
+export async function aiGetAutopilotConfig() {
+  const { data } = await api.get('/ai/autopilot/config');
+  return data as { mode: 'off'|'draft'|'auto'; minConfidence: number; allowedChannels: string[] };
+}
+
+export async function aiUpdateAutopilotConfig(payload: { mode?: 'off'|'draft'|'auto'; minConfidence?: number; allowedChannels?: string[] }) {
+  const { data } = await api.patch('/ai/autopilot/config', payload);
+  return data as { success: boolean; config?: { mode?: 'off'|'draft'|'auto'; minConfidence?: number; allowedChannels?: string[] } };
+}
+
+export async function aiAutopilotReply(conversationId: string, content: string, channelType?: string) {
+  const { data } = await api.post('/ai/autopilot/reply', { conversationId, content, channelType });
+  return data as { success: true; data: { decision: string; answer?: string; messageId?: string; confidence?: number } };
+}
+
+// ---------------- Aggregated API (for dashboards/admin pages) ----------------
 
 export interface AIInsightsDTO {
   totalAnalyses: number
@@ -46,6 +105,13 @@ export const aiApi = {
     const { data } = await api.get('/ai/insights', { params: query })
     return unwrap<AIInsightsDTO | undefined>(data)
   },
+
+  async triage(payload: { ticketId?: string; conversationId?: string; content?: string; subject?: string; channel?: string }) {
+    const { data } = await api.post('/ai/triage', payload)
+    return data
+  },
+
+  // getAutopilotConfig is defined below with a typed return (see Autopilot configuration helpers)
 
   async recentAnalyses(limit = 20, agentId?: string) {
     const params: Record<string, unknown> = { limit }
@@ -110,6 +176,13 @@ export const aiApi = {
   async setAutopilotConfig(payload: Partial<{ mode: 'off'|'draft'|'auto'; minConfidence: number; maxAutoRepliesPerHour: number; allowedChannels: string[]; guardrails: Record<string, unknown> }>): Promise<any> {
     const { data } = await api.post('/ai/autopilot/config', payload)
     return unwrap<any>(data)
+  },
+
+  async autopilotReply(payload: { conversationId: string; content: string; channelType?: string }): Promise<{ decision: string; answer?: string; messageId?: string; confidence?: number }> {
+    const { data } = await api.post('/ai/autopilot/reply', payload)
+    const unwrapped = unwrap<{ decision: string; answer?: string; messageId?: string; confidence?: number }>(data as any)
+    // unwrap handles envelopes; controller returns { success, data }
+    return (data as any)?.data ?? unwrapped
   },
 }
 

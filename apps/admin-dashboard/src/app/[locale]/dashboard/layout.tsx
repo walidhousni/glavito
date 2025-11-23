@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       }
     >
-      <ProtectedRoute requiredRole={['admin']}>
+    <ProtectedRoute requiredRole={['admin','agent']}>
         <AppShell>{children}</AppShell>
       </ProtectedRoute>
     </ClientOnly>

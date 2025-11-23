@@ -3,7 +3,7 @@ import { PrismaService } from '@glavito/shared-database';
 
 export interface SearchFilters {
   // Entity filters
-  entities?: ('lead' | 'deal' | 'customer' | 'segment')[];
+  entities?: ('lead' | 'deal' | 'customer' | 'segment' | 'ticket' | 'conversation')[];
   
   // Text search
   query?: string;
@@ -18,6 +18,12 @@ export interface SearchFilters {
   leadStatus?: string[];
   dealStage?: string[];
   dealPipeline?: string[];
+  ticketStatus?: string[];
+  ticketPriority?: string[];
+  conversationStatus?: string[];
+  
+  // Channel filters
+  channels?: string[];
   
   // Value filters
   minValue?: number;
@@ -31,6 +37,7 @@ export interface SearchFilters {
   // Assignment filters
   assignedTo?: string[];
   unassigned?: boolean;
+  teamId?: string[];
   
   // Company filters
   companies?: string[];
@@ -53,7 +60,7 @@ export interface SearchFilters {
 
 export interface SearchResult {
   id: string;
-  type: 'lead' | 'deal' | 'customer' | 'segment';
+  type: 'lead' | 'deal' | 'customer' | 'segment' | 'ticket' | 'conversation';
   title: string;
   subtitle?: string;
   description?: string;
@@ -85,12 +92,17 @@ export interface SearchFacets {
   leadStatus: Array<{ value: string; count: number }>;
   dealStage: Array<{ value: string; count: number }>;
   dealPipeline: Array<{ value: string; count: number }>;
+  ticketStatus: Array<{ value: string; count: number }>;
+  ticketPriority: Array<{ value: string; count: number }>;
+  conversationStatus: Array<{ value: string; count: number }>;
+  channels: Array<{ value: string; count: number }>;
   companies: Array<{ value: string; count: number }>;
   sources: Array<{ value: string; count: number }>;
   assignedTo: Array<{ value: string; count: number }>;
+  teams: Array<{ value: string; count: number }>;
   tags: Array<{ value: string; count: number }>;
   dateRanges: Array<{ label: string; count: number; from: Date; to: Date }>;
-  valueRanges: Array<{ label: string; count: number; min: number; max: number }>;
+  valueRanges: Array<{ value: string; count: number; min: number; max: number }>;
   scoreRanges: Array<{ label: string; count: number; min: number; max: number }>;
 }
 
@@ -144,7 +156,7 @@ export class CrmSearchService {
   private async buildSearchQuery(tenantId: string, filters: SearchFilters) {
     // Only keep safe cross-entity constraints here
     const baseWhere: any = { tenantId };
-    const entities = filters.entities || ['lead', 'deal', 'customer', 'segment'];
+    const entities = filters.entities || ['lead', 'deal', 'customer', 'segment', 'ticket', 'conversation'];
     const searchQuery = filters.query;
     const useSemantic = filters.semantic;
 
@@ -183,6 +195,16 @@ export class CrmSearchService {
           { name: { contains: query, mode: 'insensitive' } },
           { description: { contains: query, mode: 'insensitive' } }
         ];
+      case 'ticket':
+        return [
+          { subject: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { tags: { hasSome: searchTerms } }
+        ];
+      case 'conversation':
+        return [
+          { subject: { contains: query, mode: 'insensitive' } }
+        ];
       default:
         return [];
     }
@@ -197,7 +219,9 @@ export class CrmSearchService {
         (entity === 'lead' && (dateField === 'createdAt' || dateField === 'updatedAt' || dateField === 'lastActivityAt')) ||
         (entity === 'deal' && (dateField === 'createdAt' || dateField === 'updatedAt')) ||
         (entity === 'customer' && (dateField === 'createdAt' || dateField === 'updatedAt')) ||
-        (entity === 'segment' && (dateField === 'createdAt' || dateField === 'updatedAt'))
+        (entity === 'segment' && (dateField === 'createdAt' || dateField === 'updatedAt')) ||
+        (entity === 'ticket' && (dateField === 'createdAt' || dateField === 'updatedAt')) ||
+        (entity === 'conversation' && (dateField === 'createdAt' || dateField === 'updatedAt'))
       ) {
         where[dateField] = {};
         if (filters.dateFrom) where[dateField].gte = filters.dateFrom;
@@ -237,6 +261,25 @@ export class CrmSearchService {
       if (filters.companies?.length) where.company = { in: filters.companies };
       if (filters.tags?.length) where.tags = { hasSome: filters.tags };
       // healthScore filters could be mapped from minScore/maxScore if desired; skipping for now
+    }
+
+    if (entity === 'ticket') {
+      if (filters.ticketStatus?.length) where.status = { in: filters.ticketStatus };
+      if (filters.ticketPriority?.length) where.priority = { in: filters.ticketPriority };
+      if (filters.assignedTo?.length) where.assignedAgentId = { in: filters.assignedTo };
+      if (filters.unassigned) where.assignedAgentId = null;
+      if (filters.teamId?.length) where.teamId = { in: filters.teamId };
+      if (filters.tags?.length) where.tags = { hasSome: filters.tags };
+      if (filters.channels?.length) {
+        where.channel = { type: { in: filters.channels } };
+      }
+    }
+
+    if (entity === 'conversation') {
+      if (filters.conversationStatus?.length) where.status = { in: filters.conversationStatus };
+      if (filters.channels?.length) {
+        where.channel = { type: { in: filters.channels } };
+      }
     }
   }
 
@@ -366,6 +409,51 @@ export class CrmSearchService {
             }
           });
           break;
+        case 'ticket':
+          entityResults = await this.prisma.ticket.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: { [sortBy === 'updatedAt' ? 'updatedAt' : sortBy]: sortOrder },
+            select: {
+              id: true,
+              subject: true,
+              description: true,
+              status: true,
+              priority: true,
+              tags: true,
+              assignedAgentId: true,
+              teamId: true,
+              createdAt: true,
+              updatedAt: true,
+              channel: {
+                select: {
+                  type: true
+                }
+              }
+            }
+          });
+          break;
+        case 'conversation':
+          entityResults = await this.prisma.conversation.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: { [sortBy === 'updatedAt' ? 'updatedAt' : sortBy]: sortOrder },
+            select: {
+              id: true,
+              subject: true,
+              status: true,
+              createdAt: true,
+              updatedAt: true,
+              channel: {
+                select: {
+                  type: true
+                }
+              }
+            }
+          });
+          break;
       }
 
       // Transform results to SearchResult format
@@ -445,6 +533,38 @@ export class CrmSearchService {
           createdAt: result.createdAt,
           updatedAt: result.updatedAt
         };
+      case 'ticket':
+        return {
+          id: result.id,
+          type: 'ticket',
+          title: result.subject,
+          subtitle: `${result.status} - ${result.priority}`,
+          description: result.description?.substring(0, 200),
+          metadata: {
+            status: result.status,
+            priority: result.priority,
+            tags: result.tags,
+            assignedAgentId: result.assignedAgentId,
+            teamId: result.teamId,
+            channel: result.channel?.type
+          },
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt
+        };
+      case 'conversation':
+        return {
+          id: result.id,
+          type: 'conversation',
+          title: result.subject || 'Conversation',
+          subtitle: result.status,
+          description: `Conversation via ${result.channel?.type || 'unknown channel'}`,
+          metadata: {
+            status: result.status,
+            channel: result.channel?.type
+          },
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt
+        };
       default:
         return {
           id: result.id,
@@ -488,6 +608,12 @@ export class CrmSearchService {
         case 'segment':
           count = await this.prisma.customerSegment.count({ where });
           break;
+        case 'ticket':
+          count = await this.prisma.ticket.count({ where });
+          break;
+        case 'conversation':
+          count = await this.prisma.conversation.count({ where });
+          break;
       }
       totalCount += count;
     }
@@ -502,9 +628,14 @@ export class CrmSearchService {
       leadStatus: [],
       dealStage: [],
       dealPipeline: [],
+      ticketStatus: [],
+      ticketPriority: [],
+      conversationStatus: [],
+      channels: [],
       companies: [],
       sources: [],
       assignedTo: [],
+      teams: [],
       tags: [],
       dateRanges: [],
       valueRanges: [],
@@ -517,14 +648,18 @@ export class CrmSearchService {
         this.prisma.lead.count({ where: { tenantId } }),
         this.prisma.deal.count({ where: { tenantId } }),
         this.prisma.customer.count({ where: { tenantId } }),
-        this.prisma.customerSegment.count({ where: { tenantId } })
+        this.prisma.customerSegment.count({ where: { tenantId } }),
+        this.prisma.ticket.count({ where: { tenantId } }),
+        this.prisma.conversation.count({ where: { tenantId } })
       ]);
 
       facets.entities = [
         { value: 'lead', count: entityCounts[0] },
         { value: 'deal', count: entityCounts[1] },
         { value: 'customer', count: entityCounts[2] },
-        { value: 'segment', count: entityCounts[3] }
+        { value: 'segment', count: entityCounts[3] },
+        { value: 'ticket', count: entityCounts[4] },
+        { value: 'conversation', count: entityCounts[5] }
       ];
 
       // Lead status counts
@@ -547,6 +682,72 @@ export class CrmSearchService {
       facets.dealStage = dealStages.map(item => ({
         value: item.stage || 'unknown',
         count: item._count.stage
+      }));
+
+      // Ticket status counts
+      const ticketStatuses = await this.prisma.ticket.groupBy({
+        by: ['status'],
+        where: { tenantId },
+        _count: { status: true }
+      });
+      facets.ticketStatus = ticketStatuses.map(item => ({
+        value: item.status || 'unknown',
+        count: item._count.status
+      }));
+
+      // Ticket priority counts
+      const ticketPriorities = await this.prisma.ticket.groupBy({
+        by: ['priority'],
+        where: { tenantId },
+        _count: { priority: true }
+      });
+      facets.ticketPriority = ticketPriorities.map(item => ({
+        value: item.priority || 'unknown',
+        count: item._count.priority
+      }));
+
+      // Conversation status counts
+      const conversationStatuses = await this.prisma.conversation.groupBy({
+        by: ['status'],
+        where: { tenantId },
+        _count: { status: true }
+      });
+      facets.conversationStatus = conversationStatuses.map(item => ({
+        value: item.status || 'unknown',
+        count: item._count.status
+      }));
+
+      // Channel counts (from tickets and conversations)
+      const ticketChannels = await this.prisma.ticket.findMany({
+        where: { tenantId },
+        select: { channel: { select: { type: true } } },
+        distinct: ['channelId']
+      });
+      const conversationChannels = await this.prisma.conversation.findMany({
+        where: { tenantId },
+        select: { channel: { select: { type: true } } },
+        distinct: ['channelId']
+      });
+      const channelMap = new Map<string, number>();
+      for (const t of ticketChannels) {
+        const type = t.channel.type;
+        channelMap.set(type, (channelMap.get(type) || 0) + 1);
+      }
+      for (const c of conversationChannels) {
+        const type = c.channel.type;
+        channelMap.set(type, (channelMap.get(type) || 0) + 1);
+      }
+      facets.channels = Array.from(channelMap.entries()).map(([value, count]) => ({ value, count }));
+
+      // Team counts
+      const teams = await this.prisma.ticket.groupBy({
+        by: ['teamId'],
+        where: { tenantId, teamId: { not: null } },
+        _count: { teamId: true }
+      });
+      facets.teams = teams.map(item => ({
+        value: item.teamId || 'unknown',
+        count: item._count.teamId
       }));
 
       // Company counts

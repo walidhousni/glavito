@@ -3,8 +3,33 @@ import { DatabaseService } from '@glavito/shared-database'
 import type { Response } from 'express'
 
 export type PublicChatRole = 'user' | 'assistant'
-export type PublicChatMessage = { role: PublicChatRole; text: string; ts: number }
-export type PublicChatSession = { tenantId: string; createdAt: number; messages: PublicChatMessage[]; email?: string; name?: string; conversationId?: string; conversationChannel?: string }
+export type PublicChatMessage = { role: PublicChatRole; text: string; ts: number; channel?: string; status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed' }
+
+export type LinkedChannel = {
+  phoneNumber?: string
+  igHandle?: string
+  email?: string
+  verified: boolean
+  linkedAt: number
+  verificationCode?: string
+  verificationAttempts?: number
+  lastVerificationAt?: number
+}
+
+export type PublicChatSession = { 
+  tenantId: string
+  createdAt: number
+  messages: PublicChatMessage[]
+  email?: string
+  name?: string
+  conversationId?: string
+  conversationChannel?: string
+  linkedChannels?: {
+    whatsapp?: LinkedChannel
+    instagram?: LinkedChannel
+    email?: LinkedChannel
+  }
+}
 
 @Injectable()
 export class PublicChatSessionStore {
@@ -134,6 +159,104 @@ export class PublicChatSessionStore {
     }
     this.magicTokens.delete(token)
     return { sessionId: entry.sessionId, tenantId: entry.tenantId }
+  }
+
+  // --- Multi-channel support ---
+  linkWhatsAppNumber(sessionId: string, phoneNumber: string, verified = false): void {
+    const sess = this.sessions.get(sessionId)
+    if (!sess) return
+    if (!sess.linkedChannels) sess.linkedChannels = {}
+    sess.linkedChannels.whatsapp = {
+      phoneNumber,
+      verified,
+      linkedAt: Date.now(),
+      verificationAttempts: 0,
+    }
+  }
+
+  linkInstagramHandle(sessionId: string, igHandle: string, verified = false): void {
+    const sess = this.sessions.get(sessionId)
+    if (!sess) return
+    if (!sess.linkedChannels) sess.linkedChannels = {}
+    sess.linkedChannels.instagram = {
+      igHandle,
+      verified,
+      linkedAt: Date.now(),
+      verificationAttempts: 0,
+    }
+  }
+
+  linkEmail(sessionId: string, email: string, verified = true): void {
+    const sess = this.sessions.get(sessionId)
+    if (!sess) return
+    if (!sess.linkedChannels) sess.linkedChannels = {}
+    sess.linkedChannels.email = {
+      email,
+      verified,
+      linkedAt: Date.now(),
+    }
+  }
+
+  findSessionByPhoneNumber(phoneNumber: string): string | null {
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (session.linkedChannels?.whatsapp?.phoneNumber === phoneNumber && session.linkedChannels.whatsapp.verified) {
+        return sessionId
+      }
+    }
+    return null
+  }
+
+  findSessionByInstagramHandle(igHandle: string): string | null {
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (session.linkedChannels?.instagram?.igHandle === igHandle && session.linkedChannels.instagram.verified) {
+        return sessionId
+      }
+    }
+    return null
+  }
+
+  getLinkedChannels(sessionId: string): PublicChatSession['linkedChannels'] | null {
+    const sess = this.sessions.get(sessionId)
+    return sess?.linkedChannels || null
+  }
+
+  addChannelMessage(sessionId: string, channel: string, message: Omit<PublicChatMessage, 'channel'>): void {
+    const sess = this.sessions.get(sessionId)
+    if (!sess) return
+    const fullMessage: PublicChatMessage = { ...message, channel }
+    sess.messages.push(fullMessage)
+    this.broadcast(sessionId, { type: 'message', message: fullMessage })
+  }
+
+  setVerificationCode(sessionId: string, channel: 'whatsapp' | 'instagram', code: string): void {
+    const sess = this.sessions.get(sessionId)
+    if (!sess || !sess.linkedChannels) return
+    const linkedChannel = sess.linkedChannels[channel]
+    if (!linkedChannel) return
+    linkedChannel.verificationCode = code
+    linkedChannel.lastVerificationAt = Date.now()
+    linkedChannel.verificationAttempts = (linkedChannel.verificationAttempts || 0) + 1
+  }
+
+  verifyChannel(sessionId: string, channel: 'whatsapp' | 'instagram', code: string): boolean {
+    const sess = this.sessions.get(sessionId)
+    if (!sess || !sess.linkedChannels) return false
+    const linkedChannel = sess.linkedChannels[channel]
+    if (!linkedChannel || linkedChannel.verificationCode !== code) return false
+    linkedChannel.verified = true
+    linkedChannel.verificationCode = undefined
+    this.broadcast(sessionId, { type: 'channel.verified', channel })
+    return true
+  }
+
+  updateMessageStatus(sessionId: string, messageTs: number, status: PublicChatMessage['status']): void {
+    const sess = this.sessions.get(sessionId)
+    if (!sess) return
+    const message = sess.messages.find(m => m.ts === messageTs)
+    if (message) {
+      message.status = status
+      this.broadcast(sessionId, { type: 'message.status', ts: messageTs, status })
+    }
   }
 }
 

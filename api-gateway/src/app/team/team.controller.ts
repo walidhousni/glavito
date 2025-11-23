@@ -25,8 +25,7 @@ import {
   UpdateTeamMemberRequest 
 } from './team.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard, Roles } from '@glavito/shared-auth';
 
 @ApiTags('teams')
 @ApiBearerAuth()
@@ -51,7 +50,7 @@ export class TeamController {
   }
 
   @Get()
-  @Roles('admin')
+  @Roles('admin', 'agent')
   @ApiOperation({ summary: 'Get all teams' })
   @ApiQuery({ name: 'includeMembers', required: false, type: Boolean })
   @ApiResponse({
@@ -62,8 +61,10 @@ export class TeamController {
     @Request() req: any,
     @Query('includeMembers') includeMembers?: boolean
   ) {
-    const { tenantId } = req.user;
-    return this.teamService.getTeams(tenantId, includeMembers);
+    const { tenantId, id: userId, role } = req.user;
+    // Agents can only see teams they're members of
+    const isAgent = role === 'agent';
+    return this.teamService.getTeams(tenantId, includeMembers, isAgent ? userId : undefined);
   }
 
   @Get('stats')
@@ -95,7 +96,7 @@ export class TeamController {
   }
 
   @Get(':teamId')
-  @Roles('admin')
+  @Roles('admin', 'agent')
   @ApiOperation({ summary: 'Get team by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -105,12 +106,18 @@ export class TeamController {
     @Request() req: any,
     @Param('teamId') teamId: string
   ) {
-    const { tenantId } = req.user;
+    const { tenantId, id: userId, role } = req.user;
+    // Agents can only see teams they're members of
+    const isAgent = role === 'agent';
+    if (isAgent) {
+      // Verify agent is a member of this team
+      await this.teamService.verifyTeamMembership(tenantId, teamId, userId);
+    }
     return this.teamService.getTeam(tenantId, teamId);
   }
 
   @Get(':teamId/members')
-  @Roles('admin')
+  @Roles('admin', 'agent')
   @ApiOperation({ summary: 'Get team members' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -120,7 +127,13 @@ export class TeamController {
     @Request() req: any,
     @Param('teamId') teamId: string
   ) {
-    const { tenantId } = req.user;
+    const { tenantId, id: userId, role } = req.user;
+    // Agents can only see members of teams they belong to
+    const isAgent = role === 'agent';
+    if (isAgent) {
+      // Verify agent is a member of this team
+      await this.teamService.verifyTeamMembership(tenantId, teamId, userId);
+    }
     return this.teamService.getTeamMembers(tenantId, teamId);
   }
 

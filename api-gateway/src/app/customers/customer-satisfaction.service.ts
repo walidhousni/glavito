@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Optional, Inject } from '@nestjs/common';
 import { DatabaseService } from '@glavito/shared-database';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
@@ -49,6 +49,7 @@ export class CustomerSatisfactionService {
     private readonly databaseService: DatabaseService,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    @Optional() @Inject('EVENT_PUBLISHER') private readonly eventPublisher?: { emit?: (event: string, payload: Record<string, unknown>) => void },
   ) {}
 
   /**
@@ -95,6 +96,11 @@ export class CustomerSatisfactionService {
             surveyUrl,
           },
         },
+      });
+
+      // Create system message in conversation when survey is sent
+      await this.createSurveySentMessage(request.tenantId, request.customerId, request.conversationId, survey.id, 'email').catch((err) => {
+        this.logger.warn('Failed to create survey sent message:', err);
       });
 
       this.logger.log(`Email survey sent to customer ${request.customerId}, survey ID: ${survey.id}`);
@@ -152,6 +158,11 @@ export class CustomerSatisfactionService {
             flowDelivered: flowSent,
           },
         },
+      });
+
+      // Create system message in conversation when survey is sent
+      await this.createSurveySentMessage(request.tenantId, request.customerId, request.conversationId, survey.id, 'whatsapp').catch((err) => {
+        this.logger.warn('Failed to create survey sent message:', err);
       });
 
       this.logger.log(`WhatsApp Flow survey sent to customer ${request.customerId}, survey ID: ${survey.id}`);
@@ -215,7 +226,54 @@ export class CustomerSatisfactionService {
         }
       }
 
+      // Create system message in conversation showing survey response
+      const tenantId = (survey as any)?.tenantId as string | undefined;
+      const customerId = (survey as any)?.customerId as string | undefined;
+      const conversationId = (survey as any)?.conversationId as string | undefined;
+      const channel = (survey as any)?.channel as string | undefined;
+      
+      if (tenantId && customerId) {
+        await this.createSurveyResponseMessage(
+          tenantId,
+          customerId,
+          conversationId,
+          surveyId,
+          rating,
+          comment,
+          customAnswers,
+          channel || 'whatsapp'
+        ).catch((err) => {
+          this.logger.warn('Failed to create survey response message:', err);
+        });
+      }
+
       this.logger.log(`Survey response processed: ${surveyId}, rating: ${rating}`);
+
+      // Emit notifications (best-effort)
+      try {
+        this.eventPublisher?.emit?.('survey.response', {
+          eventType: 'survey.response',
+          surveyId,
+          tenantId,
+          customerId,
+          rating,
+          comment,
+          respondedAt: updatedSurvey.respondedAt,
+        })
+        if (typeof rating === 'number' && rating <= 2) {
+          this.eventPublisher?.emit?.('csat.low_rating_received', {
+            eventType: 'csat.low_rating_received',
+            surveyId,
+            tenantId,
+            customerId,
+            rating,
+            comment,
+            timestamp: new Date().toISOString(),
+          })
+        }
+      } catch (emitErr) {
+        this.logger.warn('Failed to emit survey notifications', emitErr as any)
+      }
 
       return {
         surveyId,
@@ -228,6 +286,20 @@ export class CustomerSatisfactionService {
       this.logger.error('Failed to process survey response:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get segment members (customer IDs)
+   */
+  async getSegmentMembers(tenantId: string, segmentId: string): Promise<string[]> {
+    const memberships = await this.databaseService.customerSegmentMembership.findMany({
+      where: { 
+        segmentId,
+        segment: { tenantId },
+      },
+      select: { customerId: true },
+    });
+    return memberships.map(m => m.customerId);
   }
 
   /**
@@ -304,6 +376,49 @@ export class CustomerSatisfactionService {
       return acc;
     }, {} as Record<string, number>);
 
+    // NPS-style score on 1-5 scale: 4-5 = promoters, 3 = passive, 1-2 = detractors
+    let promoters = 0; let passives = 0; let detractors = 0;
+    for (const r of ratings) {
+      if (r >= 4) promoters += 1; else if (r === 3) passives += 1; else detractors += 1;
+    }
+    const npsBase = ratings.length || 1;
+    const nps = ((promoters - detractors) / npsBase) * 100;
+
+    // Channel averages
+    const channelAverages: Array<{ channel: string; averageScore: number; responseCount: number }> = [];
+    try {
+      const byChannel = new Map<string, { sum: number; count: number }>();
+      for (const s of surveys) {
+        if (!s.respondedAt) continue;
+        const key = s.channel || 'unknown';
+        const cur = byChannel.get(key) || { sum: 0, count: 0 };
+        cur.sum += s.rating || 0;
+        cur.count += 1;
+        byChannel.set(key, cur);
+      }
+      for (const [channel, agg] of byChannel.entries()) {
+        channelAverages.push({ channel, averageScore: agg.count ? Math.round((agg.sum / agg.count) * 100) / 100 : 0, responseCount: agg.count });
+      }
+    } catch { /* noop */ }
+
+    // Simple channel trends by day (responses)
+    const channelTrends: Array<{ channel: string; points: Array<{ date: string; value: number }> }> = [];
+    try {
+      const map = new Map<string, Map<string, number>>();
+      for (const s of surveys) {
+        if (!s.respondedAt) continue;
+        const day = new Date(s.respondedAt).toISOString().slice(0, 10);
+        const chan = s.channel || 'unknown';
+        if (!map.has(chan)) map.set(chan, new Map());
+        const byDay = map.get(chan)!;
+        byDay.set(day, (byDay.get(day) || 0) + 1);
+      }
+      for (const [chan, byDay] of map.entries()) {
+        const points = Array.from(byDay.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([date, value]) => ({ date, value }));
+        channelTrends.push({ channel: chan, points });
+      }
+    } catch { /* noop */ }
+
     return {
       totalSent,
       totalResponded,
@@ -311,6 +426,10 @@ export class CustomerSatisfactionService {
       averageRating: Math.round(averageRating * 100) / 100,
       ratingDistribution,
       channelBreakdown,
+      // Extended metrics
+      nps: Math.round(nps * 100) / 100,
+      channelAverages,
+      channelTrends,
       surveys: surveys.slice(0, 50), // Latest 50 for detailed view
     };
   }
@@ -434,7 +553,8 @@ export class CustomerSatisfactionService {
   }
 
   /**
-   * Create WhatsApp Flow for survey
+   * Create WhatsApp Flow for survey using Meta Flows API
+   * Reference: https://developers.facebook.com/blog/post/2024/03/06/creating-surveys-with-whatsapp-flows/
    */
   private async createWhatsAppSurveyFlow(
     request: SatisfactionSurveyRequest,
@@ -442,13 +562,61 @@ export class CustomerSatisfactionService {
   ): Promise<WhatsAppFlowSurvey> {
     const questions = request.customQuestions || this.getDefaultQuestions(request.surveyType);
 
-    // Create flow JSON for WhatsApp
+    const whatsappConfig = {
+      accessToken: this.configService.get<string>('WHATSAPP_ACCESS_TOKEN'),
+      businessAccountId: this.configService.get<string>('WHATSAPP_BUSINESS_ACCOUNT_ID') || 
+                         this.configService.get<string>('WHATSAPP_BUSINESS_ID'), // Fallback for legacy env var name
+      baseUrl: this.configService.get<string>('WHATSAPP_API_BASE_URL', 'https://graph.facebook.com/v18.0'),
+    };
+
+    if (!whatsappConfig.accessToken || !whatsappConfig.businessAccountId) {
+      this.logger.warn('WhatsApp configuration missing, cannot create Flow');
+      throw new Error('WhatsApp Business Account ID and Access Token are required');
+    }
+
+    try {
+      // Step 1: Create Flow via Flows API
+      // POST /{business-account-id}/flows
+      const flowName = `survey_${surveyId.substring(0, 8)}_${Date.now()}`;
+      const createFlowUrl = `${whatsappConfig.baseUrl}/${whatsappConfig.businessAccountId}/flows`;
+      
+      // Create form-urlencoded payload
+      const flowCreationPayload = new URLSearchParams();
+      flowCreationPayload.append('name', flowName);
+      flowCreationPayload.append('categories', JSON.stringify(['SURVEY']));
+      
+      const createFlowResponse = await firstValueFrom(
+        this.httpService.post(
+          createFlowUrl,
+          flowCreationPayload.toString(),
+          {
+            headers: {
+              'Authorization': `Bearer ${whatsappConfig.accessToken}`,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          }
+        )
+      );
+
+      const flowId = createFlowResponse.data?.id;
+      if (!flowId) {
+        throw new Error('Failed to create Flow: No flow ID returned');
+      }
+
+      this.logger.log(`Flow created with ID: ${flowId}`);
+
+      // Step 2: Create Flow JSON structure according to WhatsApp Flows spec
+      // Reference: https://developers.facebook.com/docs/whatsapp/flows/reference/flowjson
     const flowJson = {
       version: "3.0",
       screens: [
         {
           id: "SURVEY_SCREEN",
           title: "Customer Satisfaction Survey",
+            data: {
+              // Store surveyId in screen data for reference
+              surveyId: surveyId,
+            },
           layout: {
             type: "SingleColumnLayout",
             children: [
@@ -467,8 +635,9 @@ export class CustomerSatisfactionService {
                 "on-click-action": {
                   name: "complete",
                   payload: {
-                    surveyId,
+                      surveyId: surveyId,
                     ...questions.reduce((acc, q, index) => {
+                        // Reference form fields using ${form.fieldName} syntax
                       acc[`answer_${index}`] = `\${form.answer_${index}}`;
                       return acc;
                     }, {} as Record<string, string>)
@@ -481,15 +650,60 @@ export class CustomerSatisfactionService {
       ]
     };
 
-    // In a real implementation, you would create the flow via WhatsApp Business API
-    const flowId = `survey_${surveyId}_${Date.now()}`;
+      // Step 3: Upload Flow JSON as asset
+      const uploadAssetsUrl = `${whatsappConfig.baseUrl}/${flowId}/assets`;
+      
+      // Use form-data for multipart upload
+      let FormData: any;
+      try {
+        FormData = require('form-data');
+      } catch {
+        // Fallback: use native FormData if available (Node 18+)
+        FormData = globalThis.FormData || require('form-data');
+      }
+      
+      const formData = new FormData();
+      formData.append('name', 'flow.json');
+      formData.append('asset_type', 'FLOW_JSON');
+      formData.append('file', Buffer.from(JSON.stringify(flowJson, null, 2)), {
+        filename: 'flow.json',
+        contentType: 'application/json',
+      });
+
+      const formHeaders = formData.getHeaders ? formData.getHeaders() : {};
+      await firstValueFrom(
+        this.httpService.post(uploadAssetsUrl, formData, {
+          headers: {
+            'Authorization': `Bearer ${whatsappConfig.accessToken}`,
+            ...formHeaders,
+          },
+        })
+      );
+
+      this.logger.log(`Flow JSON uploaded for Flow ID: ${flowId}`);
+
+      // Step 4: Publish Flow
+      const publishFlowUrl = `${whatsappConfig.baseUrl}/${flowId}/publish`;
+      await firstValueFrom(
+        this.httpService.post(
+          publishFlowUrl,
+          {},
+          {
+            headers: {
+              'Authorization': `Bearer ${whatsappConfig.accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        )
+      );
+
+      this.logger.log(`Flow published: ${flowId}`);
 
     return {
       flowId,
       surveyData: {
         questions: questions.map(q => {
           const base = { id: q.id, text: q.question, type: q.type } as { id: string; text: string; type: 'rating' | 'text' | 'choice'; options?: string[] }
-          // Only include options for choice questions
           if (q.type === 'choice' && 'options' in q && Array.isArray((q as any).options)) {
             base.options = (q as any).options as string[]
           }
@@ -497,10 +711,16 @@ export class CustomerSatisfactionService {
         }),
       },
     };
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.error?.message || error?.message || 'Failed to create WhatsApp Flow';
+      this.logger.error(`Failed to create WhatsApp Flow: ${errorMessage}`, error?.response?.data);
+      throw new Error(`WhatsApp Flow creation failed: ${errorMessage}`);
+    }
   }
 
   /**
-   * Send WhatsApp Flow
+   * Send WhatsApp Flow via interactive message
+   * Reference: https://developers.facebook.com/docs/whatsapp/cloud-api/guides/flows/send-flow
    */
   private async sendWhatsAppFlow(params: {
     phoneNumber: string;
@@ -516,15 +736,24 @@ export class CustomerSatisfactionService {
       };
 
       if (!whatsappConfig.accessToken || !whatsappConfig.phoneNumberId) {
-        this.logger.warn('WhatsApp configuration missing, marking flow as sent');
-        return true;
+        this.logger.warn('WhatsApp configuration missing, cannot send Flow');
+        throw new Error('WhatsApp Phone Number ID and Access Token are required');
       }
+
+      // Normalize phone number (remove non-digits, ensure country code)
+      const normalizedPhone = params.phoneNumber.replace(/\D/g, '');
 
       const url = `${whatsappConfig.baseUrl}/${whatsappConfig.phoneNumberId}/messages`;
 
+      // Generate unique flow token for this survey instance
+      // Flow token can be used to pass data to the flow, encoded as base64url
+      const flowToken = Buffer.from(JSON.stringify({ 
+        timestamp: Date.now(),
+      })).toString('base64url');
+
       const payload = {
         messaging_product: 'whatsapp',
-        to: params.phoneNumber,
+        to: normalizedPhone,
         type: 'interactive',
         interactive: {
           type: 'flow',
@@ -542,7 +771,7 @@ export class CustomerSatisfactionService {
             name: 'flow',
             parameters: {
               flow_message_version: '3',
-              flow_token: `survey_${Date.now()}`,
+              flow_token: flowToken,
               flow_id: params.flowId,
               flow_cta: 'Start Survey',
               flow_action: 'navigate',
@@ -563,11 +792,14 @@ export class CustomerSatisfactionService {
         })
       );
 
-      this.logger.log(`WhatsApp Flow sent successfully: ${response.data.messages?.[0]?.id}`);
+      const messageId = response.data?.messages?.[0]?.id;
+      this.logger.log(`WhatsApp Flow sent successfully. Message ID: ${messageId}, Flow ID: ${params.flowId}`);
       return true;
-    } catch (error) {
-      this.logger.error('Failed to send WhatsApp Flow:', error);
-      return false;
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.error?.message || error?.message || 'Failed to send WhatsApp Flow';
+      const errorCode = error?.response?.data?.error?.code;
+      this.logger.error(`Failed to send WhatsApp Flow: ${errorMessage} (Code: ${errorCode})`, error?.response?.data);
+      throw new Error(`WhatsApp Flow send failed: ${errorMessage}`);
     }
   }
 
@@ -627,11 +859,11 @@ export class CustomerSatisfactionService {
           ...baseComponent,
           label: question.question,
           'data-source': [
-            { id: '1', title: '1 - Very Poor' },
-            { id: '2', title: '2 - Poor' },
-            { id: '3', title: '3 - Average' },
-            { id: '4', title: '4 - Good' },
-            { id: '5', title: '5 - Excellent' },
+            { id: '0', title: '1 - Very Poor' },
+            { id: '1', title: '2 - Poor' },
+            { id: '2', title: '3 - Average' },
+            { id: '3', title: '4 - Good' },
+            { id: '4', title: '5 - Excellent' },
           ],
         };
 
@@ -729,6 +961,198 @@ export class CustomerSatisfactionService {
 </body>
 </html>
     `;
+  }
+
+  /**
+   * Find or get conversation ID for customer and channel
+   */
+  private async findOrGetConversationId(
+    tenantId: string,
+    customerId: string,
+    channel: 'whatsapp' | 'email',
+    existingConversationId?: string | null
+  ): Promise<string | null> {
+    try {
+      // If conversationId is provided, verify it exists
+      if (existingConversationId) {
+        const conv = await this.databaseService.conversation.findFirst({
+          where: {
+            id: existingConversationId,
+            tenantId,
+            customerId,
+          },
+        });
+        if (conv) return conv.id;
+      }
+
+      // Find most recent active conversation for this customer and channel
+      const channelRecord = await this.databaseService.channel.findFirst({
+        where: {
+          tenantId,
+          type: channel,
+          isActive: true,
+        },
+      });
+
+      if (!channelRecord) {
+        this.logger.warn(`No active ${channel} channel found for tenant ${tenantId}`);
+        return null;
+      }
+
+      const conversation = await this.databaseService.conversation.findFirst({
+        where: {
+          tenantId,
+          customerId,
+          channelId: channelRecord.id,
+          status: { in: ['active', 'waiting'] },
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      return conversation?.id || null;
+    } catch (error) {
+      this.logger.warn('Failed to find conversation:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Create system message when survey is sent
+   */
+  private async createSurveySentMessage(
+    tenantId: string,
+    customerId: string,
+    conversationId: string | undefined | null,
+    surveyId: string,
+    channel: 'whatsapp' | 'email'
+  ): Promise<void> {
+    try {
+      const convId = await this.findOrGetConversationId(tenantId, customerId, channel, conversationId);
+      if (!convId) {
+        this.logger.debug(`No conversation found for survey ${surveyId}, skipping message creation`);
+        return;
+      }
+
+      const channelName = channel === 'whatsapp' ? 'WhatsApp' : 'Email';
+      const content = `📋 Customer Satisfaction Survey sent via ${channelName}\n\nSurvey ID: ${surveyId.substring(0, 8)}...`;
+
+      await this.databaseService.message.create({
+        data: {
+          conversationId: convId,
+          senderId: 'system',
+          senderType: 'system',
+          content,
+          messageType: 'text',
+          metadata: {
+            surveyId,
+            surveyEvent: 'sent',
+            channel,
+          },
+        },
+      });
+
+      this.logger.debug(`Survey sent message created in conversation ${convId}`);
+    } catch (error) {
+      this.logger.warn('Failed to create survey sent message:', error);
+    }
+  }
+
+  /**
+   * Create system message when survey response is received
+   */
+  private async createSurveyResponseMessage(
+    tenantId: string,
+    customerId: string,
+    conversationId: string | undefined | null,
+    surveyId: string,
+    rating: number,
+    comment?: string,
+    customAnswers?: Record<string, unknown>,
+    channel = 'whatsapp'
+  ): Promise<void> {
+    try {
+      const convId = await this.findOrGetConversationId(
+        tenantId,
+        customerId,
+        channel === 'whatsapp' ? 'whatsapp' : 'email',
+        conversationId
+      );
+      if (!convId) {
+        this.logger.debug(`No conversation found for survey ${surveyId}, skipping response message creation`);
+        return;
+      }
+
+      // Format survey response message
+      const stars = '⭐'.repeat(rating);
+      const emptyStars = '☆'.repeat(5 - rating);
+      const parts = [
+        `📋 Customer Satisfaction Survey Response`,
+        ``,
+        `Rating: ${stars}${emptyStars} ${rating}/5`,
+      ];
+
+      if (comment) {
+        parts.push(``, `Comment: "${comment}"`);
+      }
+
+      // Add custom answers if available
+      if (customAnswers && Object.keys(customAnswers).length > 0) {
+        const questions = await this.databaseService.customerSatisfactionSurvey.findFirst({
+          where: { id: surveyId },
+          select: { metadata: true },
+        });
+        const surveyMetadata = (questions?.metadata as any) || {};
+        const surveyQuestions = surveyMetadata.questions || [];
+
+        const customAnswersList: string[] = [];
+        Object.entries(customAnswers).forEach(([key, value]) => {
+          if (key.startsWith('answer_')) {
+            const questionIndex = parseInt(key.replace('answer_', ''));
+            const question = surveyQuestions[questionIndex];
+            const questionText = question?.question || `Question ${questionIndex + 1}`;
+            
+            // Format value based on type
+            let formattedValue = String(value);
+            if (question?.type === 'rating' && typeof value === 'string' && /^\d+$/.test(value)) {
+              const ratingValue = parseInt(value) + 1; // Convert 0-4 to 1-5
+              formattedValue = `${ratingValue}/5 ⭐`;
+            }
+            
+            customAnswersList.push(`• ${questionText}: ${formattedValue}`);
+          }
+        });
+
+        if (customAnswersList.length > 0) {
+          parts.push(``, `Additional Responses:`, ...customAnswersList);
+        }
+      }
+
+      parts.push(``, `✅ Thank you for your feedback!`);
+
+      const content = parts.join('\n');
+
+      await this.databaseService.message.create({
+        data: {
+          conversationId: convId,
+          senderId: 'system',
+          senderType: 'system',
+          content,
+          messageType: 'text',
+          metadata: {
+            surveyId,
+            surveyEvent: 'response_received',
+            rating,
+            comment,
+            customAnswers: customAnswers || {},
+            channel,
+          } as any,
+        },
+      });
+
+      this.logger.debug(`Survey response message created in conversation ${convId}`);
+    } catch (error) {
+      this.logger.warn('Failed to create survey response message:', error);
+    }
   }
 
   /**

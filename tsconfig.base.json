@@ -16,16 +16,14 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["development"],
+    "customConditions": ["@glavito-workspace/source"],
     "baseUrl": ".",
     "paths": {
       "@glavito/database": ["libs/shared/database/src/index.ts"],
       "@glavito/shared-ai": ["libs/shared/ai/src/index.ts"],
       "@glavito/shared-analytics": ["libs/shared/analytics/src/index.ts"],
       "@glavito/shared-auth": ["libs/shared/auth/src/index.ts"],
-      "@glavito/shared-conversation": [
-        "libs/shared/conversation/src/index.ts"
-      ],
+      "@glavito/shared-conversation": ["libs/shared/conversation/src/index.ts"],
       "@glavito/shared-conversation/*": [
         "libs/shared/conversation/src/*",
         "dist/libs/shared/conversation/src/*"
@@ -33,9 +31,7 @@
       "@glavito/shared-database": ["libs/shared/database/src/index.ts"],
       "@glavito/shared-kafka": ["libs/shared/kafka/src/index.ts"],
       "@glavito/shared-types": ["libs/shared/types/src/index.ts"],
-      "@glavito/shared-workflow": [
-        "libs/shared/workflow/src/index.ts"
-      ],
+      "@glavito/shared-workflow": ["libs/shared/workflow/src/index.ts"],
       "@glavito/shared-workflow/*": [
         "libs/shared/workflow/src/*",
         "dist/libs/shared/workflow/src/*"

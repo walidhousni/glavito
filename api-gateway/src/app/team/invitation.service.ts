@@ -6,12 +6,21 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from '@glavito/shared-database';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
+import { EmailService } from '../email/email.service';
 
 export interface SendInvitationRequest {
   email: string;
+  role: 'agent' | 'admin' | 'manager';
+  teamIds?: string[];
+  permissions?: string[];
+  customMessage?: string;
+  templateId?: string;
+}
+
+export interface BulkInviteRequest {
+  emails: string[];
   role: 'agent' | 'admin' | 'manager';
   teamIds?: string[];
   permissions?: string[];
@@ -93,7 +102,7 @@ export class InvitationService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -203,6 +212,63 @@ export class InvitationService {
       this.logger.error(`Failed to get invitations: ${errorMessage}`);
       throw new BadRequestException('Failed to get invitations');
     }
+  }
+
+  /**
+   * Send bulk invitations
+   */
+  async sendBulkInvitations(
+    tenantId: string,
+    request: BulkInviteRequest,
+    inviterUserId: string
+  ): Promise<{ sent: number; failed: number; errors: Array<{ email: string; error: string }> }> {
+    const results = { sent: 0, failed: 0, errors: [] as Array<{ email: string; error: string }> };
+    const emails = Array.isArray(request.emails) ? request.emails : [];
+    for (const email of emails) {
+      try {
+        await this.sendInvitation(tenantId, inviterUserId, {
+          email,
+          role: request.role,
+          teamIds: request.teamIds,
+          permissions: request.permissions,
+          customMessage: request.customMessage,
+          templateId: request.templateId,
+        });
+        results.sent += 1;
+      } catch (e) {
+        results.failed += 1;
+        results.errors.push({ email, error: (e as Error)?.message || 'invite_failed' });
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Validate invitation token
+   */
+  async getInvitationByToken(token: string): Promise<InvitationInfo | null> {
+    const invitation = await this.databaseService.invitation.findFirst({
+      where: { token, status: 'pending', expiresAt: { gt: new Date() } },
+      include: {
+        inviter: {
+          select: { firstName: true, lastName: true, email: true },
+        },
+      },
+    });
+    if (!invitation) return null;
+    return this.mapToInvitationInfo(invitation);
+  }
+
+  /**
+   * Mark expired invitations
+   */
+  async cleanupExpiredInvitations(): Promise<number> {
+    const now = new Date();
+    const expired = await this.databaseService.invitation.updateMany({
+      where: { status: 'pending', expiresAt: { lt: now } },
+      data: { status: 'expired' },
+    });
+    return expired.count || 0;
   }
 
   /**
@@ -505,8 +571,7 @@ export class InvitationService {
   }
 
   private async hashPassword(password: string): Promise<string> {
-    // In a real implementation, use bcrypt or similar
-    return crypto.createHash('sha256').update(password).digest('hex');
+    return bcrypt.hash(String(password ?? ''), 12);
   }
 
   private async sendInvitationEmail(invitation: any, request?: SendInvitationRequest): Promise<void> {
@@ -547,8 +612,8 @@ export class InvitationService {
         .replace(/\{role\}/g, invitation.role)
         .replace(/\{customMessage\}/g, request?.customMessage || '');
 
-      // Send email using your email service
-      await this.sendEmail({
+      // Send email via Brevo SMTP using tenant-aware transport
+      await this.emailService.dispatchEmailForTenant(invitation.tenantId, {
         to: invitation.email,
         subject,
         html: personalizedContent,
@@ -562,9 +627,20 @@ export class InvitationService {
     }
   }
 
-  private async sendEmail(emailData: { to: string; subject: string; html: string }): Promise<void> {
-    // In a real implementation, integrate with your email service (SendGrid, SES, etc.)
-    this.logger.log(`Email would be sent to: ${emailData.to} with subject: ${emailData.subject}`);
+  private async sendEmail(emailData: { to: string; subject: string; html: string; tenantId?: string }): Promise<void> {
+    if (emailData.tenantId) {
+      await this.emailService.dispatchEmailForTenant(emailData.tenantId, {
+        to: emailData.to,
+        subject: emailData.subject,
+        html: emailData.html,
+      });
+      return;
+    }
+    await this.emailService.sendEmail({
+      to: emailData.to,
+      subject: emailData.subject,
+      html: emailData.html,
+    });
   }
 
   private getDefaultInvitationContent(): string {

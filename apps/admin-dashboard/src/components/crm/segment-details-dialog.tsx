@@ -98,39 +98,39 @@ export function SegmentDetailsDialog({ open, onOpenChange, segmentId, segmentNam
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="grid grid-cols-3 w-full mb-4">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full">
+          <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="overview">{t('segments.details.metrics')}</TabsTrigger>
             <TabsTrigger value="preview">{t('segments.details.preview')}</TabsTrigger>
             <TabsTrigger value="actions">{t('segments.details.actions')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview">
+          <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm text-gray-500">{t('segments.details.totalCustomers')}</div>
-                      <div className="text-2xl font-semibold">{metrics?.customerCount ?? (loading ? '…' : 0)}</div>
+                      <div className="text-sm text-muted-foreground">{t('segments.details.totalCustomers')}</div>
+                      <div className="text-2xl font-bold">{metrics?.customerCount ?? (loading ? '…' : 0)}</div>
                     </div>
-                    <Users className="h-5 w-5 text-blue-500" />
+                    <Users className="h-5 w-5 text-primary" />
                   </div>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4">
-                  <div className="text-sm text-gray-500">{t('segments.details.avgValue')}</div>
-                  <div className="text-2xl font-semibold">{metrics ? `$${metrics.averageValue}` : (loading ? '…' : '$0')}</div>
+                <CardContent className="p-6">
+                  <div className="text-sm text-muted-foreground">{t('segments.details.avgValue')}</div>
+                  <div className="text-2xl font-bold">{metrics ? `$${metrics.averageValue}` : (loading ? '…' : '$0')}</div>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4">
-                  <div className="text-sm text-gray-500">{t('segments.details.monthlyGrowth')}</div>
+                <CardContent className="p-6">
+                  <div className="text-sm text-muted-foreground">{t('segments.details.monthlyGrowth')}</div>
                   <div className="flex items-center gap-2">
-                    <div className="text-2xl font-semibold">{metrics ? `${metrics.monthlyGrowth}%` : (loading ? '…' : '0%')}</div>
+                    <div className="text-2xl font-bold">{metrics ? `${metrics.monthlyGrowth}%` : (loading ? '…' : '0%')}</div>
                     {metrics && (
-                      <Badge variant={metrics.monthlyGrowth >= 0 ? 'secondary' : 'outline'} className={metrics.monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      <Badge variant={metrics.monthlyGrowth >= 0 ? 'default' : 'destructive'}>
                         {metrics.monthlyGrowth >= 0 ? '↑' : '↓'}
                       </Badge>
                     )}
@@ -138,9 +138,9 @@ export function SegmentDetailsDialog({ open, onOpenChange, segmentId, segmentNam
                 </CardContent>
               </Card>
             </div>
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <BarChart3 className="h-4 w-4" />
                   {t('segments.details.summary')}
                 </div>
@@ -148,44 +148,50 @@ export function SegmentDetailsDialog({ open, onOpenChange, segmentId, segmentNam
             </Card>
           </TabsContent>
 
-          <TabsContent value="preview">
+          <TabsContent value="preview" className="space-y-4">
             <Card>
               <CardContent className="p-0">
-                <div className="flex items-center justify-between px-4 py-3 border-b">
-                  <div className="text-sm text-gray-600">
-                    {t('segments.details.totalMatched')}: <strong>{preview?.totalMatched ?? (loading ? '…' : 0)}</strong> • {t('segments.details.sampleCount')}: <strong>{preview?.sampleCount ?? (loading ? '…' : 0)}</strong>
+                <div className="flex items-center justify-between px-6 py-4 border-b">
+                  <div className="text-sm text-muted-foreground">
+                    {t('segments.details.totalMatched')}: <span className="font-semibold text-foreground">{preview?.totalMatched ?? (loading ? '…' : 0)}</span> • {t('segments.details.sampleCount')}: <span className="font-semibold text-foreground">{preview?.sampleCount ?? (loading ? '…' : 0)}</span>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => void recalc()}>
-                    <RefreshCw className="h-4 w-4 mr-1" /> {t('segments.details.recalculate')}
+                  <Button variant="outline" size="sm" onClick={() => void recalc()}>
+                    <RefreshCw className="h-4 w-4 mr-2" /> 
+                    {t('segments.details.recalculate')}
                   </Button>
                 </div>
                 <ScrollArea className="max-h-72">
-                  <ul className="divide-y">
+                  <div className="divide-y">
                     {(preview?.sampleCustomerIds || []).map((id) => (
-                      <li key={id} className="px-4 py-3 text-sm text-gray-700 flex items-center justify-between">
+                      <div key={id} className="px-6 py-3 text-sm flex items-center justify-between">
                         <span>{id}</span>
                         <Badge variant="outline">ID</Badge>
-                      </li>
+                      </div>
                     ))}
                     {!loading && (!preview || (preview.sampleCustomerIds || []).length === 0) && (
-                      <li className="px-4 py-6 text-center text-sm text-gray-500">{t('segments.details.noSample')}</li>
+                      <div className="px-6 py-8 text-center text-sm text-muted-foreground">
+                        {t('segments.details.noSample')}
+                      </div>
                     )}
-                  </ul>
+                  </div>
                 </ScrollArea>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="actions">
+          <TabsContent value="actions" className="space-y-4">
             <div className="flex flex-wrap gap-3">
-              <Button className="gap-2" onClick={() => void exportData('json')}>
-                <Download className="h-4 w-4" /> {t('segments.details.exportJson')}
+              <Button onClick={() => void exportData('json')}>
+                <Download className="h-4 w-4 mr-2" /> 
+                {t('segments.details.exportJson')}
               </Button>
-              <Button variant="secondary" className="gap-2" onClick={() => void exportData('csv')}>
-                <Download className="h-4 w-4" /> {t('segments.details.exportCsv')}
+              <Button variant="secondary" onClick={() => void exportData('csv')}>
+                <Download className="h-4 w-4 mr-2" /> 
+                {t('segments.details.exportCsv')}
               </Button>
-              <Button variant="outline" className="gap-2" onClick={() => void recalc()}>
-                <RefreshCw className="h-4 w-4" /> {t('segments.details.recalculate')}
+              <Button variant="outline" onClick={() => void recalc()}>
+                <RefreshCw className="h-4 w-4 mr-2" /> 
+                {t('segments.details.recalculate')}
               </Button>
             </div>
           </TabsContent>

@@ -1,355 +1,377 @@
+/**
+ * Onboarding Store
+ * Zustand store for managing onboarding state
+ */
+
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { 
-  OnboardingSession, 
-  OnboardingProgress, 
-  OnboardingStep,
-  StepConfiguration,
-  CompletionResult,
-  OnboardingType,
-  OnboardingRole,
-  StartOnboardingRequest,
-} from '@glavito/shared-types';
-import { onboardingAPI } from '@/lib/api/onboarding';
+import { onboardingAPI } from '../api/onboarding';
+import type { OnboardingStep as SharedOnboardingStep } from '@glavito/shared-types';
+import { useAuthStore } from './auth-store';
 
-interface OnboardingState {
-  // State
-  session: OnboardingSession | null;
-  progress: OnboardingProgress | null;
-  currentStepConfig: StepConfiguration | null;
-  isLoading: boolean;
-  error: string | null;
-  isInitialized: boolean;
-  onboardingType: OnboardingType | null;
-  onboardingRole: OnboardingRole | null;
+export type OnboardingType = 'tenant_setup' | 'agent_welcome';
+export type OnboardingRole = 'tenant_admin' | 'agent';
+export type OnboardingStep = SharedOnboardingStep;
 
-  // Actions
-  initializeOnboarding: () => Promise<void>;
-  startOnboarding: (request?: StartOnboardingRequest) => Promise<void>;
-  startOnboardingWithType: (type: OnboardingType, role: OnboardingRole, request?: StartOnboardingRequest) => Promise<void>;
-  updateStep: (stepId: OnboardingStep, data: Record<string, unknown>) => Promise<void>;
-  pauseOnboarding: () => Promise<void>;
-  resumeOnboarding: () => Promise<void>;
-  completeOnboarding: () => Promise<CompletionResult>;
-  setCurrentStep: (step: OnboardingStep) => Promise<void>;
-  clearError: () => void;
-  reset: () => void;
-  getOnboardingType: () => Promise<{ type: OnboardingType; role: OnboardingRole; isTenantOwner: boolean }>;
+export interface OnboardingSession {
+  id: string;
+  userId: string;
+  tenantId: string;
+  type: OnboardingType;
+  role: OnboardingRole;
+  currentStep: string;
+  completedSteps: string[];
+  stepData: Record<string, unknown>;
+  status: string;
+  progress: number;
+  startedAt: Date;
+  lastActivityAt: Date;
+  completedAt?: Date;
 }
 
-const initialState = {
+interface OnboardingStore {
+  // Session state
+  session: OnboardingSession | null;
+  currentStepIndex: number;
+  totalSteps: number;
+  steps: readonly string[];
+  
+  // Step data
+  stepData: Record<string, unknown>;
+  
+  // UI state
+  isLoading: boolean;
+  error: string | null;
+  
+  // Actions
+  initialize: () => Promise<void>;
+  startOnboarding: (type: OnboardingType, role: OnboardingRole) => Promise<void>;
+  nextStep: () => Promise<void>;
+  prevStep: () => void;
+  goToStep: (stepIndex: number) => void;
+  saveStepData: (stepId: OnboardingStep, data: Record<string, unknown>) => Promise<void>;
+  skipStep: (stepId: OnboardingStep) => Promise<void>;
+  completeOnboarding: () => Promise<void>;
+  pauseOnboarding: () => Promise<void>;
+  resumeOnboarding: () => Promise<void>;
+  reset: () => void;
+  
+  // Helper getters
+  getCurrentStep: () => string;
+  isFirstStep: () => boolean;
+  isLastStep: () => boolean;
+  canGoNext: () => boolean;
+  canGoPrev: () => boolean;
+}
+
+// Tenant Admin Steps
+const TENANT_STEPS = [
+  'welcome',
+  'stripe',
+  'channels',
+  'team',
+  'knowledge-base',
+  'ai-features',
+  'workflows',
+  'complete',
+] as const;
+
+// Agent Steps
+const AGENT_STEPS = [
+  'profile',
+  'tour',
+  'sample-ticket',
+  'knowledge-base-intro',
+  'notifications',
+] as const;
+
+export const useOnboardingStore = create<OnboardingStore>((set, get) => ({
+  // Initial state
   session: null,
-  progress: null,
-  currentStepConfig: null,
+  currentStepIndex: 0,
+  totalSteps: 0,
+  steps: [],
+  stepData: {},
   isLoading: false,
   error: null,
-  isInitialized: false,
-  onboardingType: null,
-  onboardingRole: null,
-};
+  
+  // Initialize from existing session
+  initialize: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const status = await onboardingAPI.getOnboardingStatus();
+      const session = status?.session || null;
 
-export const useOnboardingStore = create<OnboardingState>()(
-  devtools(
-    persist(
-      (set, get) => ({
-        ...initialState,
+      if (session) {
+        const steps = session.type === 'tenant_setup' ? TENANT_STEPS : AGENT_STEPS;
+        const stepsArray = steps as readonly string[];
+        const currentStepIndex = stepsArray.indexOf(session.currentStep) !== -1 ? stepsArray.indexOf(session.currentStep) : 0;
 
-        initializeOnboarding: async () => {
-          const { isInitialized, isLoading, session, progress } = get();
-
-          // Only skip if a fetch is in-flight OR we already have valid data
-          if (isLoading) return;
-          if (isInitialized && session && progress) return;
-
-          set({ isLoading: true, error: null });
-
-          try {
-            // First, determine the onboarding type and role
-            const typeInfo = await onboardingAPI.getOnboardingType();
-            
-            // Get onboarding status
-            const statusResponse = await onboardingAPI.getOnboardingStatus();
-            
-            // Get current step configuration
-            let currentStepConfig = null as StepConfiguration | null;
-            if (statusResponse.session.status === 'active') {
-              try {
-                currentStepConfig = await onboardingAPI.getStepConfiguration(
-                  statusResponse.session.currentStep,
-                  typeInfo.type
-                );
-              } catch (error) {
-                console.warn('Failed to load step configuration:', error);
-              }
-            }
-
-            set({
-              session: statusResponse.session,
-              progress: statusResponse.progress,
-              currentStepConfig,
-              onboardingType: typeInfo.type,
-              onboardingRole: typeInfo.role,
-              isLoading: false,
-              isInitialized: true,
-            });
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Failed to initialize onboarding',
-              isLoading: false,
-              // Mark initialized to prevent infinite spinners; UI can offer retry
-              isInitialized: true,
-            });
-          }
-        },
-
-        startOnboarding: async (request) => {
-          set({ isLoading: true, error: null });
-
-          try {
-            const session = await onboardingAPI.startOnboarding(request);
-            const progress = await onboardingAPI.getProgress(session.id);
-            
-            let currentStepConfig = null as StepConfiguration | null;
-            try {
-              currentStepConfig = await onboardingAPI.getStepConfiguration(
-                session.currentStep,
-                session.type
-              );
-            } catch (error) {
-              console.warn('Failed to load step configuration:', error);
-            }
-
-            set({
-              session,
-              progress,
-              currentStepConfig,
-              onboardingType: session.type,
-              onboardingRole: session.role,
-              isLoading: false,
-              isInitialized: true,
-            });
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Failed to start onboarding',
-              isLoading: false,
-            });
-          }
-        },
-
-        startOnboardingWithType: async (type, role, request) => {
-          set({ isLoading: true, error: null });
-
-          try {
-            const session = await onboardingAPI.startOnboardingWithType(type, role, request);
-            const progress = await onboardingAPI.getProgress(session.id);
-            
-            let currentStepConfig = null as StepConfiguration | null;
-            try {
-              currentStepConfig = await onboardingAPI.getStepConfiguration(
-                session.currentStep,
-                session.type
-              );
-            } catch (error) {
-              console.warn('Failed to load step configuration:', error);
-            }
-
-            set({
-              session,
-              progress,
-              currentStepConfig,
-              onboardingType: session.type,
-              onboardingRole: session.role,
-              isLoading: false,
-              isInitialized: true,
-            });
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Failed to start onboarding',
-              isLoading: false,
-            });
-          }
-        },
-
-        updateStep: async (stepId, data) => {
-          const { session } = get();
-          if (!session) {
-            throw new Error('No active onboarding session');
-          }
-
-          set({ isLoading: true, error: null });
-
-          try {
-            const result = await onboardingAPI.updateStep(session.id, stepId, data);
-            
-            if (!result.success) {
-              throw new Error(result.errors?.join(', ') || 'Failed to update step');
-            }
-
-            // Fetch updated session and progress from backend
-            const statusResponse = await onboardingAPI.getOnboardingStatus();
-            const updatedSession = statusResponse.session;
-            const updatedProgress = statusResponse.progress;
-
-            // Get next step configuration
-            let currentStepConfig = null as StepConfiguration | null;
-            if (result.nextStep) {
-              try {
-                currentStepConfig = await onboardingAPI.getStepConfiguration(
-                  result.nextStep,
-                  session.type
-                );
-              } catch (error) {
-                console.warn('Failed to load next step configuration:', error);
-              }
-            }
-
-            set({
-              session: updatedSession,
-              progress: updatedProgress,
-              currentStepConfig,
-              isLoading: false,
-            });
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Failed to update step',
-              isLoading: false,
-            });
-            throw error;
-          }
-        },
-
-        pauseOnboarding: async () => {
-          const { session } = get();
-          if (!session) return;
-
-          set({ isLoading: true, error: null });
-
-          try {
-            await onboardingAPI.pauseOnboarding(session.id);
-            
-            set({
-              session: { ...session, status: 'paused' } as OnboardingSession,
-              isLoading: false,
-            });
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Failed to pause onboarding',
-              isLoading: false,
-            });
-          }
-        },
-
-        resumeOnboarding: async () => {
-          const { session } = get();
-          if (!session) return;
-
-          set({ isLoading: true, error: null });
-
-          try {
-            const resumedSession = await onboardingAPI.resumeOnboarding(session.id);
-            const progress = await onboardingAPI.getProgress(resumedSession.id);
-            
-            let currentStepConfig = null as StepConfiguration | null;
-            try {
-              currentStepConfig = await onboardingAPI.getStepConfiguration(
-                resumedSession.currentStep,
-                resumedSession.type
-              );
-            } catch (error) {
-              console.warn('Failed to load step configuration:', error);
-            }
-
-            set({
-              session: resumedSession,
-              progress,
-              currentStepConfig,
-              isLoading: false,
-            });
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Failed to resume onboarding',
-              isLoading: false,
-            });
-          }
-        },
-
-        completeOnboarding: async () => {
-          const { session } = get();
-          if (!session) {
-            throw new Error('No active onboarding session');
-          }
-
-          set({ isLoading: true, error: null });
-
-          try {
-            const result = await onboardingAPI.completeOnboarding(session.id, { force: true });
-            
-            set({
-              session: { ...session, status: 'completed', completedAt: new Date() } as OnboardingSession,
-              isLoading: false,
-            });
-
-            return result;
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Failed to complete onboarding',
-              isLoading: false,
-            });
-            throw error;
-          }
-        },
-
-        setCurrentStep: async (step) => {
-          const { session } = get();
-          if (!session) return;
-
-          set({ isLoading: true, error: null });
-
-          try {
-            const stepConfig = await onboardingAPI.getStepConfiguration(step, session.type);
-            
-            set({
-              session: { ...session, currentStep: step } as OnboardingSession,
-              currentStepConfig: stepConfig,
-              isLoading: false,
-            });
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Failed to load step configuration',
-              isLoading: false,
-            });
-          }
-        },
-
-        getOnboardingType: async () => {
-          try {
-            return await onboardingAPI.getOnboardingType();
-          } catch (error) {
-            throw new Error(error instanceof Error ? error.message : 'Failed to get onboarding type');
-          }
-        },
-
-        clearError: () => {
-          set({ error: null });
-        },
-
-        reset: () => {
-          set(initialState);
-        },
-      }),
-      {
-        name: 'onboarding-store',
-        partialize: (state) => ({
-          session: state.session,
-          progress: state.progress,
-          isInitialized: state.isInitialized,
-          onboardingType: state.onboardingType,
-          onboardingRole: state.onboardingRole,
-        }),
+        set({
+          session,
+          currentStepIndex,
+          totalSteps: steps.length,
+          steps,
+          stepData: session.stepData,
+          isLoading: false,
+        });
+      } else {
+        // Determine onboarding type for new session
+        const typeInfo = await onboardingAPI.getOnboardingType();
+        const steps = typeInfo.type === 'tenant_setup' ? TENANT_STEPS : AGENT_STEPS;
+        
+        set({
+          totalSteps: steps.length,
+          steps,
+          isLoading: false,
+        });
       }
-    ),
-    {
-      name: 'onboarding-store',
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to initialize onboarding';
+      set({ error: message, isLoading: false });
+      throw error;
     }
-  )
-);
+  },
+  
+  // Start new onboarding session
+  startOnboarding: async (type: OnboardingType, role: OnboardingRole) => {
+    set({ isLoading: true, error: null });
+    try {
+      console.log('[OnboardingStore] Starting onboarding with type:', type, 'role:', role);
+      const session = await onboardingAPI.startOnboardingWithType(type, role);
+      console.log('[OnboardingStore] Session started successfully:', session);
+      const steps = type === 'tenant_setup' ? TENANT_STEPS : AGENT_STEPS;
+      
+      set({
+        session,
+        currentStepIndex: 0,
+        totalSteps: steps.length,
+        steps,
+        stepData: session.stepData,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to start onboarding';
+      console.error('[OnboardingStore] Failed to start:', error);
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+  
+  // Navigate to next step
+  nextStep: async () => {
+    const { session, currentStepIndex, steps, stepData } = get();
+    
+    if (!session) {
+      throw new Error('No active session');
+    }
+    
+    if (currentStepIndex >= steps.length - 1) {
+      // Last step - complete onboarding
+      await get().completeOnboarding();
+      return;
+    }
+    
+    const currentStep = steps[currentStepIndex];
+    const currentStepData = stepData[currentStep];
+    
+    set({ isLoading: true, error: null });
+    try {
+      // Save current step data
+      if (currentStepData) {
+        const stepId = (currentStep as OnboardingStep);
+        const result = await onboardingAPI.updateStep(session.id, stepId, currentStepData);
+        set({
+          session: result.session,
+          stepData: result.session.stepData,
+        });
+      }
+      
+      // Move to next step
+      set({
+        currentStepIndex: currentStepIndex + 1,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to proceed to next step';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+  
+  // Navigate to previous step
+  prevStep: () => {
+    const { currentStepIndex } = get();
+    if (currentStepIndex > 0) {
+      set({ currentStepIndex: currentStepIndex - 1 });
+    }
+  },
+  
+  // Go to specific step
+  goToStep: (stepIndex: number) => {
+    const { totalSteps, session } = get();
+    
+    if (!session) {
+      throw new Error('No active session');
+    }
+    
+    if (stepIndex >= 0 && stepIndex < totalSteps) {
+      set({ currentStepIndex: stepIndex });
+    }
+  },
+  
+  // Save step data
+  saveStepData: async (stepId: OnboardingStep, data: Record<string, unknown>) => {
+    const { session, stepData } = get();
+    
+    if (!session) {
+      throw new Error('No active session');
+    }
+    
+    // Update local step data immediately
+    set({
+      stepData: {
+        ...stepData,
+        [stepId as string]: data,
+      },
+    });
+    
+    // Optionally save to backend (debounced in real implementation)
+    try {
+      const result = await onboardingAPI.updateStep(session.id, stepId, data);
+      set({
+        session: result.session,
+        stepData: result.session.stepData,
+      });
+    } catch (error: unknown) {
+      console.error('Failed to save step data:', error);
+      // Don't throw - allow local editing to continue
+    }
+  },
+  
+  // Skip current step
+  skipStep: async (stepId: OnboardingStep) => {
+    const { session, currentStepIndex } = get();
+    
+    if (!session) {
+      throw new Error('No active session');
+    }
+    
+    set({ isLoading: true, error: null });
+    try {
+      const result = await onboardingAPI.skipStep(session.id, stepId);
+      set({
+        session: result.session,
+        currentStepIndex: currentStepIndex + 1,
+        stepData: result.session.stepData,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to skip step';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+  
+  // Complete onboarding
+  completeOnboarding: async () => {
+    const { session } = get();
+    
+    if (!session) {
+      throw new Error('No active session');
+    }
+    
+    set({ isLoading: true, error: null });
+    try {
+      await onboardingAPI.completeOnboarding(session.id);
+      set({
+        session: { ...session, status: 'completed', completedAt: new Date() },
+        isLoading: false,
+      });
+      // Mark user as having completed onboarding to avoid redirect loops
+      try {
+        useAuthStore.getState().updateUser({ onboardingCompleted: true });
+      } catch {
+        // noop – do not block completion on store update failure
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to complete onboarding';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+  
+  // Pause onboarding
+  pauseOnboarding: async () => {
+    const { session } = get();
+    
+    if (!session) {
+      throw new Error('No active session');
+    }
+    
+    set({ isLoading: true, error: null });
+    try {
+      await onboardingAPI.pauseOnboarding(session.id);
+      set({
+        session: { ...session, status: 'paused' },
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to pause onboarding';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+  
+  // Resume onboarding
+  resumeOnboarding: async () => {
+    const { session } = get();
+    
+    if (!session) {
+      throw new Error('No active session');
+    }
+    
+    try {
+      const resumed = await onboardingAPI.resumeOnboarding(session.id);
+      set({ session: resumed });
+    } catch (error: unknown) {
+      console.error('Failed to resume onboarding:', error);
+    }
+  },
+  
+  // Reset store
+  reset: () => {
+    set({
+      session: null,
+      currentStepIndex: 0,
+      totalSteps: 0,
+      steps: [],
+      stepData: {},
+      isLoading: false,
+      error: null,
+    });
+  },
+  
+  // Helper methods
+  getCurrentStep: () => {
+    const { steps, currentStepIndex } = get();
+    return steps[currentStepIndex] || '';
+  },
+  
+  isFirstStep: () => {
+    return get().currentStepIndex === 0;
+  },
+  
+  isLastStep: () => {
+    const { currentStepIndex, totalSteps } = get();
+    return currentStepIndex >= totalSteps - 1;
+  },
+  
+  canGoNext: () => {
+    const { currentStepIndex, totalSteps } = get();
+    return currentStepIndex < totalSteps - 1;
+  },
+  
+  canGoPrev: () => {
+    return get().currentStepIndex > 0;
+  },
+}));

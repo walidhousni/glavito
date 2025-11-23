@@ -46,8 +46,11 @@ export class WhiteLabelTrackingController {
     } catch (_) {
       // ignore errors and still redirect
     }
+    // Validate redirect URL, fallback to '/'
+    let safeUrl = '/';
+    try { safeUrl = this.wl.validateRedirectUrl(url); } catch { safeUrl = '/'; }
     res.status(302);
-    res.setHeader('Location', url || '/');
+    res.setHeader('Location', safeUrl);
     return res.end();
   }
 }

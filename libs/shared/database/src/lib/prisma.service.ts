@@ -24,26 +24,30 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       errorFormat: 'pretty',
     });
 
-    // Record query durations (all environments) using Prisma middleware
-    this.$use(async (params: any, next: (params: any) => Promise<any>) => {
-      const start = process.hrtime.bigint();
-      const result = await next(params);
-      const end = process.hrtime.bigint();
-      const durationMs = Number(end - start) / 1_000_000;
-      try {
-        this.queryDuration.record(durationMs / 1000, {
-          model: (params.model as string) || 'unknown',
-          operation: (params.action as string) || 'unknown',
-        } as any);
-      } catch {
-        /* ignore metrics */
-      }
-      if (durationMs >= this.slowThresholdMs) {
-        const msg = `Slow query (${durationMs.toFixed(1)}ms): ${(params.model as string) || 'unknown'}.${(params.action as string) || 'unknown'}`;
-        this.logger.warn(msg);
-      }
-      return result;
-    });
+    // Record query durations (all environments) using Prisma middleware (when supported)
+    if (typeof (this as any).$use === 'function') {
+      this.$use(async (params: any, next: (params: any) => Promise<any>) => {
+        const start = process.hrtime.bigint();
+        const result = await next(params);
+        const end = process.hrtime.bigint();
+        const durationMs = Number(end - start) / 1_000_000;
+        try {
+          this.queryDuration.record(durationMs / 1000, {
+            model: (params.model as string) || 'unknown',
+            operation: (params.action as string) || 'unknown',
+          } as any);
+        } catch {
+          /* ignore metrics */
+        }
+        if (durationMs >= this.slowThresholdMs) {
+          const msg = `Slow query (${durationMs.toFixed(1)}ms): ${(params.model as string) || 'unknown'}.${(params.action as string) || 'unknown'}`;
+          this.logger.warn(msg);
+        }
+        return result;
+      });
+    } else {
+      this.logger.warn('Prisma middleware ($use) not supported in current runtime; skipping performance middleware');
+    }
 
     // Transparent field encryption at rest (PII best-effort)
     const encryptIfPII = (model: string, data: Record<string, unknown>) => {
@@ -66,24 +70,26 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       return data;
     };
 
-    this.$use(async (params: any, next: (params: any) => Promise<any>) => {
-      const actions = new Set(['create', 'update', 'upsert']);
-      if (params?.model && actions.has(params.action)) {
-        if (params.args?.data) {
-          params.args.data = encryptIfPII(params.model, params.args.data);
+    if (typeof (this as any).$use === 'function') {
+      this.$use(async (params: any, next: (params: any) => Promise<any>) => {
+        const actions = new Set(['create', 'update', 'upsert']);
+        if (params?.model && actions.has(params.action)) {
+          if (params.args?.data) {
+            params.args.data = encryptIfPII(params.model, params.args.data);
+          }
+          if (params.args?.create) {
+            params.args.create = encryptIfPII(params.model, params.args.create);
+          }
+          if (params.args?.update) {
+            params.args.update = encryptIfPII(params.model, params.args.update);
+          }
         }
-        if (params.args?.create) {
-          params.args.create = encryptIfPII(params.model, params.args.create);
-        }
-        if (params.args?.update) {
-          params.args.update = encryptIfPII(params.model, params.args.update);
-        }
-      }
-      return next(params);
-    });
+        return next(params);
+      });
+    }
 
     // In non-production, also attach Prisma query event for debug with truncated SQL
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production' && typeof (this as any).$on === 'function') {
       this.$on('query' as never, (e: any) => {
         const durationMs = e.duration;
         if (durationMs >= this.slowThresholdMs) {

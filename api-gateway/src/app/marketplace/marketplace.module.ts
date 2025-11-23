@@ -4,7 +4,6 @@ import { HttpModule } from '@nestjs/axios';
 import { DatabaseModule } from '@glavito/shared-database';
 import { MarketplaceService } from './marketplace.service';
 import { MarketplaceController } from './marketplace.controller';
-import { PortalService } from '../onboarding/portal.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { CustomFieldsService } from '../custom-fields/custom-fields.service';
 import { ChannelsService } from '../channels/channels.service';
@@ -15,7 +14,6 @@ import { WorkflowModule as SharedWorkflowModule } from '@glavito/shared-workflow
   controllers: [MarketplaceController],
   providers: [
     MarketplaceService,
-    PortalService,
     TenantsService,
     CustomFieldsService,
     ChannelsService,

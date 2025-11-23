@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useWhiteLabel } from '@/lib/hooks/use-white-label';
 import { whiteLabelApi } from '@/lib/api/white-label-client';
+import { useToast } from '@/components/ui/toast';
 
 type WL = {
   smtp: { host: string; port: number; user: string; from?: string; secure?: boolean } | null;
@@ -16,6 +17,7 @@ type WL = {
 
 export function EmailSmtpPanel() {
   const { smtp, loadSmtp, saveSmtp, testSmtp } = useWhiteLabel() as WL;
+  const tctx = useToast() as unknown as { toast?: (opts: { title: string; description?: string; variant?: string }) => void };
   const [form, setForm] = useState<{ host: string; port: number | string; user: string; pass?: string; from?: string; secure?: boolean }>({ host: '', port: 587, user: '', pass: '', from: '', secure: false });
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -40,6 +42,7 @@ export function EmailSmtpPanel() {
     try {
       const res = await testSmtp({ ...form, port: Number(form.port || 0) });
       setTestResult(res.ok ? 'OK' : `Error: ${res.error || 'unknown'}`);
+      tctx?.toast?.({ title: res.ok ? 'SMTP OK' : 'SMTP Error', description: res.ok ? 'Connection successful' : (res.error || 'Failed to connect'), variant: res.ok ? 'default' : 'destructive' });
     } finally {
       setTesting(false);
     }
@@ -49,6 +52,7 @@ export function EmailSmtpPanel() {
     setSaving(true);
     try {
       await saveSmtp({ ...form, port: Number(form.port || 0) });
+      tctx?.toast?.({ title: 'Saved', description: 'SMTP settings updated' });
     } finally {
       setSaving(false);
     }

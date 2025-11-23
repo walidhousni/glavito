@@ -15,9 +15,10 @@ import { KnowledgeModule } from '../knowledge/knowledge.module';
 import { TranscriptionService } from '../calls/transcription.service';
 import { WorkflowModule as SharedWorkflowModule } from '@glavito/shared-workflow'
 import { MediaAnalysisService } from '../ai/media-analysis.service';
+import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
-imports: [ConfigModule, HttpModule, DatabaseModule, ConversationModule, forwardRef(() => KnowledgeModule), SharedWorkflowModule.forFeature()],
+imports: [ConfigModule, HttpModule, DatabaseModule, ConversationModule, forwardRef(() => KnowledgeModule), SharedWorkflowModule.forFeature(), WalletModule],
   controllers: [WebhooksController, WhatsAppWebhookController, WhatsAppWebhookStatusController, InstagramWebhookController, EmailWebhookController],
   providers: [WebhooksService, MetricsService, PublicChatLinkService, TranscriptionService, MediaAnalysisService],
   exports: [WebhooksService, MetricsService, PublicChatLinkService],

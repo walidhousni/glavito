@@ -40,19 +40,23 @@ export function SegmentDialog({ open, onOpenChange, segment }: SegmentDialogProp
         <DialogHeader>
           <DialogTitle>{segment ? t('segments.editTitle') : t('segments.createTitle')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <div className="text-sm font-medium mb-1">{t('segments.name')}</div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              {t('segments.name')}
+            </label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('segments.namePlaceholder')} />
           </div>
-          <div>
-            <div className="text-sm font-medium mb-1">{t('segments.description')}</div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              {t('segments.description')}
+            </label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('segments.descriptionPlaceholder')} />
           </div>
           {segment && (
-            <div className="rounded-md border p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-medium">{t('segments.membership')}</div>
+            <div className="rounded-lg border p-4 bg-muted/50">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-medium">{t('segments.membership')}</h4>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={async () => {
                     const res = await previewSegment(segment.id);
@@ -71,16 +75,22 @@ export function SegmentDialog({ open, onOpenChange, segment }: SegmentDialogProp
                 </div>
               </div>
               {preview && (
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div>{t('segments.totalMatched')}: <Badge variant="outline">{preview.totalMatched}</Badge></div>
-                  <div>{t('segments.sampleCount')}: {preview.sampleCount}</div>
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span>{t('segments.totalMatched')}:</span>
+                    <Badge variant="outline">{preview.totalMatched}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t('segments.sampleCount')}:</span>
+                    <span>{preview.sampleCount}</span>
+                  </div>
                 </div>
               )}
             </div>
           )}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>{t('segments.cancel')}</Button>
-            <Button className="btn-gradient" disabled={saving || name.trim().length === 0} onClick={async () => {
+            <Button disabled={saving || name.trim().length === 0} onClick={async () => {
               setSaving(true);
               try {
                 if (segment) {

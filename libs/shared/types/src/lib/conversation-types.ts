@@ -111,6 +111,21 @@ export interface VideoMessage extends BaseMessage {
   };
 }
 
+export interface MessengerMessage extends BaseMessage {
+  channel: 'messenger';
+  messengerData: {
+    messageId: string;
+    senderId: string;
+    recipientId: string;
+    isEcho?: boolean;
+  };
+  attachments?: Array<{
+    type: string;
+    url?: string;
+    payload?: any;
+  }>;
+}
+
 // Union type for all channel messages
 export type ChannelMessage = 
   | WhatsAppMessage 
@@ -118,7 +133,8 @@ export type ChannelMessage =
   | EmailMessage 
   | WebMessage 
   | VoiceMessage 
-  | VideoMessage;
+  | VideoMessage
+  | MessengerMessage;
 
 // Attachment interfaces
 export interface BaseAttachment {

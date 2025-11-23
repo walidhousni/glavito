@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, Post, Body, UseGuards, Req, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Query, Param, Post, Body, UseGuards, Req, Patch, Delete, NotFoundException } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MarketplaceService } from './marketplace.service';
@@ -70,12 +70,24 @@ export class MarketplaceController {
     return this.svc.uninstall(req?.user?.tenantId, id);
   }
 
+  @Get(':slug/reviews')
+  @Roles('admin', 'agent')
+  @Permissions('marketplace.read')
+  getReviews(@Param('slug') slug: string) {
+    return this.svc.getReviewsByItemSlug(slug);
+  }
+
   @Post(':slug/reviews')
   @Roles('admin', 'agent')
   @Permissions('marketplace.read')
-  async review(@Param('slug') slug: string, @Req() req: any, @Body() body: { rating: number; comment?: string }) {
+  async createReview(
+    @Param('slug') slug: string,
+    @Body() body: { rating: number; comment?: string },
+    @Req() req: any
+  ) {
     const item = await this.svc.getBySlug(slug);
-    return this.svc.addReview(item?.id as string, req?.user?.id, body.rating, body.comment);
+    if (!item) throw new NotFoundException('Item not found');
+    return this.svc.addReview(item.id, req.user.id, body.rating, body.comment);
   }
 }
 

@@ -205,8 +205,17 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   fetchSalesForecast: async (days?: number) => {
     try {
       const data = await crmApi.getSalesForecast(days ?? 30);
-      set({ salesForecast: data });
+      // Ensure predictions is always an array
+      set({ 
+        salesForecast: {
+          ...data,
+          predictions: Array.isArray(data?.predictions) ? data.predictions : [],
+          totalPredicted: data?.totalPredicted || 0,
+          periodDays: data?.periodDays || 30
+        }
+      });
     } catch (e: unknown) {
+      console.error('Failed to fetch sales forecast:', e);
       set({ error: e instanceof Error ? e.message : 'Failed to load sales forecast' });
     }
   }

@@ -8,7 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCrmStore } from '@/lib/store/crm-store';
-import { User, Building2, Mail, Phone, Globe, Loader2 } from 'lucide-react';
+import { 
+  FaUser, 
+  FaBuilding, 
+  FaEnvelope, 
+  FaGlobe, 
+  FaSpinner 
+} from 'react-icons/fa';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 interface CreateLeadDialogProps {
   open: boolean;
@@ -86,7 +94,7 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
       newErrors.company = t('errors.companyRequired');
     }
     
-    if (phone && !/^[\+]?[1-9][\d]{0,15}$/.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+    if (phone && !/^[+]?[1-9][\d]{0,15}$/.test(phone.replace(/[\s\-()]/g, ''))) {
       newErrors.phone = t('errors.phoneInvalid');
     }
 
@@ -118,31 +126,33 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader className="space-y-3">
+      <DialogContent className="max-w-2xl p-0 gap-0 bg-background border-0 shadow-xl rounded-xl">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
-              <User className="h-6 w-6 text-white" />
+            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50">
+              <FaUser className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-semibold">{t('title')}</DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
+              <DialogTitle className="text-lg font-semibold text-foreground">{t('title')}</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-1">
                 {t('description')}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="px-6 py-4 space-y-6 max-h-[calc(90vh-180px)] overflow-y-auto">
           {/* Personal Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-              <User className="h-4 w-4" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+              <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50">
+                <FaUser className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+              </div>
               {t('sections.personalInfo')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium">
+                <Label htmlFor="firstName" className="text-xs font-medium">
                   {t('firstName')} <span className="text-red-500">*</span>
                 </Label>
                 <Input 
@@ -150,12 +160,12 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
                   value={firstName} 
                   onChange={(e) => setFirstName(e.target.value)} 
                   placeholder={t('placeholders.firstName')} 
-                  className={`transition-colors ${errors.firstName ? 'border-red-500 focus:border-red-500' : ''}`}
+                  className={`h-9 border-0 shadow-sm ${errors.firstName ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
                 {errors.firstName && <p className="text-xs text-red-500">{errors.firstName}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium">
+                <Label htmlFor="lastName" className="text-xs font-medium">
                   {t('lastName')} <span className="text-red-500">*</span>
                 </Label>
                 <Input 
@@ -163,22 +173,26 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
                   value={lastName} 
                   onChange={(e) => setLastName(e.target.value)} 
                   placeholder={t('placeholders.lastName')} 
-                  className={`transition-colors ${errors.lastName ? 'border-red-500 focus:border-red-500' : ''}`}
+                  className={`h-9 border-0 shadow-sm ${errors.lastName ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
                 {errors.lastName && <p className="text-xs text-red-500">{errors.lastName}</p>}
               </div>
             </div>
           </div>
 
+          <Separator className="bg-border/50" />
+
           {/* Contact Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-              <Mail className="h-4 w-4" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+              <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50">
+                <FaEnvelope className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              </div>
               {t('sections.contactInfo')}
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
+                <Label htmlFor="email" className="text-xs font-medium">
                   {t('email')} <span className="text-red-500">*</span>
                 </Label>
                 <Input 
@@ -187,12 +201,12 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)} 
                   placeholder={t('placeholders.email')} 
-                  className={`transition-colors ${errors.email ? 'border-red-500 focus:border-red-500' : ''}`}
+                  className={`h-9 border-0 shadow-sm ${errors.email ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
                 {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium">
+                <Label htmlFor="phone" className="text-xs font-medium">
                   {t('phone')}
                 </Label>
                 <Input 
@@ -201,22 +215,26 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
                   value={phone} 
                   onChange={(e) => setPhone(e.target.value)} 
                   placeholder={t('placeholders.phone')} 
-                  className={`transition-colors ${errors.phone ? 'border-red-500 focus:border-red-500' : ''}`}
+                  className={`h-9 border-0 shadow-sm ${errors.phone ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
                 {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
               </div>
             </div>
           </div>
 
+          <Separator className="bg-border/50" />
+
           {/* Company Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-              <Building2 className="h-4 w-4" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+              <div className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/50">
+                <FaBuilding className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+              </div>
               {t('sections.companyInfo')}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="company" className="text-sm font-medium">
+                <Label htmlFor="company" className="text-xs font-medium">
                   {t('company')} <span className="text-red-500">*</span>
                 </Label>
                 <Input 
@@ -224,21 +242,21 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
                   value={company} 
                   onChange={(e) => setCompany(e.target.value)} 
                   placeholder={t('placeholders.company')} 
-                  className={`transition-colors ${errors.company ? 'border-red-500 focus:border-red-500' : ''}`}
+                  className={`h-9 border-0 shadow-sm ${errors.company ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
                 {errors.company && <p className="text-xs text-red-500">{errors.company}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="source" className="text-sm font-medium">
+                <Label htmlFor="source" className="text-xs font-medium">
                   {t('source')}
                 </Label>
                 <Select value={source} onValueChange={setSource}>
-                  <SelectTrigger>
+                  <SelectTrigger id="source" className="h-9 border-0 shadow-sm">
                     <SelectValue placeholder={t('placeholders.source')} />
                   </SelectTrigger>
                   <SelectContent>
                     {leadSources.map((sourceOption) => (
-                      <SelectItem key={sourceOption.value} value={sourceOption.value}>
+                      <SelectItem key={sourceOption.value} value={sourceOption.value} className="text-xs">
                         {sourceOption.label}
                       </SelectItem>
                     ))}
@@ -250,9 +268,13 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
 
           {/* Dynamic Custom Fields */}
           {!!customFields && Array.isArray(customFields) && customFields.filter((f: any) => f.entity === 'lead' && f.isActive).length > 0 && (
+            <>
+              <Separator className="bg-border/50" />
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                <Globe className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                  <div className="p-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/50">
+                    <FaGlobe className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
                 {t('sections.customFields', { default: 'Additional fields' })}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,41 +283,44 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
                   .sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
                   .map((field: any) => (
                   <div key={field.id} className="space-y-2">
-                    <Label className="text-sm font-medium">{field.label}{field.required ? ' *' : ''}</Label>
+                      <Label className="text-xs font-medium">{field.label}{field.required ? ' *' : ''}</Label>
                     {(['text','email','phone','url','number'] as string[]).includes(field.type) ? (
                       <Input
                         type={field.type === 'number' ? 'number' : 'text'}
                         value={dynamicFields[field.name] ?? ''}
                         onChange={(e) => setDynamicFields(prev => ({ ...prev, [field.name]: field.type === 'number' ? Number(e.target.value) : e.target.value }))}
                         placeholder={field.description || ''}
+                          className="h-9 border-0 shadow-sm"
                       />
                     ) : field.type === 'textarea' ? (
-                      <textarea
-                        className="w-full border rounded px-3 py-2 bg-transparent"
+                        <Textarea
+                          className="w-full border-0 shadow-sm resize-none"
                         rows={3}
                         value={dynamicFields[field.name] ?? ''}
                         onChange={(e) => setDynamicFields(prev => ({ ...prev, [field.name]: e.target.value }))}
+                        placeholder={field.description || ''}
                       />
                     ) : field.type === 'boolean' ? (
-                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
                         <input
                           type="checkbox"
                           checked={!!dynamicFields[field.name]}
                           onChange={(e) => setDynamicFields(prev => ({ ...prev, [field.name]: e.target.checked }))}
+                            className="h-4 w-4"
                         />
-                        <span className="text-sm text-muted-foreground">{field.description || ''}</span>
+                          <span className="text-xs text-muted-foreground">{field.description || ''}</span>
                       </div>
                     ) : field.type === 'select' ? (
                       <Select
                         value={String(dynamicFields[field.name] ?? '')}
                         onValueChange={(v) => setDynamicFields(prev => ({ ...prev, [field.name]: v }))}
                       >
-                        <SelectTrigger>
+                          <SelectTrigger className="h-9 border-0 shadow-sm">
                           <SelectValue placeholder={field.description || 'Select...'} />
                         </SelectTrigger>
                         <SelectContent>
                           {(Array.isArray(field.options) ? field.options : []).map((opt: any) => (
-                            <SelectItem key={String(opt?.value ?? opt)} value={String(opt?.value ?? opt)}>
+                              <SelectItem key={String(opt?.value ?? opt)} value={String(opt?.value ?? opt)} className="text-xs">
                               {String(opt?.label ?? opt)}
                             </SelectItem>
                           ))}
@@ -306,30 +331,34 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
                 ))}
               </div>
             </div>
+            </>
           )}
         </div>
 
-        <DialogFooter className="flex gap-3 pt-6 border-t">
+        <DialogFooter className="px-6 pb-6 pt-0 border-t border-border/50">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
             disabled={loading}
-            className="flex-1 sm:flex-none"
+            className="h-9 text-xs border-0 shadow-sm"
           >
             {t('cancel')}
           </Button>
           <Button 
             onClick={handleCreate} 
             disabled={loading}
-            className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+            className="h-9 text-xs bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 border-0 shadow-sm"
           >
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <FaSpinner className="mr-2 h-3.5 w-3.5 animate-spin" />
                 {t('creating')}
               </>
             ) : (
-              t('create')
+              <>
+                <FaUser className="mr-2 h-3.5 w-3.5" />
+                {t('create')}
+              </>
             )}
           </Button>
         </DialogFooter>

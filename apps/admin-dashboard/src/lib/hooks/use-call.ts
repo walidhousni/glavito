@@ -26,6 +26,8 @@ export function useCall({ callId, autoConnect = true }: UseCallOptions = {}) {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const [receivedFiles, setReceivedFiles] = useState<Array<{ name: string; size: number; url: string }>>([]);
+  const [peerMuted, setPeerMuted] = useState(false);
+  const [peerVideoEnabled, setPeerVideoEnabled] = useState(true);
 
   useEffect(() => {
     if (!autoConnect || !callId) return;
@@ -42,6 +44,8 @@ export function useCall({ callId, autoConnect = true }: UseCallOptions = {}) {
     });
     socket.on('disconnect', () => setIsConnected(false));
     socket.on('connect_error', (e) => setError(e.message));
+    socket.on('peer-muted', (p: { peerId: string; muted: boolean }) => setPeerMuted(!!p?.muted));
+    socket.on('peer-video', (p: { peerId: string; enabled: boolean }) => setPeerVideoEnabled(!!p?.enabled));
 
     return () => {
       socket.emit('leave-call', { callId });
@@ -56,6 +60,16 @@ export function useCall({ callId, autoConnect = true }: UseCallOptions = {}) {
   const sendSignal = useCallback((payload: { type: 'offer' | 'answer' | 'candidate'; data: RTCSessionDescriptionInit | RTCIceCandidateInit; to?: string }) => {
     if (!socketRef.current || !callId) return;
     socketRef.current.emit('signal', { callId, ...payload });
+  }, [callId]);
+
+  const emitMute = useCallback((muted: boolean) => {
+    if (!socketRef.current || !callId) return;
+    socketRef.current.emit('mute', { callId, muted });
+  }, [callId]);
+
+  const emitToggleVideo = useCallback((enabled: boolean) => {
+    if (!socketRef.current || !callId) return;
+    socketRef.current.emit('toggle-video', { callId, enabled });
   }, [callId]);
 
   const createCall = useCallback(async (params: { conversationId?: string; type: 'voice' | 'video'; metadata?: Record<string, unknown> }) => {
@@ -75,7 +89,12 @@ export function useCall({ callId, autoConnect = true }: UseCallOptions = {}) {
   const initPeer = useCallback(async (audio = true, video = true) => {
     const iceServers: RTCIceServer[] = [];
     const stun = (process.env.NEXT_PUBLIC_STUN_URLS || '').split(',').map((u) => u.trim()).filter(Boolean);
-    if (stun.length) iceServers.push({ urls: stun });
+    if (stun.length) {
+      iceServers.push({ urls: stun });
+    } else {
+      // Fallback to a public STUN server to improve connectivity in dev
+      iceServers.push({ urls: ['stun:stun.l.google.com:19302'] });
+    }
     const turnUrls = (process.env.NEXT_PUBLIC_TURN_URLS || '').split(',').map((u) => u.trim()).filter(Boolean);
     if (turnUrls.length) {
       iceServers.push({
@@ -217,7 +236,7 @@ export function useCall({ callId, autoConnect = true }: UseCallOptions = {}) {
     }
   }, []);
 
-  return { currentCall, setCurrentCall, isConnected, error, sendSignal, createCall, endCall, startWebRTC, localStream, remoteStream, startScreenShare, stopScreenShare, isScreenSharing, sendFile, receivedFiles };
+  return { currentCall, setCurrentCall, isConnected, error, peerMuted, peerVideoEnabled, sendSignal, emitMute, emitToggleVideo, createCall, endCall, startWebRTC, localStream, remoteStream, startScreenShare, stopScreenShare, isScreenSharing, sendFile, receivedFiles };
 }
 
 

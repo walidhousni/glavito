@@ -4,10 +4,11 @@ import type { Ticket, CreateTicketRequest, UpdateTicketRequest, TicketFilters, P
 import { TicketsRoutingService } from './tickets-routing.service';
 import { TicketsGateway } from './tickets.gateway';
 import { TicketsSearchService } from './tickets-search.service';
-import { AIIntelligenceService } from '@glavito/shared-ai';
+// Lazy AI injection via module provider token
 import { CustomersService } from '../customers/customers.service';
 import { CustomerSatisfactionService } from '../customers/customer-satisfaction.service';
 import { SLAService } from '../sla/sla.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class TicketsService {
@@ -17,11 +18,12 @@ export class TicketsService {
     private readonly routingService: TicketsRoutingService,
     private readonly gateway: TicketsGateway,
     private readonly search: TicketsSearchService,
-    private readonly ai: AIIntelligenceService,
+    @Inject('AI_INTELLIGENCE_SERVICE') private readonly ai: { analyzeContent: (args: any) => Promise<any> },
     private readonly customersService: CustomersService,
     private readonly satisfactionService: CustomerSatisfactionService,
     private readonly slaService: SLAService,
     @Optional() @Inject('EVENT_PUBLISHER') private readonly events?: { publishTicketEvent?: (event: any) => Promise<any> },
+    @Optional() private readonly notificationsService?: NotificationsService,
   ) {}
 
   private async publishSafe(event: any) {
@@ -52,12 +54,36 @@ export class TicketsService {
       (createTicketDto as any).customFields || {},
     );
 
+    // Ensure we have a valid channelId - find a default channel if not provided
+    let channelId = (createTicketDto as any).channelId;
+    if (!channelId) {
+      try {
+        // Find the first available channel for this tenant
+        const defaultChannel = await this.databaseService.channel.findFirst({
+          where: { 
+            tenantId: (createTicketDto as any).tenantId,
+            isActive: true 
+          },
+          orderBy: { createdAt: 'asc' } // Get the first created channel
+        });
+        if (defaultChannel) {
+          channelId = defaultChannel.id;
+        }
+      } catch (e) {
+        this.logger.warn(`Failed to find default channel for tenant ${(createTicketDto as any).tenantId}: ${String((e as any)?.message || e)}`);
+      }
+    }
+
+    if (!channelId) {
+      throw new Error('No channel available for ticket creation. Please ensure at least one channel is configured.');
+    }
+
     const createData: any = {
       tenantId: (createTicketDto as any).tenantId,
       subject: (createTicketDto as any).subject,
       description: (createTicketDto as any).description,
       customerId: (createTicketDto as any).customerId,
-      channelId: (createTicketDto as any).channelId,
+      channelId: channelId,
       status: 'open',
       priority: (createTicketDto as any).priority || 'medium',
       tags: Array.isArray((createTicketDto as any).tags) ? (createTicketDto as any).tags : [],
@@ -77,6 +103,32 @@ export class TicketsService {
         assignedAgent: true,
       },
     });
+
+    // Create corresponding ConversationAdvanced for the ticket
+    try {
+      await (this.databaseService as any).conversationAdvanced?.create?.({
+        data: {
+          id: `conv_ticket_${ticket.id}`,
+          tenantId: ticket.tenantId,
+          customerId: ticket.customerId,
+          channelId: ticket.channelId,
+          subject: ticket.subject || 'Ticket Conversation',
+          status: 'active',
+          priority: ticket.priority || 'medium',
+          assignedAgentId: ticket.assignedAgentId,
+          tags: ticket.tags || [],
+          messageCount: 0,
+          metadata: {
+            ticketId: ticket.id,
+            source: 'ticket',
+            unreadCount: 0,
+          },
+        },
+      });
+      this.logger.debug(`[TICKET_CREATE] Created ConversationAdvanced for ticket ${ticket.id}`);
+    } catch (e) {
+      this.logger.warn(`Failed to create ConversationAdvanced for ticket ${ticket.id}: ${String((e as any)?.message || e)}`);
+    }
 
     // Audit log best-effort
     try {
@@ -128,6 +180,46 @@ export class TicketsService {
         await this.customersService.rescoreHealth((ticket as any).customerId, (ticket as any).tenantId);
       }
     } catch (_e) { void 0 }
+
+    // Perform AI triage and potentially auto-assign (async, non-blocking)
+    void this.triageAndAutoAssignTicket((ticket as any).id, (ticket as any).tenantId, {
+      subject: (ticket as any).subject,
+      description: (ticket as any).description,
+      channelType: (ticket as any).channel?.type,
+      customerId: (ticket as any).customerId,
+      teamId: (ticket as any).teamId,
+    });
+
+    // GLAVAI Auto-Resolve: attempt auto-resolve for routine queries
+    void (async () => {
+      try {
+        const cfg: any = await (this.databaseService as any).aISettings?.findUnique?.({
+          where: { tenantId: (ticket as any).tenantId },
+        });
+        if (cfg?.autoResolveEnabled && (ticket as any).description) {
+          const { GlavaiAutoResolveService } = await import('../ai/glavai-auto-resolve.service');
+          const autoResolveService = new GlavaiAutoResolveService(this.databaseService);
+          const result = await autoResolveService.attemptAutoResolve({
+            tenantId: (ticket as any).tenantId,
+            ticketId: (ticket as any).id,
+            conversationId: (ticket as any).conversations?.[0]?.id,
+            content: `${(ticket as any).subject || ''}\n${(ticket as any).description || ''}`,
+            channelType: (ticket as any).channel?.type,
+            customerId: (ticket as any).customerId,
+          });
+          if (result.resolved) {
+            this.logger.log(`GLAVAI auto-resolved ticket ${(ticket as any).id}`);
+            this.gateway.broadcast(
+              'glavai.auto_resolved',
+              { ticketId: (ticket as any).id, confidence: result.confidence },
+              (ticket as any).tenantId,
+            );
+          }
+        }
+      } catch (e) {
+        this.logger.debug(`GLAVAI auto-resolve skipped: ${String((e as Error)?.message || e)}`);
+      }
+    })();
 
     return ticket as Ticket;
   }
@@ -244,6 +336,8 @@ export class TicketsService {
         customer: true,
         channel: true,
         assignedAgent: true,
+          // expose SLA instance to the client widgets
+          slaInstance: true,
         _count: { select: { conversations: true, timelineEvents: true } },
       },
     });
@@ -404,6 +498,22 @@ export class TicketsService {
       }
     } catch (_e) { void 0 }
 
+    if (agentId && this.notificationsService) {
+      try {
+        await this.notificationsService.publishNotification(
+          'ticket',
+          `Ticket ${id} assigned to you`,
+          'New ticket assignment.',
+          'high',
+          String(agentId),
+          { ticketId: id },
+          String(tenantId || '')
+        );
+      } catch (e) {
+        this.logger.warn(`Failed to notify agent on assign: ${e}`);
+      }
+    }
+
     return ticket as Ticket;
   }
 
@@ -428,6 +538,7 @@ export class TicketsService {
       data: {
         assignedAgentId: suggestedAgentId || null,
         status: suggestedAgentId ? 'pending' : 'open',
+        assignedByAI: !!suggestedAgentId,
       },
       include: {
         customer: true,
@@ -525,6 +636,22 @@ export class TicketsService {
       }
     } catch (e) {
       // best-effort
+    }
+
+    if ((ticket as any).assignedAgentId && this.notificationsService) {
+      try {
+        await this.notificationsService.publishNotification(
+          'ticket',
+          `Ticket ${id} resolved`,
+          'Your ticket has been resolved.',
+          'medium',
+          String((ticket as any).assignedAgentId || ''),
+          { ticketId: id },
+          String(tenantId || '')
+        );
+      } catch (e) {
+        this.logger.warn(`Failed to notify agent on resolve: ${e}`);
+      }
     }
 
     return ticket as Ticket;
@@ -949,7 +1076,7 @@ export class TicketsService {
     }
   }
 
-  async getStats(tenantId?: string) {
+  async getStats(tenantId?: string, daysWindow = 7) {
     try {
       const whereTenant = tenantId ? { tenantId } : {};
 
@@ -987,7 +1114,7 @@ export class TicketsService {
           where: { ...whereTenant, firstResponseAt: { not: null } },
           _avg: { firstResponseTime: true }
         }),
-        this.getTrendsData(tenantId || ''),
+        this.getTrendsData(tenantId || '', daysWindow),
         (this.databaseService as any)['customerSatisfactionSurvey']?.aggregate?.({
           where: { ...whereTenant },
           _avg: { rating: true }
@@ -1021,6 +1148,20 @@ export class TicketsService {
         return acc;
       }, {});
 
+      // Compute week trend percentage based on trends series
+      let weekTrendPct = 0;
+      try {
+        const series = Array.isArray(trends) ? trends : [];
+        if (series.length >= 2) {
+          const last = series[series.length - 1]?.total || 0;
+          const prev = series[series.length - 2]?.total || 0;
+          if (prev > 0) weekTrendPct = ((last - prev) / prev) * 100;
+        }
+      } catch { /* noop */ }
+
+      // Active agents from gateway presence
+      const activeAgents = this.gateway.getActiveAgents(tenantId || '');
+
       return {
         total,
         open: mapCount('open'),
@@ -1033,6 +1174,8 @@ export class TicketsService {
         overdue: overdueCount,
         unassigned,
         slaAtRisk,
+        activeAgents,
+        weekTrendPct,
         averageResolutionTime: avgResolution?._avg?.resolutionTime || 0,
         averageFirstResponseTime: avgFirstResponse?._avg?.firstResponseTime || 0,
         customerSatisfactionScore: satisfaction?._avg?.rating || 0,
@@ -1058,6 +1201,8 @@ export class TicketsService {
         overdue: 0,
         unassigned: 0,
         slaAtRisk: 0,
+        activeAgents: 0,
+        weekTrendPct: 0,
         averageResolutionTime: 0,
         averageFirstResponseTime: 0,
         customerSatisfactionScore: 0,
@@ -1081,6 +1226,79 @@ export class TicketsService {
       return analysis;
     } catch (error) {
       console.error(`Failed to get AI analysis for ticket ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getRoutingSuggestions(id: string, tenantId: string, limit = 5) {
+    try {
+      const ticket = await this.databaseService.ticket.findFirst({
+        where: { id, tenantId },
+        include: {
+          customer: true,
+          channel: true,
+        },
+      });
+
+      if (!ticket) {
+        throw new NotFoundException('Ticket not found');
+      }
+
+      const suggestions = await this.routingService.getRoutingSuggestions(
+        {
+          tenantId,
+          customerId: (ticket as any).customerId,
+          teamId: (ticket as any).teamId,
+          priority: (ticket as any).priority,
+          subject: (ticket as any).subject,
+          description: (ticket as any).description,
+          channelType: (ticket as any)?.channel?.type,
+          languageHint: (ticket as any).language,
+        },
+        limit
+      );
+
+      // Enrich with agent details
+      const agentIds = suggestions.map((s) => s.agentId);
+      const agents = await this.databaseService.user.findMany({
+        where: { id: { in: agentIds } },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          avatar: true,
+          agentProfile: {
+            select: {
+              skills: true,
+              languages: true,
+              maxConcurrentTickets: true,
+            },
+          },
+        },
+      });
+
+      const agentMap = new Map(agents.map((a) => [a.id, a]));
+
+      return suggestions.map((suggestion) => {
+        const agent = agentMap.get(suggestion.agentId);
+        return {
+          ...suggestion,
+          agent: agent
+            ? {
+                id: agent.id,
+                firstName: agent.firstName,
+                lastName: agent.lastName,
+                email: agent.email,
+                avatar: agent.avatar,
+                skills: (agent.agentProfile?.skills as string[]) || [],
+                languages: (agent.agentProfile?.languages as string[]) || [],
+              }
+            : null,
+        };
+      });
+    } catch (error) {
+      this.logger.error(`Failed to get routing suggestions for ticket ${id}: ${String(error)}`);
       throw error;
     }
   }
@@ -1139,6 +1357,124 @@ export class TicketsService {
   }
 
   // Helper: rescore CRM leads for a customer
+  /**
+   * Perform triage and auto-assign ticket based on autopilot configuration.
+   * Called asynchronously after ticket creation.
+   */
+  private async triageAndAutoAssignTicket(
+    ticketId: string,
+    tenantId: string,
+    context: {
+      subject?: string;
+      description?: string;
+      channelType?: string;
+      customerId?: string;
+      teamId?: string;
+    }
+  ) {
+    try {
+      // Get autopilot configuration
+      const autopilotConfig = await (this.databaseService as any).aISettings?.findUnique?.({
+        where: { tenantId },
+        select: {
+          autopilotMode: true,
+          minConfidence: true,
+          maxAutoRepliesPerHour: true,
+          allowedChannels: true,
+        },
+      });
+
+      const autopilotMode = autopilotConfig?.autopilotMode || 'off';
+      const minConfidence = autopilotConfig?.minConfidence || 0.7;
+      const allowedChannels = autopilotConfig?.allowedChannels || [];
+
+      // Check if triage is enabled for this channel
+      if (autopilotMode === 'off') {
+        this.logger.debug(`Autopilot is off for tenant ${tenantId}, skipping triage`);
+        return;
+      }
+
+      if (allowedChannels.length > 0 && context.channelType && !allowedChannels.includes(context.channelType)) {
+        this.logger.debug(`Channel ${context.channelType} not in allowed channels for tenant ${tenantId}`);
+        return;
+      }
+
+      // Perform triage
+      const triageResult = await this.analyzeAndEnrichTicket(ticketId, tenantId, {
+        subject: context.subject,
+        description: context.description,
+        channelType: context.channelType,
+      });
+
+      if (!triageResult) {
+        this.logger.debug(`Triage failed for ticket ${ticketId}`);
+        return;
+      }
+
+      // Auto-assign if in auto mode and confidence is sufficient
+      if (autopilotMode === 'auto' && triageResult.confidence >= minConfidence) {
+        const recommendedAgentId = await this.routingService.recommendAssignment({
+          tenantId,
+          intent: triageResult.intent,
+          category: triageResult.category,
+          priority: triageResult.priority,
+          urgencyLevel: triageResult.urgencyLevel,
+          language: triageResult.language,
+          entities: triageResult.entities,
+          customerId: context.customerId,
+          teamId: context.teamId,
+        });
+
+        if (recommendedAgentId) {
+          // Check if ticket is not already assigned
+          const current = await this.databaseService.ticket.findUnique({
+            where: { id: ticketId },
+            select: { assignedAgentId: true },
+          });
+
+          if (!(current as any).assignedAgentId) {
+            await this.databaseService.ticket.update({
+              where: { id: ticketId },
+              data: {
+                assignedAgentId: recommendedAgentId,
+                assignedByAI: true,
+              } as any,
+            });
+
+            // Publish auto-assign event
+            try {
+              await this.publishSafe({
+                eventType: 'ticket.auto_assigned',
+                tenantId,
+                userId: recommendedAgentId,
+                timestamp: new Date().toISOString(),
+                data: {
+                  ticketId,
+                  assignedAgentId: recommendedAgentId,
+                  confidence: triageResult.confidence,
+                  intent: triageResult.intent,
+                  category: triageResult.category,
+                },
+              });
+
+              this.gateway.broadcast('ticket.auto_assigned', {
+                ticketId,
+                assignedAgentId: recommendedAgentId,
+                confidence: triageResult.confidence,
+              }, tenantId);
+            } catch (_e) { /* noop */ }
+
+            this.logger.log(`Auto-assigned ticket ${ticketId} to agent ${recommendedAgentId} with confidence ${triageResult.confidence}`);
+          }
+        }
+      } else if (autopilotMode === 'draft') {
+        this.logger.debug(`Draft mode: triage completed for ticket ${ticketId}, but not auto-assigning`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to triage and auto-assign ticket ${ticketId}: ${String(error)}`);
+    }
+  }
+
   private async rescoreLeadsForCustomer(tenantId: string, customerId: string) {
     try {
       const leads = await (this.databaseService as any).lead.findMany({ where: { tenantId, customerId }, take: 20 });
@@ -1150,7 +1486,10 @@ export class TicketsService {
       const ticketsCount = await this.databaseService.ticket.count({ where: { tenantId, customerId } }).catch(() => 0);
 
       for (const lead of leads) {
-        const { score, factors, reasoning } = await this.ai.computeLeadScore(lead, { interactionsLast30d, ticketsCount });
+        // Best-effort: computeLeadScore may not be available on injected AI stub
+        const aiAny = this.ai as unknown as { computeLeadScore?: (lead: any, ctx: any) => Promise<{ score: number; factors?: any; reasoning?: any }> };
+        if (!aiAny.computeLeadScore) continue;
+        const { score, factors, reasoning } = await aiAny.computeLeadScore(lead, { interactionsLast30d, ticketsCount });
         await (this.databaseService as any).lead.update({ where: { id: lead.id }, data: { score, scoreReason: { factors, reasoning } } });
       }
     } catch (err) {
@@ -1211,24 +1550,178 @@ export class TicketsService {
     }
   }
 
-  private async getTrendsData(tenantId: string) {
+  private async getTrendsData(tenantId: string, daysWindow = 7) {
     try {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      
-      const trends = await this.databaseService.ticket.groupBy({
-        by: ['status'],
-        where: {
-          tenantId,
-          createdAt: { gte: thirtyDaysAgo }
-        },
-        _count: { status: true }
-      });
+      // Build last 7 days windows [start, end]
+      const startOfDay = (d: Date) => {
+        const x = new Date(d);
+        x.setHours(0, 0, 0, 0);
+        return x;
+      };
+      const endOfDay = (d: Date) => {
+        const x = new Date(d);
+        x.setHours(23, 59, 59, 999);
+        return x;
+      };
 
-      return trends;
+      const days: Array<{ start: Date; end: Date; label: string }> = [];
+      const todayStart = startOfDay(new Date());
+      const span = Math.max(1, Math.min(180, Number(daysWindow) || 7));
+      for (let i = span - 1; i >= 0; i--) {
+        const start = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000);
+        const end = endOfDay(start);
+        const label = start.toISOString().slice(0, 10);
+        days.push({ start, end, label });
+      }
+
+      const series: Array<{ date: string; total: number; resolved: number; avgFirstResponseMinutes: number }> = [];
+
+      for (const day of days) {
+        const [totalCount, resolvedCount, firstRespAgg] = await Promise.all([
+          this.databaseService.ticket.count({
+            where: { tenantId, createdAt: { gte: day.start, lte: day.end } },
+          }),
+          this.databaseService.ticket.count({
+            where: { tenantId, resolvedAt: { gte: day.start, lte: day.end } },
+          }),
+          (this.databaseService.ticket as any).aggregate({
+            where: { tenantId, firstResponseAt: { gte: day.start, lte: day.end }, firstResponseTime: { not: null } },
+            _avg: { firstResponseTime: true },
+          }),
+        ]);
+
+        series.push({
+          date: day.label,
+          total: totalCount || 0,
+          resolved: resolvedCount || 0,
+          avgFirstResponseMinutes: (firstRespAgg?._avg?.firstResponseTime as number) || 0,
+        });
+      }
+
+      return series;
     } catch (error) {
       console.error('Failed to get trends data:', error);
       return [];
     }
+  }
+
+  /**
+   * Tenant-wide or agent-scoped activity feed built from timeline events and audit logs
+   */
+  async getActivityFeed(
+    tenantId: string,
+    opts?: { limit?: number; agentId?: string }
+  ): Promise<Array<{ id: string; type: 'ticket' | 'agent' | 'customer' | 'system' | 'message' | 'sla'; title: string; description?: string; user: string; time: string; priority?: 'low' | 'medium' | 'high' | 'urgent'; metadata?: Record<string, unknown> }>> {
+    const limit = Math.max(1, Math.min(100, opts?.limit ?? 20));
+    const agentId = opts?.agentId;
+
+    // Pull recent ticket timeline events (scoped to tenant)
+    const timelineWhere: any = { ticket: { tenantId } };
+    if (agentId) {
+      // Scope to events on tickets assigned to this agent
+      timelineWhere.ticket = { tenantId, assignedAgentId: agentId };
+    }
+
+    const [timeline, audits] = await Promise.all([
+      this.databaseService.ticketTimelineEvent.findMany({
+        where: timelineWhere,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        include: {
+          ticket: { select: { id: true, subject: true, priority: true } },
+          user: { select: { firstName: true, lastName: true, email: true } },
+        },
+      }),
+      (this.databaseService as any).auditLog.findMany?.({
+        where: {
+          tenantId,
+          resource: 'ticket',
+          ...(agentId ? { userId: agentId } : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: { id: true, userId: true, action: true, resourceId: true, createdAt: true, newValues: true },
+      }).catch(() => []),
+    ]);
+
+    const toName = (u?: { firstName?: string | null; lastName?: string | null; email?: string | null }) =>
+      ((u?.firstName || '') + ' ' + (u?.lastName || '')).trim() || (u?.email || 'System');
+
+    const mapTimeline = timeline.map((e: any) => {
+      const kind = String(e.eventType || '').toLowerCase();
+      let type: 'ticket' | 'agent' | 'customer' | 'system' | 'message' | 'sla' = 'ticket';
+      if (kind.includes('note')) type = 'message';
+      else if (kind.includes('snooz') || kind.includes('sla')) type = 'sla';
+
+      const title = (
+        kind === 'note_added' ? 'Note added to ticket' :
+        kind === 'snoozed' ? 'Ticket snoozed' :
+        kind === 'assign' ? 'Ticket assignment change' :
+        'Ticket update'
+      );
+
+      const priority = (e.ticket?.priority as 'low' | 'medium' | 'high' | 'urgent' | undefined) || undefined;
+
+      return {
+        id: `tl_${e.id}`,
+        type,
+        title,
+        description: (e as any).description || undefined,
+        user: toName(e.user as any),
+        time: (e.createdAt as Date).toISOString(),
+        priority,
+        metadata: {
+          ticketId: e.ticket?.id,
+          subject: e.ticket?.subject,
+        },
+      };
+    });
+
+    const mapAudit = (audits as any[]).map((a: any) => {
+      const act = String(a.action || '').toLowerCase();
+      let type: 'ticket' | 'agent' | 'customer' | 'system' | 'message' | 'sla' = 'ticket';
+      let title = 'Ticket activity';
+      if (act.includes('created')) title = 'New ticket created';
+      else if (act.includes('resolved')) title = 'Ticket resolved';
+      else if (act.includes('updated')) title = 'Ticket updated';
+      else if (act.includes('assigned')) title = 'Ticket assigned';
+
+      return {
+        id: `al_${a.id}`,
+        type,
+        title,
+        description: undefined,
+        user: 'System',
+        time: (a.createdAt as Date).toISOString(),
+        priority: undefined,
+        metadata: {
+          ticketId: a.resourceId,
+          changes: a.newValues || undefined,
+        },
+      };
+    });
+
+    const combined = [...mapTimeline, ...mapAudit]
+      .sort((x, y) => new Date(y.time).getTime() - new Date(x.time).getTime())
+      .slice(0, limit);
+
+    return combined;
+  }
+
+  /**
+   * Aggregate basic stats for the current agent
+   */
+  async getAgentStats(tenantId: string, agentId: string) {
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [assigned, open, waiting, urgent, resolvedToday] = await Promise.all([
+      this.databaseService.ticket.count({ where: { tenantId, assignedAgentId: agentId } }),
+      this.databaseService.ticket.count({ where: { tenantId, assignedAgentId: agentId, status: { in: ['open', 'in_progress'] } } }),
+      this.databaseService.ticket.count({ where: { tenantId, assignedAgentId: agentId, status: 'waiting' } }),
+      this.databaseService.ticket.count({ where: { tenantId, assignedAgentId: agentId, priority: { in: ['urgent', 'high'] } } }),
+      this.databaseService.ticket.count({ where: { tenantId, assignedAgentId: agentId, status: 'resolved', createdAt: { gte: since24h } } }),
+    ]);
+
+    return { assigned, open, waiting, urgent, resolvedToday } as const;
   }
 
   /**
@@ -1243,73 +1736,124 @@ export class TicketsService {
       const text = `${content.subject || ''}\n${content.description || ''}`.trim();
       if (!text) return;
 
+      // Get customer history for better triage
+      const ticket = await this.databaseService.ticket.findUnique({
+        where: { id: ticketId },
+        select: {
+          customerId: true,
+          customer: {
+            select: {
+              tickets: { select: { id: true } },
+              createdAt: true,
+            },
+          },
+        },
+      });
+
+      const ticketCount = ticket?.customer?.tickets?.length || 0;
+      const lastInteractionDays = ticket?.customer?.createdAt
+        ? Math.floor((Date.now() - new Date(ticket.customer.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+        : undefined;
+
+      // Perform comprehensive triage using new DashScope-powered method
+      const triageResult = await (this.ai as any).performTriage({
+        content: text,
+        subject: content.subject,
+        channel: content.channelType,
+        customerHistory: { ticketCount, lastInteractionDays },
+      });
+
+      // Also run legacy analysis for sentiment and knowledge suggestions
       const result = await this.ai.analyzeContent({
         content: text,
         context: { tenantId, channelType: content.channelType },
         analysisTypes: [
-          'intent_classification',
           'sentiment_analysis',
-          'urgency_detection',
-          'language_detection',
           'knowledge_suggestions',
         ] as any,
       });
 
-      // Persist AI analysis snapshot
+      // Persist combined AI analysis snapshot
       try {
-        await (this.databaseService as any).ticketAIAnalysis.create({
-          data: {
+        await (this.databaseService as any).ticketAIAnalysis.upsert({
+          where: { ticketId },
+          create: {
             ticketId,
-            analysisType: 'intent,sentiment,urgency,language,knowledge',
-            confidence: Number(result.confidence || 0),
-            results: (result.results || {}) as any,
+            analysisType: 'triage,sentiment,knowledge',
+            confidence: Number(triageResult.confidence || 0),
+            results: {
+              triage: triageResult,
+              sentiment: (result.results as any)?.sentimentAnalysis,
+              knowledge: (result.results as any)?.knowledgeSuggestions,
+            } as any,
             suggestions: ((result.results as any)?.responseGeneration?.suggestedResponses || []) as any,
-            metadata: { processingTime: result.processingTime, at: result.timestamp },
+            metadata: { triageAt: new Date().toISOString() },
+          },
+          update: {
+            analysisType: 'triage,sentiment,knowledge',
+            confidence: Number(triageResult.confidence || 0),
+            results: {
+              triage: triageResult,
+              sentiment: (result.results as any)?.sentimentAnalysis,
+              knowledge: (result.results as any)?.knowledgeSuggestions,
+            } as any,
+            suggestions: ((result.results as any)?.responseGeneration?.suggestedResponses || []) as any,
+            metadata: { triageAt: new Date().toISOString() },
           },
         });
-      } catch (_e) { /* non-fatal */ }
-
-      // Compute suggested priority from urgency
-      let suggestedPriority: string | undefined;
-      const urgency = (result.results as any)?.urgencyDetection?.urgencyLevel as
-        | 'low'
-        | 'medium'
-        | 'high'
-        | 'critical'
-        | undefined;
-      if (urgency === 'critical' || urgency === 'high') suggestedPriority = 'urgent';
-      else if (urgency === 'medium') suggestedPriority = 'medium';
-      else if (urgency === 'low') suggestedPriority = 'low';
-
-      // Extract intent as tag
-      const primaryIntent = (result.results as any)?.intentClassification?.primaryIntent as string | undefined;
-      const extraTags = [primaryIntent ? `ai:${primaryIntent}` : null].filter(Boolean) as string[];
-
-      // Apply enrichment if changed
-      if (suggestedPriority || extraTags.length) {
-        try {
-          const current = await this.databaseService.ticket.findUnique({ where: { id: ticketId }, select: { priority: true, tags: true } });
-          const newPriority = suggestedPriority || (current as any).priority;
-          const newTags = Array.from(new Set([...(current as any).tags || [], ...extraTags]));
-          await this.databaseService.ticket.update({
-            where: { id: ticketId },
-            data: { priority: newPriority as any, tags: newTags as any },
-          });
-          // broadcast update
-          try {
-            await this.publishSafe({
-              eventType: 'ticket.updated',
-              tenantId,
-              timestamp: new Date().toISOString(),
-              data: { ticketId, changes: { priority: newPriority, tags: newTags } },
-            });
-            this.gateway.broadcast('ticket.updated', { ticketId, changes: { priority: newPriority, tags: newTags } }, tenantId);
-          } catch (_e) { /* noop */ }
-        } catch (_e) { /* noop */ }
+      } catch (_e) {
+        this.logger.warn(`Failed to persist triage analysis: ${String(_e)}`);
       }
 
+      // Extract intent as tag
+      const extraTags = [triageResult.intent ? `ai:${triageResult.intent}` : null].filter(Boolean) as string[];
+
+      // Update ticket with triage predictions
+        try {
+        const current = await this.databaseService.ticket.findUnique({
+          where: { id: ticketId },
+          select: { priority: true, tags: true, assignedAgentId: true, language: true },
+        });
+
+        const updateData: any = {
+          predictedIntent: triageResult.intent,
+          predictedCategory: triageResult.category,
+          predictedPriority: triageResult.priority,
+          triageConfidence: triageResult.confidence,
+          aiTriageAt: new Date(),
+          language: triageResult.language || (current as any).language,
+          tags: Array.from(new Set([...(current as any).tags || [], ...extraTags])),
+        };
+
+        // Only update priority if not already set by human or if AI confidence is high
+        if (triageResult.confidence >= 0.7 && !(current as any).assignedAgentId) {
+          updateData.priority = triageResult.priority;
+        }
+
+          await this.databaseService.ticket.update({
+            where: { id: ticketId },
+          data: updateData,
+          });
+
+        // Broadcast triage completion
+        try {
+          this.gateway.broadcast('ticket.triage', {
+            ticketId,
+            intent: triageResult.intent,
+            category: triageResult.category,
+            priority: triageResult.priority,
+            confidence: triageResult.confidence,
+          }, tenantId);
+          } catch (_e) { /* noop */ }
+      } catch (_e) {
+        this.logger.warn(`Failed to update ticket with triage: ${String(_e)}`);
+      }
+
+      // Return triage result for potential auto-assignment
+      return triageResult;
     } catch (error) {
       this.logger.warn(`AI analyzeAndEnrichTicket failed: ${String((error as any)?.message || error)}`);
+      return undefined;
     }
   }
 
@@ -1376,20 +1920,49 @@ export class TicketsService {
         return;
       }
 
+      // Dedupe: avoid sending if a survey was already created for this ticket
+      try {
+        const existing = await (this.databaseService as any).customerSatisfactionSurvey?.findFirst?.({
+          where: { tenantId, ticketId },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true },
+        });
+        if (existing?.id) {
+          this.logger.debug(`Survey already exists for ticket ${ticketId}, skipping`);
+          return;
+        }
+      } catch { /* ignore if model not available */ }
+
+      // Preferences: respect opt-outs and quiet hours
+      let preferEmail = true;
+      let preferWhatsApp = true;
+      let extraDelayMinutes = 0;
+      try {
+        const prefs = await this.customersService.getPreferences(customerId, tenantId);
+        if (prefs?.marketingPreferences) {
+          if (prefs.marketingPreferences.emailOptOut) preferEmail = false;
+          if (prefs.marketingPreferences.whatsappOptOut) preferWhatsApp = false;
+        }
+        // crude quiet-hours delay: if within quiet window, delay 60 minutes
+        if (prefs?.quietHours?.start && prefs?.quietHours?.end) {
+          extraDelayMinutes = Math.max(extraDelayMinutes, 60);
+        }
+      } catch { /* best-effort */ }
+
       // Determine which channels to use
       const channels: ('email' | 'whatsapp')[] = [];
       
       if (satisfactionSettings.preferredChannel === 'both') {
-        if (customer.email) channels.push('email');
-        if (customer.phone) channels.push('whatsapp');
-      } else if (satisfactionSettings.preferredChannel === 'whatsapp' && customer.phone) {
+        if (customer.email && preferEmail) channels.push('email');
+        if (customer.phone && preferWhatsApp) channels.push('whatsapp');
+      } else if (satisfactionSettings.preferredChannel === 'whatsapp' && customer.phone && preferWhatsApp) {
         channels.push('whatsapp');
-      } else if (customer.email) {
+      } else if (customer.email && preferEmail) {
         channels.push('email');
       }
 
       // Send surveys with optional delay
-      const sendDelay = satisfactionSettings.delay || 0;
+      const sendDelay = (satisfactionSettings.delay || 0) + (extraDelayMinutes || 0);
       
       for (const channel of channels) {
         setTimeout(async () => {

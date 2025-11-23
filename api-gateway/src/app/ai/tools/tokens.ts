@@ -1,0 +1,5 @@
+export const ORDER_TOOL_TOKEN = 'AI_ORDER_TOOL';
+export const PRODUCT_TOOL_TOKEN = 'AI_PRODUCT_TOOL';
+export const CUSTOMER_TOOL_TOKEN = 'AI_CUSTOMER_TOOL';
+
+

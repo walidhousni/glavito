@@ -137,13 +137,18 @@ export interface ModelABTest {
   }
 }
 
-type ApiEnvelope<T> = { success?: boolean; data: T }
-
-function unwrap<T>(payload: T | ApiEnvelope<T>): T {
-  const maybe = payload as ApiEnvelope<T>
-  return (maybe && typeof maybe === 'object' && 'data' in maybe)
-    ? (maybe.data as T)
-    : (payload as T)
+// Unwrap responses from the backend TransformInterceptor and ok() helper.
+// Shapes we may receive:
+// 1) T
+// 2) { data: T }
+// 3) { data: { success: boolean, data: T } }
+function unwrap<T>(payload: unknown): T {
+  // Peel off any number of nested { data: ... } envelopes
+  let value: unknown = payload
+  while (value && typeof value === 'object' && 'data' in (value as Record<string, unknown>)) {
+    value = (value as { data: unknown }).data
+  }
+  return value as T
 }
 
 export const predictiveAnalyticsApi = {

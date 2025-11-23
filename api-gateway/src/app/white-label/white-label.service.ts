@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '@glavito/shared-database';
 import { FilesService } from '../files/files.service';
 import type {
@@ -11,6 +11,8 @@ import type {
   UpsertWhiteLabelTemplateRequest,
   WhiteLabelTemplateDTO,
   TenantWhiteLabelSettings,
+  WhiteLabelTheme,
+  EmailTheme,
 } from '@glavito/shared-types';
 
 @Injectable()
@@ -206,6 +208,64 @@ export class WhiteLabelService {
       return this.db.mobileAppConfig.update({ where: { id: existing.id }, data: payload as any }) as unknown as MobileAppConfigDTO;
     }
     return this.db.mobileAppConfig.create({ data: { tenantId, ...(payload as any) } }) as unknown as MobileAppConfigDTO;
+  }
+
+  // Theme computation
+  async computeTheme(tenantId: string): Promise<WhiteLabelTheme> {
+    const tenant = await this.db.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) throw new NotFoundException('Tenant not found');
+    const wl: any = (tenant as any).whiteLabelSettings || {};
+    const branding: any = wl.branding || (tenant as any).brandingConfig || {};
+    // Attempt to find active assets for logo and favicon
+    const [logoAsset] = (await this.db.brandAsset.findMany({ where: { tenantId, type: 'logo', isActive: true }, orderBy: { updatedAt: 'desc' }, take: 1 })) as any[];
+    const [faviconAsset] = (await this.db.brandAsset.findMany({ where: { tenantId, type: 'favicon', isActive: true }, orderBy: { updatedAt: 'desc' }, take: 1 })) as any[];
+    const logoUrl = branding?.logoUrl || wl?.assets?.logoUrl || logoAsset?.originalUrl || '';
+    const faviconUrl = branding?.faviconUrl || wl?.assets?.faviconUrl || faviconAsset?.originalUrl || '';
+    const primary = branding?.primaryColor || wl?.branding?.primaryColor || '#2563EB';
+    const secondary = branding?.secondaryColor || wl?.branding?.secondaryColor || '#0EA5E9';
+    const accent = branding?.accentColor || wl?.branding?.accentColor || '#10B981';
+    const surface = '#ffffff';
+    const onPrimary = '#ffffff';
+    const fontFamily = branding?.fontFamily || wl?.branding?.fontFamily || 'Arial, Helvetica, sans-serif';
+    const emailTheme: EmailTheme = wl?.emailTheme || {
+      headerBackground: primary,
+      bodyBackground: '#F6F8FA',
+      contentBackground: '#FFFFFF',
+      textColor: '#111827',
+      linkColor: primary,
+      buttonBackground: primary,
+      buttonTextColor: '#FFFFFF',
+      footerText: 'You are receiving this email because you interacted with our services.',
+    };
+    return {
+      colors: { primary, secondary, accent, surface, onPrimary },
+      typography: { fontFamily },
+      assets: { logoUrl, faviconUrl },
+      email: emailTheme,
+    } as WhiteLabelTheme;
+  }
+
+  // Activate a specific brand asset (and optionally deactivate others of same type)
+  async activateAsset(tenantId: string, id: string): Promise<BrandAssetDTO> {
+    const asset = await this.db.brandAsset.findFirst({ where: { id, tenantId } });
+    if (!asset) throw new NotFoundException('Brand asset not found');
+    // Deactivate others of same type
+    await this.db.brandAsset.updateMany({ where: { tenantId, type: (asset as any).type, NOT: { id } }, data: { isActive: false } });
+    const updated = await this.db.brandAsset.update({ where: { id }, data: { isActive: true, version: ((asset as any).version || 1) + 1 } });
+    return updated as unknown as BrandAssetDTO;
+  }
+
+  // Simple safety for redirect URLs
+  validateRedirectUrl(url: string): string {
+    try {
+      const u = new URL(url);
+      const allowed = ['http:', 'https:'];
+      if (!allowed.includes(u.protocol)) throw new Error('Invalid protocol');
+      // Optionally: restrict to same-site or allow all https
+      return u.toString();
+    } catch {
+      throw new BadRequestException('Invalid URL');
+    }
   }
 }
 

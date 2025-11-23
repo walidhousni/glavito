@@ -8,26 +8,103 @@ export class WorkflowEventHandler {
 
   constructor(private readonly workflowService: WorkflowService) {}
 
-  @EventPattern('ticket.created')
-  async handleTicketCreated(@Payload() data: any) {
+  /**
+   * Normalize and execute workflows for an event
+   * Supports wildcard matching (e.g., ticket.* matches ticket.created, ticket.assigned, etc.)
+   */
+  private async executeEventWorkflows(rawEventType: string, payload: any): Promise<void> {
     try {
-      this.logger.log('Processing ticket.created event for workflow automation')
+      // Normalize event type to lowercase
+      const eventType = rawEventType.toLowerCase().trim()
       
-      // Execute workflows triggered by ticket creation
-      const executions = await this.workflowService.executeWorkflowByTrigger('event', {
-        eventType: 'ticket.created',
-        ticketId: data.ticketId,
-        tenantId: data.tenantId,
-        customerId: data.customerId,
-        priority: data.priority,
-        category: data.category,
+      this.logger.log(`Processing event: ${eventType}`)
+      
+      // Execute workflows for exact match
+      const exactMatches = await this.workflowService.executeWorkflowByTrigger('event', {
+        eventType,
+        ...payload,
+        _originalEventType: rawEventType,
         timestamp: new Date()
       })
-
-      this.logger.log(`Triggered ${executions.length} workflows for ticket.created event`)
       
+      // Execute workflows for wildcard matches (e.g., ticket.* should match ticket.created)
+      const eventParts = eventType.split('.')
+      const wildcardPatterns = []
+      
+      // Generate wildcard patterns: ticket.created -> [ticket.*, *]
+      for (let i = 1; i < eventParts.length; i++) {
+        wildcardPatterns.push(eventParts.slice(0, i).join('.') + '.*')
+      }
+      wildcardPatterns.push('*') // Match-all wildcard
+      
+      let wildcardMatches: any[] = []
+      for (const pattern of wildcardPatterns) {
+        const matches = await this.workflowService.executeWorkflowByTrigger('event', {
+          eventType: pattern,
+          ...payload,
+          _originalEventType: rawEventType,
+          _wildcardPattern: pattern,
+          timestamp: new Date()
+        })
+        wildcardMatches = [...wildcardMatches, ...matches]
+      }
+      
+      const totalExecutions = exactMatches.length + wildcardMatches.length
+      this.logger.log(`Triggered ${totalExecutions} workflows for ${eventType} (${exactMatches.length} exact, ${wildcardMatches.length} wildcard)`)
+      
+    } catch (error: any) {
+      this.logger.error(`Failed to process event ${rawEventType}: ${error?.message}`, error.stack)
+      // Don't throw - we don't want to break the event handler
+    }
+  }
+
+  @EventPattern('ticket.created')
+  async handleTicketCreated(@Payload() data: any) {
+    await this.executeEventWorkflows('ticket.created', {
+      ticketId: data.ticketId,
+      tenantId: data.tenantId,
+      customerId: data.customerId,
+      priority: data.priority,
+      category: data.category,
+    })
+  }
+
+  // Orders (Deals as Orders)
+  @EventPattern('order.created')
+  async handleOrderCreated(@Payload() data: any) {
+    try {
+      this.logger.log('Processing order.created event for workflow automation')
+      const executions = await this.workflowService.executeWorkflowByTrigger('event', {
+        eventType: 'order.created',
+        orderId: data.orderId,
+        tenantId: data.tenantId,
+        customerId: data.customerId,
+        total: data.total,
+        currency: data.currency,
+        items: data.items,
+        timestamp: new Date()
+      })
+      this.logger.log(`Triggered ${executions.length} workflows for order.created event`)
     } catch (error) {
-      this.logger.error('Failed to handle ticket.created event:', error)
+      this.logger.error('Failed to handle order.created event:', error)
+    }
+  }
+
+  @EventPattern('order.updated')
+  async handleOrderUpdated(@Payload() data: any) {
+    try {
+      this.logger.log('Processing order.updated event for workflow automation')
+      const executions = await this.workflowService.executeWorkflowByTrigger('event', {
+        eventType: 'order.updated',
+        orderId: data.orderId,
+        tenantId: data.tenantId,
+        status: data.status,
+        reason: data.reason,
+        timestamp: new Date()
+      })
+      this.logger.log(`Triggered ${executions.length} workflows for order.updated event`)
+    } catch (error) {
+      this.logger.error('Failed to handle order.updated event:', error)
     }
   }
 

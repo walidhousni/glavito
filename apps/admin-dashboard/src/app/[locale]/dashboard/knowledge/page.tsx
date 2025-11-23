@@ -91,53 +91,51 @@ export default function KnowledgePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-8">
-        <KnowledgeHeader
-          query={q}
-          semantic={semantic}
-          onQueryChange={setQuery}
-          onSemanticChange={setSemantic}
-          onCreateArticle={handleCreateArticle}
+    <div className="min-h-screen p-6 space-y-6">
+      <KnowledgeHeader
+        query={q}
+        semantic={semantic}
+        onQueryChange={setQuery}
+        onSemanticChange={setSemantic}
+        onCreateArticle={handleCreateArticle}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ArticlesSection
+          articles={Array.isArray(result.articles) ? result.articles : []}
+          loading={searchLoading}
+          onArticleClick={handleEditArticle}
         />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <ArticlesSection
-            articles={Array.isArray(result.articles) ? result.articles : []}
-            loading={searchLoading}
-            onArticleClick={handleEditArticle}
-          />
-          <FAQsSection
-            faqs={Array.isArray(authorItems) ? authorItems : []}
-            loading={authorLoading}
-            expandedRelated={expandedRelated}
-            onEdit={handleEditArticle}
-            onPublishToggle={publishToggle}
-            onToggleRelated={handleToggleRelated}
-          />
-              </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <AnalyticsSection
-            analytics={analytics}
-            loading={!analytics}
-          />
-          <MaintenanceSection
-            items={Array.isArray(outdated) ? outdated : []}
-            loading={maintLoading}
-            onMarkReviewed={markReviewed}
-          />
-            </div>
-
-        <ArticleEditor
-          isOpen={editorOpen}
-          editing={editing}
-          saving={saving}
-          onClose={() => setEditorOpen(false)}
-          onSave={handleSaveArticle}
-          onUpdate={handleUpdateEditing}
+        <FAQsSection
+          faqs={Array.isArray(authorItems) ? authorItems : []}
+          loading={authorLoading}
+          expandedRelated={expandedRelated}
+          onEdit={handleEditArticle}
+          onPublishToggle={publishToggle}
+          onToggleRelated={handleToggleRelated}
         />
-          </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <AnalyticsSection
+          analytics={analytics}
+          loading={!analytics}
+        />
+        <MaintenanceSection
+          items={Array.isArray(outdated) ? outdated : []}
+          loading={maintLoading}
+          onMarkReviewed={markReviewed}
+        />
+      </div>
+
+      <ArticleEditor
+        isOpen={editorOpen}
+        editing={editing}
+        saving={saving}
+        onClose={() => setEditorOpen(false)}
+        onSave={handleSaveArticle}
+        onUpdate={handleUpdateEditing}
+      />
     </div>
   )
 }

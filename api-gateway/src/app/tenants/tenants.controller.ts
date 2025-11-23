@@ -1,14 +1,11 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { CurrentTenant } from '@glavito/shared-auth';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard, Roles, CurrentTenant, CurrentUser } from '@glavito/shared-auth';
 import { TenantsService } from './tenants.service';
 import { FilesService } from '../files/files.service';
-import { FileInterceptor } from '@nestjs/platform-express';
 import type { CreateTenantRequest, UpdateTenantRequest, Tenant } from '@glavito/shared-types';
-import { CurrentUser } from '@glavito/shared-auth';
 
 @ApiTags('Tenants')
 @Controller('tenants')

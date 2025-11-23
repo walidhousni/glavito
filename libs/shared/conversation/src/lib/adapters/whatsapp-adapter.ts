@@ -28,6 +28,7 @@ export class WhatsAppAdapter implements ChannelAdapter {
   private readonly accessToken: string;
   private readonly phoneNumberId: string;
   private readonly webhookVerifyToken: string;
+  private idempotencyCache: Map<string, { result: MessageDeliveryResult; expiresAt: number }> = new Map();
   
   constructor(
     private readonly configService: ConfigService,
@@ -229,6 +230,28 @@ export class WhatsAppAdapter implements ChannelAdapter {
           displayPhoneNumber: change.value.metadata.display_phone_number
         }
       };
+      // Capture pricing/conversation context when present (for analytics)
+      try {
+        const pricing = (change as any)?.value?.pricing
+        const conversationInfo = (change as any)?.value?.conversation
+        if (pricing) {
+          ;(whatsappMessage as any).whatsappData.pricing = pricing
+          ;(whatsappMessage.metadata as any).waPricingModel = pricing.pricing_model
+          ;(whatsappMessage.metadata as any).waBillable = pricing.billable
+          if (pricing.category && !(whatsappMessage.metadata as any).waCategory) {
+            ;(whatsappMessage.metadata as any).waCategory = pricing.category
+          }
+        }
+        if (conversationInfo) {
+          ;(whatsappMessage as any).whatsappData.conversation = conversationInfo
+          if (conversationInfo.id) {
+            ;(whatsappMessage.metadata as any).waConversationId = conversationInfo.id
+          }
+          if (conversationInfo.category && !(whatsappMessage.metadata as any).waCategory) {
+            ;(whatsappMessage.metadata as any).waCategory = conversationInfo.category
+          }
+        }
+      } catch { /* noop */ }
       
       this.logger.log(`Message received: ${message.id}, type: ${message.type}`);
       return whatsappMessage;
@@ -241,9 +264,22 @@ export class WhatsAppAdapter implements ChannelAdapter {
   
   async sendMessage(conversationId: string, message: OutgoingMessage): Promise<MessageDeliveryResult> {
     try {
+      if (!message.recipientId) {
+        throw new Error('Recipient ID is required for WhatsApp messages');
+      }
+      
       const url = `${this.baseUrl}/${this.phoneNumberId}/messages`;
       
-      const normalizedTo = this.normalizePhone(String(message.recipientId || ''))
+      const normalizedTo = this.normalizePhone(message.recipientId);
+      // Basic idempotency: prefer explicit key from metadata, otherwise derive from message
+      const idempotencyKey = this.getIdempotencyKey(message)
+      if (idempotencyKey) {
+        const cached = this.idempotencyCache.get(idempotencyKey)
+        if (cached && cached.expiresAt > Date.now()) {
+          this.logger.debug(`Idempotent send suppressed (whatsapp): ${idempotencyKey}`)
+          return cached.result
+        }
+      }
       const payload: Record<string, unknown> = {
         messaging_product: 'whatsapp',
         to: normalizedTo,
@@ -261,6 +297,18 @@ export class WhatsAppAdapter implements ChannelAdapter {
             throw new Error('Template ID is required for template messages');
           }
           const language = ((message.metadata as any)?.language || (message as any)?.templateLanguage || 'en') as string
+          // Pre-send validation: ensure template is approved in Meta
+          const approved = await this.isTemplateApproved(message.templateId, language)
+          if (!approved) {
+            // If template not approved but a safe fallback text provided, degrade gracefully to text
+            const fallbackText = (((message.metadata as Record<string, unknown> | undefined)?.['fallbackText']) || message.content) as string | undefined
+            if (fallbackText && fallbackText.trim().length > 0) {
+              payload['type'] = 'text'
+              payload['text'] = { body: fallbackText }
+              break;
+            }
+            throw new Error('Template not approved')
+          }
           payload['template'] = {
             name: message.templateId,
             language: { code: language },
@@ -289,6 +337,46 @@ export class WhatsAppAdapter implements ChannelAdapter {
             };
           }
           break;
+        case 'location': {
+          type LocationInput = { latitude: number; longitude: number; name?: string; address?: string }
+          const loc = (((message.metadata as Record<string, unknown> | undefined)?.['location']) || (message as unknown as { location?: LocationInput }).location) as LocationInput | undefined
+          if (!loc) throw new Error('Location data required for location message')
+          payload['location'] = {
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            name: loc.name,
+            address: loc.address
+          }
+          break;
+        }
+        case 'contact': {
+          type ContactInput = {
+            name?: { formatted_name?: string; first_name?: string; last_name?: string; middle_name?: string };
+            phones?: Array<{ phone?: string; type?: string; wa_id?: string }>;
+            emails?: Array<{ email?: string; type?: string }>;
+          }
+          const contactsAny = (((message.metadata as Record<string, unknown> | undefined)?.['contacts']) || (message as unknown as { contacts?: ContactInput[] | ContactInput }).contacts) as ContactInput[] | ContactInput | undefined
+          const list = Array.isArray(contactsAny) ? contactsAny : contactsAny ? [contactsAny] : []
+          if (list.length === 0) throw new Error('At least one contact is required')
+          payload['contacts'] = list.map((c: ContactInput) => ({
+            name: c.name,
+            phones: c.phones,
+            emails: c.emails
+          }))
+          break;
+        }
+        case 'sticker': {
+          const attachment = message.attachments?.[0]
+          if (!attachment?.url) throw new Error('Sticker URL required')
+          payload['sticker'] = { link: attachment.url }
+          break;
+        }
+        case 'interactive': {
+          const interactive = (message.metadata as Record<string, unknown> | undefined)?.['interactive'] as Record<string, unknown> | undefined
+          if (!interactive) throw new Error('Interactive payload required')
+          payload['interactive'] = interactive
+          break;
+        }
           
         default:
           throw new Error(`Unsupported message type: ${message.messageType}`);
@@ -311,17 +399,23 @@ export class WhatsAppAdapter implements ChannelAdapter {
         })
       )
       let response: any
-      try {
-        response = await doRequest()
-      } catch (err: any) {
-        // basic retry for 429 and transient 5xx
-        const status = err?.response?.status
-        if (status === 429 || (status >= 500 && status < 600)) {
-          const retryAfter = parseInt(err?.response?.headers?.['retry-after'] || '2', 10)
-          await new Promise((r) => setTimeout(r, isNaN(retryAfter) ? 1500 : retryAfter * 1000))
+      const maxAttempts = 3
+      let attempt = 0
+      // exponential backoff with jitter
+      while (true) {
+        try {
           response = await doRequest()
-        } else {
-          throw err
+          break
+        } catch (err: any) {
+          attempt += 1
+          const status = err?.response?.status
+          if (attempt >= maxAttempts || !(status === 429 || (status >= 500 && status < 600))) {
+            throw err
+          }
+          const retryAfterHeader = parseInt(err?.response?.headers?.['retry-after'] || '0', 10)
+          const baseDelay = retryAfterHeader > 0 ? retryAfterHeader * 1000 : Math.min(5000, 500 * Math.pow(2, attempt))
+          const jitter = Math.floor(Math.random() * 250)
+          await new Promise((r) => setTimeout(r, baseDelay + jitter))
         }
       }
       
@@ -338,6 +432,11 @@ export class WhatsAppAdapter implements ChannelAdapter {
         this.metricSendLatencyMs?.observe(Date.now() - start);
       } catch (err) {
         this.logger.debug('metrics record failed (whatsapp success)', (err as any)?.message || String(err));
+      }
+      // Cache idempotent result for a short TTL
+      if (idempotencyKey) {
+        const ttlMs = 5 * 60 * 1000
+        this.idempotencyCache.set(idempotencyKey, { result, expiresAt: Date.now() + ttlMs })
       }
       
       return result;
@@ -412,7 +511,7 @@ export class WhatsAppAdapter implements ChannelAdapter {
       
       const formData = new (globalThis as any).FormData();
       formData.append('messaging_product', 'whatsapp');
-      formData.append('file', new Blob([file.data], { type: file.mimeType }), file.filename);
+      formData.append('file', new Blob([new Uint8Array(file.data)], { type: file.mimeType }), file.filename);
       formData.append('type', file.mimeType);
       
       const response = await firstValueFrom(
@@ -493,12 +592,21 @@ export class WhatsAppAdapter implements ChannelAdapter {
     }
     
     // Validate phone number format
-    if (!/^\d{10,15}$/.test(message.recipientId.replace(/\D/g, ''))) {
+    if (!message.recipientId) {
       results.push({
         isValid: false,
-        errors: ['Invalid WhatsApp phone number format'],
+        errors: ['Recipient ID (phone number) is required for WhatsApp messages'],
         warnings: []
       });
+    } else {
+      const phoneDigits = String(message.recipientId).replace(/\D/g, '');
+      if (!/^\d{10,15}$/.test(phoneDigits)) {
+        results.push({
+          isValid: false,
+          errors: [`Invalid WhatsApp phone number format: ${message.recipientId}`],
+          warnings: []
+        });
+      }
     }
     
     // Validate template message
@@ -546,6 +654,45 @@ export class WhatsAppAdapter implements ChannelAdapter {
   }
 
   // Simple WABA templates sync with in-memory cache
+  /**
+   * Get WhatsApp account balance/credits from Meta Business API
+   * Note: Meta doesn't provide direct balance API, so we check account status and billing info
+   */
+  async getBalance(): Promise<{ balance: number; currency: string; metadata?: Record<string, unknown> }> {
+    try {
+      const businessAccountId = this.configService.get<string>('WHATSAPP_BUSINESS_ACCOUNT_ID', '');
+      if (!businessAccountId || !this.accessToken) {
+        throw new Error('WhatsApp configuration incomplete');
+      }
+
+      // Try to get account info and billing status
+      const url = `${this.baseUrl}/${businessAccountId}?fields=account_status,message_template_namespace`;
+      const response = await firstValueFrom(
+        this.httpService.get(url, {
+          headers: { Authorization: `Bearer ${this.accessToken}` },
+        })
+      );
+
+      const accountStatus = (response.data as any)?.account_status;
+      const isActive = accountStatus === 'CONNECTED' || accountStatus === 'UNVERIFIED';
+
+      // Meta doesn't expose balance directly, so we return account status
+      // Balance would need to be tracked via webhook events or billing API
+      return {
+        balance: isActive ? 1000 : 0, // Placeholder - actual balance should come from billing webhooks
+        currency: 'USD',
+        metadata: {
+          accountStatus,
+          businessAccountId,
+          phoneNumberId: this.phoneNumberId,
+        },
+      };
+    } catch (err: any) {
+      this.logger.error('Failed to get WhatsApp balance', err?.message || String(err));
+      throw err;
+    }
+  }
+
   async listTemplates(forceRefresh = false): Promise<Array<{ name: string; category?: string; language?: string; status?: string; previewBody?: string; variables?: string[] }>> {
     const cacheTtlMs = 5 * 60 * 1000
     try {
@@ -590,6 +737,136 @@ export class WhatsAppAdapter implements ChannelAdapter {
     }
   }
 
+  /**
+   * Create a new WhatsApp message template and submit it to Meta Business API for approval
+   * @param template Template definition
+   * @returns Created template with ID and status
+   */
+  async createTemplate(template: {
+    name: string;
+    category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
+    language: string;
+    body: string;
+    header?: string;
+    footer?: string;
+    buttons?: Array<{
+      type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+      text?: string;
+      url?: string;
+      phoneNumber?: string;
+    }>;
+  }): Promise<{ id: string; name: string; status: string; message?: string }> {
+    try {
+      const businessAccountId = this.configService.get<string>('WHATSAPP_BUSINESS_ACCOUNT_ID', '');
+      if (!businessAccountId || !this.accessToken) {
+        throw new Error('WhatsApp configuration incomplete');
+      }
+
+      // Validate template name (lowercase, underscores, max 512 chars)
+      const templateName = template.name.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 512);
+      if (!templateName) {
+        throw new Error('Invalid template name');
+      }
+
+      // Build components array
+      const components: any[] = [];
+
+      // Header component (optional)
+      if (template.header) {
+        components.push({
+          type: 'HEADER',
+          format: 'TEXT',
+          text: template.header,
+        });
+      }
+
+      // Body component (required)
+      components.push({
+        type: 'BODY',
+        text: template.body,
+      });
+
+      // Footer component (optional)
+      if (template.footer) {
+        components.push({
+          type: 'FOOTER',
+          text: template.footer,
+        });
+      }
+
+      // Buttons (optional, max 3 buttons)
+      if (template.buttons && template.buttons.length > 0) {
+        const buttonComponents = template.buttons.slice(0, 3).map((button, index) => {
+          if (button.type === 'QUICK_REPLY') {
+            return {
+              type: 'BUTTON',
+              sub_type: 'QUICK_REPLY',
+              index: index,
+              text: button.text || `Button ${index + 1}`,
+            };
+          } else if (button.type === 'URL') {
+            return {
+              type: 'BUTTON',
+              sub_type: 'URL',
+              index: index,
+              text: button.text || `Visit Website`,
+              url: button.url,
+            };
+          } else if (button.type === 'PHONE_NUMBER') {
+            return {
+              type: 'BUTTON',
+              sub_type: 'PHONE_NUMBER',
+              index: index,
+              text: button.text || `Call Us`,
+              phone_number: button.phoneNumber,
+            };
+          }
+          return null;
+        }).filter(Boolean);
+
+        if (buttonComponents.length > 0) {
+          components.push(...buttonComponents);
+        }
+      }
+
+      // Submit template to Meta Business API
+      const url = `${this.baseUrl}/${businessAccountId}/message_templates`;
+      const payload = {
+        name: templateName,
+        language: template.language,
+        category: template.category,
+        components,
+      };
+
+      const response = await firstValueFrom(
+        this.httpService.post(url, payload, {
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      );
+
+      // Invalidate cache to force refresh on next list
+      const cacheKey = businessAccountId;
+      this.templatesCacheByAccount.delete(cacheKey);
+
+      const templateData = response.data;
+      this.logger.log(`WhatsApp template created: ${templateName}, ID: ${templateData.id}, Status: ${templateData.status}`);
+
+      return {
+        id: templateData.id,
+        name: templateData.name || templateName,
+        status: templateData.status || 'PENDING',
+        message: templateData.message || 'Template submitted for approval',
+      };
+    } catch (error: any) {
+      const errorMsg = this.normalizeApiError(error);
+      this.logger.error(`Failed to create WhatsApp template: ${errorMsg}`, error);
+      throw new Error(`Failed to create template: ${errorMsg}`);
+    }
+  }
+
   private normalizeApiError(err: any): string {
     try {
       const status = err?.response?.status
@@ -601,14 +878,52 @@ export class WhatsAppAdapter implements ChannelAdapter {
     } catch { return 'Unknown error' }
   }
 
+  private async isTemplateApproved(name: string, language?: string): Promise<boolean> {
+    try {
+      const within = (items: Array<{ name: string; language?: string; status?: string }>) => {
+        const found = items.find(t => String(t.name).toLowerCase() === String(name).toLowerCase() && (!language || String(t.language || '').toLowerCase() === String(language).toLowerCase()))
+        if (!found) return false
+        return String(found.status || '').toUpperCase() === 'APPROVED'
+      }
+      let items = await this.listTemplates(false)
+      if (within(items)) return true
+      // refresh and check again
+      items = await this.listTemplates(true)
+      return within(items)
+    } catch {
+      // Be conservative: if cannot verify, fail closed to avoid policy violations
+      return false
+    }
+  }
+
+  private getIdempotencyKey(message: OutgoingMessage): string | null {
+    try {
+      const explicit = (message.metadata as any)?.idempotencyKey as string | undefined
+      if (explicit && explicit.length > 0) return `wa:${explicit}`
+      const base = [message.messageType, this.normalizePhone(String(message.recipientId || '')), message.templateId || '', message.content || '', message.replyToMessageId || ''].join('|')
+      // Reduce overly long keys
+      const crypto = require('crypto') as typeof import('crypto')
+      return `wa:auto:${crypto.createHash('sha256').update(base).digest('hex')}`
+    } catch {
+      return null
+    }
+  }
+
   private generateId(): string {
     return `wa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private normalizePhone(input: string): string {
-    const digits = input.replace(/\D/g, '')
+  private normalizePhone(input: string | undefined | null): string {
+    if (!input) {
+      throw new Error('Phone number is required for WhatsApp messages');
+    }
+    const inputStr = String(input);
+    const digits = inputStr.replace(/\D/g, '');
+    if (!digits || digits.length < 10) {
+      throw new Error(`Invalid phone number format: ${inputStr}`);
+    }
     // Minimal normalization; assume already includes country code in most cases
-    return digits
+    return digits;
   }
 
   /**
@@ -734,23 +1049,27 @@ export class WhatsAppAdapter implements ChannelAdapter {
         }
       });
 
-      // Submit to satisfaction service
-      const response = await (globalThis as any).fetch('/api/satisfaction/surveys/' + surveyId + '/response', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rating,
-          comment,
-          customAnswers,
-        }),
-      });
+      // Submit to satisfaction service via backend HTTP (server-safe)
+      const base =
+        this.configService.get<string>('APP_INTERNAL_URL') ||
+        this.configService.get<string>('APP_URL') ||
+        'http://localhost:3000';
 
-      if (response.ok) {
+      // Ensure API prefix is included (main.ts sets global prefix to 'api')
+      const apiPrefix = 'api';
+      const apiBase = base.replace(/\/$/, '') + (base.includes('/api') ? '' : `/${apiPrefix}`);
+
+      try {
+        await firstValueFrom(
+          this.httpService.post(
+            `${apiBase}/satisfaction/surveys/${encodeURIComponent(surveyId)}/response`,
+            { rating, comment, customAnswers },
+            { headers: { 'Content-Type': 'application/json' } }
+          )
+        );
         this.logger.log(`Satisfaction survey response processed: ${surveyId}, rating: ${rating}`);
-      } else {
-        this.logger.error(`Failed to process satisfaction survey response: ${response.status}`);
+      } catch (e) {
+        this.logger.error('Failed to POST survey response to backend', e as any);
       }
     } catch (error) {
       this.logger.error('Error processing satisfaction survey response:', error);

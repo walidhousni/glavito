@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: glavito-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+    - hosts:
+        - admin.glavito.com
+      secretName: admin-glavito-tls
+    - hosts:
+        - api.glavito.com
+      secretName: api-glavito-tls
+  rules:
+    - host: admin.glavito.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-dashboard
+                port:
+                  number: 3000
+    - host: api.glavito.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 3000
+

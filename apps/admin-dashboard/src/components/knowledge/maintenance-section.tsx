@@ -4,8 +4,12 @@ import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Wrench, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { 
+  FaWrench, 
+  FaClock, 
+  FaExclamationTriangle, 
+  FaCheckCircle 
+} from 'react-icons/fa'
 
 interface MaintenanceItem {
   id: string
@@ -37,11 +41,11 @@ export function MaintenanceSection({ items, loading, onMarkReviewed }: Maintenan
   }
 
   const getPriorityIcon = (helpfulRate?: number, views?: number) => {
-    if (!helpfulRate || !views) return Clock
+    if (!helpfulRate || !views) return FaClock
     
-    if (helpfulRate < 0.1 && views > 20) return AlertTriangle
-    if (helpfulRate < 0.2 && views > 10) return Clock
-    return CheckCircle
+    if (helpfulRate < 0.1 && views > 20) return FaExclamationTriangle
+    if (helpfulRate < 0.2 && views > 10) return FaClock
+    return FaCheckCircle
   }
 
   const getPriorityBadge = (helpfulRate?: number, views?: number) => {
@@ -53,63 +57,62 @@ export function MaintenanceSection({ items, loading, onMarkReviewed }: Maintenan
   }
 
   return (
-    <Card className="shadow-xl bg-white/90 dark:bg-slate-900/90 rounded-2xl overflow-hidden border-slate-200/60 dark:border-slate-700/60">
-      <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-b border-slate-200/60 dark:border-slate-700/60">
-        <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-800 dark:text-slate-200">
-          <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl">
-            <Wrench className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <div className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/50">
+            <FaWrench className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
           </div>
           {t('maintenance', { fallback: 'Maintenance' })}
           {loading && (
-            <Badge variant="secondary" className="ml-auto bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">
+            <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5 bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 border-0 shadow-sm">
               {t('loading', { fallback: 'Loading...' })}
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-4 pt-0">
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-3"></div>
-                <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
+                <div className="h-3 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-2.5 bg-muted rounded w-1/2 mb-2"></div>
+                <div className="h-6 bg-muted rounded w-1/4"></div>
               </div>
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-12">
-            <CheckCircle className="h-12 w-12 text-green-400 dark:text-green-500 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+          <div className="text-center py-8">
+            <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/50 w-fit mx-auto mb-3">
+              <FaCheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <p className="text-xs text-muted-foreground">
               {t('noMaintenance', { fallback: 'No maintenance needed' })}
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-[10px] text-muted-foreground mt-1">
               {t('allArticlesUpToDate', { fallback: 'All articles are up to date' })}
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {items.map((item, index) => {
+          <div className="space-y-3">
+            {items.map((item) => {
               const PriorityIcon = getPriorityIcon(item.helpfulRate, item.views)
               const priority = getPriorityBadge(item.helpfulRate, item.views)
               
               return (
-                <motion.div
+                <div
                   key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="group p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 hover:border-amber-300/60 dark:hover:border-amber-600/60 hover:shadow-lg transition-all duration-300 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800"
+                  className="group p-3 rounded-lg border-0 shadow-sm bg-muted/30 hover:bg-muted/50 transition-all"
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors mb-2">
+                      <h3 className="text-xs font-semibold text-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors mb-1">
                         {item.title}
                       </h3>
-                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                          <FaClock className="h-2.5 w-2.5" />
                           {formatDate(item.updatedAt)}
                         </div>
                         {item.helpfulRate && (
@@ -118,44 +121,44 @@ export function MaintenanceSection({ items, loading, onMarkReviewed }: Maintenan
                           </span>
                         )}
                         {item.views && (
-                          <span className="text-slate-500 dark:text-slate-400">
+                          <span className="text-muted-foreground">
                             {item.views} views
                           </span>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="ml-2">
                       <Badge
                         variant={priority.variant}
-                        className={`${
+                        className={`text-[10px] h-4 px-1.5 border-0 shadow-sm ${
                           priority.variant === 'destructive'
-                            ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                             : priority.variant === 'secondary'
-                            ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
-                            : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
+                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                            : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                         }`}
                       >
-                        <PriorityIcon className="h-3 w-3 mr-1" />
+                        <PriorityIcon className="h-2.5 w-2.5 mr-1" />
                         {priority.text}
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="text-[10px] text-muted-foreground">
                       {t('lastUpdated', { fallback: 'Last updated' })}: {formatDate(item.updatedAt)}
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onMarkReviewed(item.id)}
-                      className="h-8 text-xs border-amber-200 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-300"
+                      className="h-7 text-[10px] border-0 shadow-sm"
                     >
-                      <CheckCircle className="h-3 w-3 mr-1" />
+                      <FaCheckCircle className="h-2.5 w-2.5 mr-1" />
                       {t('markReviewed', { fallback: 'Mark Reviewed' })}
                     </Button>
                   </div>
-                </motion.div>
+                </div>
               )
             })}
           </div>

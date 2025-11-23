@@ -6,6 +6,7 @@
 import { Injectable, Logger, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from '@glavito/shared-database';
+import { SubscriptionService } from '../subscriptions/subscriptions.service';
 
 export interface CreateTeamRequest {
   name: string;
@@ -99,6 +100,7 @@ export class TeamService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly configService: ConfigService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   /**
@@ -107,6 +109,23 @@ export class TeamService {
   async createTeam(tenantId: string, request: CreateTeamRequest): Promise<TeamInfo> {
     try {
       this.logger.log(`Creating team for tenant: ${tenantId}`);
+
+      // Check subscription limits for teams
+      const currentTeamCount = await this.databaseService.team.count({
+        where: { tenantId },
+      });
+
+      const limitCheck = await this.subscriptionService.checkUsageLimits(
+        tenantId,
+        'teams',
+        currentTeamCount
+      );
+
+      if (!limitCheck.allowed) {
+        throw new ForbiddenException(
+          limitCheck.message || `You've reached your plan limit of ${limitCheck.limit} teams. Please upgrade to add more teams.`
+        );
+      }
 
       // Check if team name already exists
       const existingTeam = await this.databaseService.team.findFirst({
@@ -146,21 +165,35 @@ export class TeamService {
       return this.mapToTeamInfo(team);
     } catch (error) {
       this.logger.error(`Failed to create team: ${error.message}`);
-      if (error instanceof BadRequestException) throw error;
+      if (error instanceof BadRequestException || error instanceof ForbiddenException) throw error;
       throw new BadRequestException('Failed to create team');
     }
   }
 
   /**
    * Get all teams for a tenant
+   * If userId is provided, only return teams the user is a member of (for agents)
    */
   async getTeams(
     tenantId: string,
-    includeMembers = false
+    includeMembers = false,
+    userId?: string
   ): Promise<TeamInfo[]> {
     try {
+      const where: any = { tenantId };
+      
+      // If userId is provided, filter to only teams the user is a member of
+      if (userId) {
+        where.members = {
+          some: {
+            userId,
+            isActive: true,
+          },
+        };
+      }
+
       const teams = await this.databaseService.team.findMany({
-        where: { tenantId },
+        where,
         include: {
           members: includeMembers ? {
             include: {
@@ -612,6 +645,34 @@ export class TeamService {
     } catch (error) {
       this.logger.error(`Failed to get team stats: ${error.message}`);
       throw new BadRequestException('Failed to get team statistics');
+    }
+  }
+
+  /**
+   * Verify that a user is a member of a team
+   */
+  async verifyTeamMembership(tenantId: string, teamId: string, userId: string): Promise<void> {
+    try {
+      const membership = await this.databaseService.teamMember.findFirst({
+        where: {
+          teamId,
+          userId,
+          isActive: true,
+          team: {
+            tenantId,
+          },
+        },
+      });
+
+      if (!membership) {
+        throw new ForbiddenException('You are not a member of this team');
+      }
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+      this.logger.error(`Failed to verify team membership: ${error.message}`);
+      throw new ForbiddenException('Failed to verify team membership');
     }
   }
 

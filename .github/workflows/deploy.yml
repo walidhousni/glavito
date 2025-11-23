@@ -1,0 +1,82 @@
+name: Deploy to Alibaba Cloud ACK
+
+on:
+  workflow_dispatch:
+    inputs:
+      color:
+        description: "Target color overlay (blue|green)"
+        required: true
+        default: "green"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ALICLOUD_REGION: me-east-1
+      ACR_NAMESPACE: glavito
+      REGISTRY: registry.me-east-1.aliyuncs.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build apps
+        run: npm run build:all
+
+      - name: Login to ACR
+        run: echo ${{ secrets.ACR_PASSWORD }} | docker login ${{ env.REGISTRY }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
+
+      - name: Build and push images
+        run: |
+          GIT_SHA=$(git rev-parse --short HEAD)
+          docker build -f api-gateway/Dockerfile -t $REGISTRY/$ACR_NAMESPACE/api:$GIT_SHA .
+          docker build -f apps/admin-dashboard/Dockerfile -t $REGISTRY/$ACR_NAMESPACE/admin:$GIT_SHA .
+          docker push $REGISTRY/$ACR_NAMESPACE/api:$GIT_SHA
+          docker push $REGISTRY/$ACR_NAMESPACE/admin:$GIT_SHA
+
+      - name: Setup yq
+        uses: mikefarah/yq@v4.44.3
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.30.0
+
+      - name: Write kubeconfig
+        run: |
+          echo "${{ secrets.KUBECONFIG_CONTENT }}" > kubeconfig
+          echo "KUBECONFIG=$(pwd)/kubeconfig" >> $GITHUB_ENV
+
+      - name: Set images in overlay
+        run: |
+          GIT_SHA=$(git rev-parse --short HEAD)
+          yq -i ".images[] |= select(.name == \"$REGISTRY/$ACR_NAMESPACE/admin\").newTag = \"$GIT_SHA\"" infrastructure/kubernetes/overlays/${{ github.event.inputs.color }}/kustomization.yaml
+          yq -i ".images[] |= select(.name == \"$REGISTRY/$ACR_NAMESPACE/api\").newTag = \"$GIT_SHA\"" infrastructure/kubernetes/overlays/${{ github.event.inputs.color }}/kustomization.yaml
+
+      - name: Deploy (kustomize)
+        run: |
+          kubectl apply -k infrastructure/kubernetes/overlays/${{ github.event.inputs.color }}
+
+      - name: Run DB migrations (api)
+        run: |
+          GIT_SHA=$(git rev-parse --short HEAD)
+          JOB=$(mktemp)
+          sed "s|IMAGE_TO_REPLACE|$REGISTRY/$ACR_NAMESPACE/api:$GIT_SHA|" infrastructure/kubernetes/jobs/prisma-migrate.yaml > $JOB
+          kubectl apply -n prod-${{ github.event.inputs.color }} -f $JOB
+          kubectl wait --for=condition=complete --timeout=180s -n prod-${{ github.event.inputs.color }} job/prisma-migrate || (kubectl logs job/prisma-migrate -n prod-${{ github.event.inputs.color }}; exit 1)
+          kubectl delete -n prod-${{ github.event.inputs.color }} job/prisma-migrate || true
+
+      - name: Health check
+        run: |
+          kubectl rollout status deployment/api-gateway -n prod-${{ github.event.inputs.color }} --timeout=180s
+          kubectl rollout status deployment/admin-dashboard -n prod-${{ github.event.inputs.color }} --timeout=180s
+

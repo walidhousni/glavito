@@ -1,471 +1,524 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import { WorkflowList } from '@/components/workflows/workflow-list';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import { 
+  Plus,
+  Search,
   Zap, 
   Play, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  TrendingUp,
-  AlertTriangle,
-  BarChart3
+  MoreVertical,
+  Edit,
+  Copy,
+  Trash2,
+  BarChart3,
+  Pause,
+  BookOpen,
+  FileText,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { workflowsApi, WorkflowRuleDTO } from '@/lib/api/workflows-client';
+import { workflowsApi, FlowDTO } from '@/lib/api/workflows-client';
 import { CreateWorkflowDialog } from '@/components/workflows/create-workflow-dialog';
-import { WebhooksManagerDialog } from '@/components/webhooks/WebhooksManager';
-
-interface WorkflowStats {
-  totalWorkflows: number;
-  activeWorkflows: number;
-  totalExecutions: number;
-  successfulExecutions: number;
-  failedExecutions: number;
-  averageExecutionTime: number;
-  executionsToday: number;
-  executionsThisWeek: number;
-  executionsThisMonth: number;
-}
-
-type WorkflowItem = {
-  id: string;
-  definition: {
-    name: string;
-    description: string;
-    status: 'active' | 'inactive' | 'draft';
-    category: string;
-    tags: string[];
-    version: string;
-    createdBy: string;
-  };
-  isActive: boolean;
-  lastExecutedAt?: Date;
-  executionCount: number;
-  averageExecutionTime: number;
-  successRate: number;
-  createdAt: Date;
-  updatedAt: Date;
-  // Additional fields for better display
-  nodeCount?: number;
-  connectionCount?: number;
-  lastExecutionStatus?: string;
-  errorCount?: number;
-};
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function WorkflowsPage() {
-  const t = useTranslations('workflows');
   const router = useRouter();
-  const params = useParams<{ locale: string }>();
-  const [workflows, setWorkflows] = useState<WorkflowItem[]>([]);
-  const [stats, setStats] = useState<WorkflowStats | null>(null);
+  const [workflows, setWorkflows] = useState<FlowDTO[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'all' | 'active' | 'inactive' | 'draft'>('all');
-  const [category, setCategory] = useState<string>('all');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);
-  const [webhooksOpen, setWebhooksOpen] = useState(false);
-
-  const mapDTOToItem = (w: WorkflowRuleDTO): WorkflowItem => {
-    // Handle different metadata structures
-    const metadata = w.metadata || {};
-    const status = metadata.status || (w.isActive ? 'active' : 'inactive');
-    const category = metadata.category || 'general';
-    const tags = metadata.tags || [];
-    const version = metadata.version || '1.0';
-    const createdBy = metadata.createdBy || 'system';
-    
-    return {
-      id: w.id,
-      definition: {
-        name: w.name,
-        description: w.description || '',
-        status: status as any,
-        category: category,
-        tags: tags,
-        version: version,
-        createdBy: createdBy,
-      },
-      isActive: !!w.isActive,
-      lastExecutedAt: w.lastExecuted ? new Date(w.lastExecuted) : undefined,
-      executionCount: w.executionCount || 0,
-      averageExecutionTime: metadata.avgExecutionTime || 0,
-      successRate: metadata.successRate || 0.0,
-      createdAt: new Date(w.createdAt),
-      updatedAt: new Date(w.updatedAt),
-      // Additional fields for better display
-      nodeCount: metadata.nodes?.length || 0,
-      connectionCount: metadata.connections?.length || 0,
-      lastExecutionStatus: metadata.lastExecutionStatus,
-      errorCount: metadata.errorCount || 0,
-    };
-  };
+  const [selectedWorkflows, setSelectedWorkflows] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // initial load
-    void fetchWorkflows('');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadData();
   }, []);
 
-  useEffect(() => {
-    const id = setTimeout(() => setDebouncedSearch(search), 350);
-    return () => clearTimeout(id);
-  }, [search]);
-
-  useEffect(() => {
-    void fetchWorkflows(debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, category, debouncedSearch]);
-
-  const fetchWorkflows = async (searchText?: string) => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      setError(null);
-      const res = await workflowsApi.list({
-        status: status === 'all' ? undefined : status,
-        category: category === 'all' ? undefined : category,
-        search: (searchText ?? search) || undefined,
-      } as any);
-      const raw: WorkflowRuleDTO[] = Array.isArray((res as any)?.data) ? ((res as any).data as WorkflowRuleDTO[]) : [];
-      const items = raw.map(mapDTOToItem);
-      setWorkflows(items as any);
-      const active = items.filter(i => i.isActive).length;
-      const totalExec = items.reduce((acc, i) => acc + (i.executionCount || 0), 0);
-      setStats({
-        totalWorkflows: items.length,
-        activeWorkflows: active,
-        totalExecutions: totalExec,
-        successfulExecutions: Math.round(totalExec * 0.95),
-        failedExecutions: Math.max(0, Math.round(totalExec * 0.05)),
-        averageExecutionTime: Math.round(
-          items.reduce((acc, i) => acc + (i.averageExecutionTime || 0), 0) / (items.length || 1)
-        ),
-        executionsToday: 0,
-        executionsThisWeek: 0,
-        executionsThisMonth: 0,
-      });
-    } catch (err) {
-      console.error('Error fetching workflows:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch workflows');
-      setWorkflows([]);
-      setStats({
-        totalWorkflows: 0,
-        activeWorkflows: 0,
-        totalExecutions: 0,
-        successfulExecutions: 0,
-        failedExecutions: 0,
-        averageExecutionTime: 0,
-        executionsToday: 0,
-        executionsThisWeek: 0,
-        executionsThisMonth: 0,
-      });
+      const [flowsData, statsData] = await Promise.all([
+        workflowsApi.list(),
+        workflowsApi.getStats()
+      ]);
+      // Normalize API response shapes to avoid runtime errors
+      const flowsPayload: any = (flowsData as any)?.data ?? flowsData;
+      const normalizedFlows: FlowDTO[] = Array.isArray(flowsPayload)
+        ? flowsPayload
+        : Array.isArray((flowsPayload as any)?.items)
+          ? (flowsPayload as any).items
+          : [];
+      setWorkflows(normalizedFlows);
+
+      const statsPayload: any = (statsData as any)?.data ?? statsData ?? {};
+      setStats(statsPayload);
+    } catch (error) {
+      console.error('Failed to load workflows:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateWorkflow = () => {
-    setCreateOpen(true);
+  const filteredWorkflows = workflows.filter(workflow => {
+    const matchesSearch = !searchQuery || 
+      workflow.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      workflow.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || workflow.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleEdit = (id: string) => {
+    router.push(`/dashboard/workflows/${id}`);
   };
 
-  const handleWorkflowCreated = (workflowId: string) => {
-    setCreateOpen(false);
-    const locale = (params as any)?.locale || 'en';
-    router.push(`/${locale}/dashboard/workflows/${workflowId}`);
-  };
-
-  const handleEditWorkflow = (workflow: any) => {
-    const locale = (params as any)?.locale || 'en';
-    router.push(`/${locale}/dashboard/workflows/${workflow.id}`);
-  };
-
-  const handleDeleteWorkflow = async (workflowId: string) => {
-    try {
-      setLoading(true);
-      await workflowsApi.remove(workflowId);
-      await fetchWorkflows();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete workflow');
-    } finally {
-      setLoading(false);
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this workflow?')) {
+      try {
+        await workflowsApi.remove(id);
+        loadData();
+      } catch (error) {
+        console.error('Failed to delete workflow:', error);
+      }
     }
   };
 
-  const handleToggleWorkflow = async (workflowId: string, active: boolean) => {
+  const handleDuplicate = async (id: string) => {
     try {
-      setLoading(true);
-      await workflowsApi.update(workflowId, { isActive: active } as any);
-      await fetchWorkflows();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update workflow');
-    } finally {
-      setLoading(false);
+      // TODO: Implement duplicate API
+      console.log('Duplicate workflow:', id);
+    } catch (error) {
+      console.error('Failed to duplicate workflow:', error);
     }
   };
 
-  const handleExecuteWorkflow = async (workflowId: string) => {
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
     try {
-      setLoading(true);
-      await workflowsApi.execute(workflowId, {});
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to execute workflow');
-    } finally {
-      setLoading(false);
+      if (currentStatus === 'published') {
+        await workflowsApi.unpublish(id);
+      } else {
+        await workflowsApi.publish(id);
+      }
+      loadData();
+    } catch (error) {
+      console.error('Failed to toggle workflow status:', error);
     }
   };
 
-  const handleViewAnalytics = (workflowId: string) => {
-    // TODO: Open analytics view
-    console.log('View analytics:', workflowId);
+  const toggleWorkflowSelection = (id: string) => {
+    setSelectedWorkflows(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
-  const formatExecutionTime = (milliseconds: number) => {
-    if (milliseconds < 1000) return `${milliseconds}ms`;
-    if (milliseconds < 60000) return `${(milliseconds / 1000).toFixed(1)}s`;
-    return `${(milliseconds / 60000).toFixed(1)}m`;
+  const toggleAllWorkflows = () => {
+    if (selectedWorkflows.size === filteredWorkflows.length) {
+      setSelectedWorkflows(new Set());
+    } else {
+      setSelectedWorkflows(new Set(filteredWorkflows.map(w => w.id)));
+    }
   };
 
-  const formatSuccessRate = (successful: number, total: number) => {
-    if (total === 0) return '0%';
-    return `${((successful / total) * 100).toFixed(1)}%`;
+  const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">{t('subtitle')}</p>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header with Tabs */}
+        <div className="space-y-4">
+        <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-foreground">Flow Builder</h1>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // TODO: Open step-by-step guide
+                  console.log('Open guide');
+                }}
+                className="gap-2 text-sm"
+              >
+                <BookOpen className="w-4 h-4" />
+                Step-by-step guide
+              </Button>
+          <Button
+            onClick={() => setCreateOpen(true)}
+                className="gap-2 text-sm"
+          >
+                <Plus className="w-4 h-4" />
+                Create new flow
+          </Button>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => fetchWorkflows()}>{t('list.reload')}</Button>
-          <Button variant="outline" size="sm" onClick={() => setWebhooksOpen(true)}>Webhooks</Button>
-          <Button size="sm" className="btn-gradient" onClick={handleCreateWorkflow}>{t('list.createWorkflow')}</Button>
-        </div>
-      </div>
+                  </div>
 
-      {/* Filters */}
-      <Card className="premium-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">{t('list.filters')}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col md:flex-row gap-3">
-          <div className="md:w-1/3">
-            <Input placeholder={t('list.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <div className="md:w-1/4">
-            <Select value={status} onValueChange={(v) => setStatus(v as any)}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('list.status')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('list.all')}</SelectItem>
-                <SelectItem value="active">{t('list.active')}</SelectItem>
-                <SelectItem value="inactive">{t('list.inactive')}</SelectItem>
-                <SelectItem value="draft">draft</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="md:w-1/4">
-            <Select value={category} onValueChange={(v) => setCategory(v)}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('list.category')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('list.all')}</SelectItem>
-                <SelectItem value="general">general</SelectItem>
-                <SelectItem value="chatbot">chatbot</SelectItem>
-                <SelectItem value="ticket_management">ticket_management</SelectItem>
-                <SelectItem value="sla">sla</SelectItem>
-                <SelectItem value="onboarding">onboarding</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="md:w-1/6">
-            <Button className="w-full" onClick={() => fetchWorkflows()}>{t('list.reload')}</Button>
-          </div>
-        </CardContent>
-      </Card>
+          <Tabs defaultValue="listing" className="w-full">
+            <TabsList className="h-10">
+              <TabsTrigger value="listing" className="px-4">
+                Listing
+              </TabsTrigger>
+              <TabsTrigger value="usage" className="px-4">
+                Usage
+              </TabsTrigger>
+            </TabsList>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="premium-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('list.totalWorkflows')}</CardTitle>
-              <Zap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalWorkflows}</div>
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <Badge variant="secondary" className="text-xs">
-                  {stats.activeWorkflows} {t('list.active')}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {stats.totalWorkflows - stats.activeWorkflows} {t('list.inactive')}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+            <TabsContent value="listing" className="space-y-6 mt-6">
 
-          <Card className="premium-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('list.totalExecutions')}</CardTitle>
-              <Play className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalExecutions.toLocaleString()}</div>
-              <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3" />
-                <span>{stats.executionsToday} {t('list.today')}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="premium-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('list.successRate')}</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatSuccessRate(stats.successfulExecutions, stats.totalExecutions)}
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <span className="text-green-600">{stats.successfulExecutions} successful</span>
-                <span className="text-red-600">{stats.failedExecutions} failed</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="premium-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('list.avgExecutionTime')}</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatExecutionTime(stats.averageExecutionTime)}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Across all workflows
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="premium-card lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5" />
-              <span>{t('list.executionActivity')}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{stats?.executionsToday || 0}</div>
-                  <div className="text-muted-foreground">{t('list.today')}</div>
+              {/* Summary Card */}
+              {stats && (
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        ACTIVE FLOWS LIMIT
+                      </p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {stats?.publishedFlows || 0}/{stats?.totalFlows || 0}
+                      </p>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{stats?.executionsThisWeek || 0}</div>
-                  <div className="text-muted-foreground">{t('list.thisWeek')}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{stats?.executionsThisMonth || 0}</div>
-                  <div className="text-muted-foreground">{t('list.thisMonth')}</div>
-                </div>
-              </div>
-              
-              {/* Placeholder for chart */}
-              <div className="h-32 bg-muted/20 rounded-lg flex items-center justify-center">
-                <div className="text-muted-foreground text-sm">—</div>
+              </CardContent>
+            </Card>
+        )}
+
+        {/* Filters */}
+        <Card>
+          <CardContent className="p-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Status: All</SelectItem>
+                        <SelectItem value="published">Status: Published</SelectItem>
+                        <SelectItem value="draft">Status: Draft</SelectItem>
+                        <SelectItem value="archived">Status: Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value="all" onValueChange={() => {
+                      // TODO: Implement created by filter
+                    }}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Created by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All users</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value="all" onValueChange={() => {
+                      // TODO: Implement updated by filter
+                    }}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Updated by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All users</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value="all" onValueChange={() => {
+                      // TODO: Implement last updated filter
+                    }}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Last updated" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All time</SelectItem>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="week">This week</SelectItem>
+                        <SelectItem value="month">This month</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {(statusFilter !== 'all') && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setStatusFilter('all')}
+                        className="text-xs"
+                      >
+                        Reset filter
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Total: {filteredWorkflows.length} {filteredWorkflows.length === 1 ? 'flow' : 'flows'}
+                    </p>
+                    <div className="relative w-full max-w-md">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                        placeholder="Search by flow name"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="premium-card">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5" />
-              <span>{t('list.recentIssues')}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg">
-                <XCircle className="h-4 w-4 text-red-500" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium">SLA Monitoring failed</div>
-                  <div className="text-xs text-muted-foreground">2 hours ago</div>
-                </div>
+              {/* Workflows Table */}
+        {loading ? (
+                <Card>
+                <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+                      ))}
+                    </div>
+                </CardContent>
+              </Card>
+        ) : filteredWorkflows.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Zap className="w-8 h-8 text-muted-foreground" />
               </div>
-              
-              <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium">Slow execution detected</div>
-                  <div className="text-xs text-muted-foreground">5 hours ago</div>
-                </div>
-              </div>
-              
-              <div className="text-center py-4">
-                <Button variant="outline" size="sm">{t('list.viewAllIssues')}</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                    <h3 className="font-semibold text-lg text-foreground mb-2">
+                No workflows found
+              </h3>
+                    <p className="text-muted-foreground mb-4">
+                {searchQuery ? 'Try a different search term' : 'Get started by creating your first workflow'}
+              </p>
+              {!searchQuery && (
+                <Button onClick={() => setCreateOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Workflow
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+                <Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedWorkflows.size === filteredWorkflows.length && filteredWorkflows.length > 0}
+                            onCheckedChange={toggleAllWorkflows}
+                          />
+                        </TableHead>
+                        <TableHead>Flow name</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Flow log</TableHead>
+                        <TableHead>Created by</TableHead>
+                        <TableHead>Last updated by</TableHead>
+                        <TableHead>Last updated</TableHead>
+                        <TableHead className="w-12"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+            {filteredWorkflows.map(workflow => (
+                        <TableRow
+                key={workflow.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                onClick={() => handleEdit(workflow.id)}
+              >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedWorkflows.has(workflow.id)}
+                              onCheckedChange={() => toggleWorkflowSelection(workflow.id)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-primary" />
+                              <span className="font-medium">{workflow.name}</span>
+                      </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={workflow.status === 'published' ? 'default' : 'secondary'}
+                              className="uppercase"
+                            >
+                          {workflow.status}
+                        </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // TODO: Open flow log
+                              }}
+                              className="gap-2"
+                            >
+                              <FileText className="w-4 h-4" />
+                              View
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                  {getInitials(workflow.createdById)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm">
+                                {workflow.createdById || 'System'}
+                              </span>
+                      </div>
+                          </TableCell>
+                          <TableCell>
+                            {workflow.updatedById ? (
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                    {getInitials(workflow.updatedById)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm">{workflow.updatedById}</span>
+                    </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(workflow.updatedAt).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEdit(workflow.id)}>
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDuplicate(workflow.id)}>
+                          <Copy className="w-4 h-4 mr-2" />
+                          Duplicate
+                        </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleToggleStatus(workflow.id, workflow.status)}>
+                          {workflow.status === 'published' ? (
+                            <><Pause className="w-4 h-4 mr-2" />Pause</>
+                          ) : (
+                            <><Play className="w-4 h-4 mr-2" />Activate</>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                                  onClick={() => handleDelete(workflow.id)}
+                                  className="text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
 
-      {/* Workflow List */}
-      <WorkflowList
-        workflows={workflows}
-        loading={loading}
-        onRefresh={fetchWorkflows}
-        onCreateWorkflow={handleCreateWorkflow}
-        onEditWorkflow={handleEditWorkflow}
-        onDeleteWorkflow={handleDeleteWorkflow}
-        onToggleWorkflow={handleToggleWorkflow}
-        onExecuteWorkflow={handleExecuteWorkflow}
-        onViewAnalytics={handleViewAnalytics}
-      />
+                  {/* Pagination */}
+                  {filteredWorkflows.length > 0 && (
+                    <div className="flex items-center justify-center p-4 border-t">
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" disabled>
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <span className="text-sm text-muted-foreground px-4">
+                          Page 1 of 1
+                        </span>
+                        <Button variant="outline" size="sm" disabled>
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                  </div>
+                    </div>
+                  )}
+                </Card>
+              )}
+
+            </TabsContent>
+
+            <TabsContent value="usage" className="mt-6">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="font-semibold text-lg text-foreground mb-2">
+                    Usage Analytics
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Usage statistics and analytics will be displayed here
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+          </div>
+      </div>
 
       <CreateWorkflowDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={handleWorkflowCreated}
+        onCreated={(id) => {
+          setCreateOpen(false);
+          router.push(`/dashboard/workflows/${id}`);
+        }}
       />
-
-      <WebhooksManagerDialog open={webhooksOpen} onOpenChange={setWebhooksOpen} />
-
-      {/* Error State */}
-      {error && (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Error Loading Workflows</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => fetchWorkflows()}>
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
+

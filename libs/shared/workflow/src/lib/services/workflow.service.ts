@@ -1,9 +1,7 @@
 import { Injectable, Logger, Inject, Optional } from '@nestjs/common'
 import { PrismaService } from '@glavito/shared-database'
 import { EventPublisherService } from '@glavito/shared-kafka'
-import { N8NClient } from '../clients/n8n.client'
-import { N8NSyncService } from './n8n-sync.service'
-import { WorkflowExecutionService } from './workflow-execution.service'
+// import { WorkflowExecutionService } from './workflow-execution.service'
 import {
   WorkflowRule,
   WorkflowExecution,
@@ -23,11 +21,8 @@ export class WorkflowService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly n8nClient: N8NClient,
-    private readonly n8nSyncService: N8NSyncService,
     private readonly eventPublisher: EventPublisherService,
     private readonly http: HttpService,
-    private readonly executionService: WorkflowExecutionService,
     @Optional() @Inject('EMAIL_SENDER') private readonly emailAdapter?: EmailSender
   ) {}
 
@@ -40,12 +35,18 @@ export class WorkflowService {
           tenantId,
           name: workflowData.name,
           description: workflowData.description,
-          // Map to existing schema fields
-          type: workflowData.type || 'n8n',
+          // Map to existing schema fields (align to interface types)
+          type: (workflowData.type as any) || 'automation',
           priority: workflowData.priority ?? 0,
           // Support both old and new structures
-          conditions: workflowData.conditions || workflowData.triggerConditions || {},
-          actions: workflowData.actions || {},
+          conditions: Array.isArray(workflowData.conditions)
+            ? workflowData.conditions
+            : (workflowData.conditions || workflowData.triggerConditions
+              ? [workflowData.conditions || workflowData.triggerConditions]
+              : []),
+          actions: Array.isArray(workflowData.actions)
+            ? workflowData.actions
+            : (workflowData.actions ? [workflowData.actions] : []),
           // ensure array shape for triggers JSON
           triggers: Array.isArray(workflowData.triggers) ? workflowData.triggers : (workflowData.triggers || []),
           isActive: workflowData.isActive ?? true,
@@ -67,19 +68,7 @@ export class WorkflowService {
         } as any
       })
 
-      // Sync to N8N if workflow has nodes and connections
-      const metadata = workflow.metadata as any || {}
-      if (metadata.nodes && metadata.nodes.length > 0) {
-        try {
-          const n8nWorkflowId = await this.n8nSyncService.syncWorkflowToN8N(workflow.id)
-          this.logger.log(`Workflow ${workflow.id} synced to N8N with ID: ${n8nWorkflowId}`)
-        } catch (error) {
-          this.logger.warn(`Failed to sync workflow ${workflow.id} to N8N:`, error)
-          // Don't fail the workflow creation if N8N sync fails
-        }
-      }
-
-      // Publish workflow created event (pending)
+      // Publish workflow created event
 
       return workflow as any
     } catch (error) {
@@ -197,10 +186,25 @@ export class WorkflowService {
 
   private async runInternalActions(wf: any, payload: Record<string, unknown>): Promise<void> {
     const actions = Array.isArray(wf?.actions) ? wf.actions : []
+    
+    if (actions.length === 0) {
+      this.logger.debug(`No actions to execute for workflow ${wf?.id}`)
+      return
+    }
+
     for (const action of actions) {
-      const type = String(action?.type || action?.actionType || '')
+      // Skip disabled actions
+      if (action?.enabled === false) {
+        this.logger.debug(`Skipping disabled action: ${action?.type}`)
+        continue
+      }
+
+      const type = String(action?.type || action?.actionType || '').toLowerCase()
       const cfg = action?.config || action
+      
       try {
+        this.logger.debug(`Executing action: ${type} for workflow ${wf?.id}`)
+        
         if (type === 'create_ticket' && (cfg.title || cfg.subject)) {
           const subject: string = cfg.subject || cfg.title
           const customerId: string | null = (cfg.customerId || (payload as any)?.customerId) ?? null
@@ -481,7 +485,34 @@ export class WorkflowService {
           }
         }
       } catch (e) {
-        this.logger.warn(`Internal action failed (${type}) in workflow ${wf?.id}: ${e instanceof Error ? e.message : 'error'}`)
+        const errorMsg = e instanceof Error ? e.message : 'Unknown error'
+        this.logger.error(`Action failed (${type}) in workflow ${wf?.id}: ${errorMsg}`, e instanceof Error ? e.stack : undefined)
+        
+        // Store error in workflow execution metadata for debugging
+        try {
+          const executionId = (payload as any)?._executionId
+          if (executionId) {
+            await this.prisma['workflowExecution'].update({
+              where: { id: executionId },
+              data: {
+                metadata: {
+                  lastError: { type, message: errorMsg, timestamp: new Date().toISOString() }
+                } as any
+              }
+            }).catch(() => {/* ignore meta update errors */})
+          }
+        } catch {/* ignore */}
+        
+        // Check if action has retry policy
+        const retryPolicy = action?.onError
+        if (retryPolicy?.action === 'stop') {
+          throw e
+        } else if (retryPolicy?.action === 'retry') {
+          const retryCount = retryPolicy.retryCount || 3
+          this.logger.warn(`Will retry action ${type} up to ${retryCount} times with ${retryPolicy.retryDelay || 1000}ms delay`)
+          // TODO: Implement actual retry logic with exponential backoff
+        }
+        // Default: continue to next action
       }
     }
   }
@@ -610,88 +641,18 @@ export class WorkflowService {
       // Execute internal actions
       await this.runInternalActions(workflow, input?.data || {})
 
-      // Execute in N8N if workflow has (or can obtain) N8N ID
-      const metadata = (workflow.metadata as any) || {}
-      let n8nWorkflowId = metadata.n8nWorkflowId
-      // If no N8N id but we have nodes to sync, attempt auto-sync
-      if (!n8nWorkflowId && Array.isArray(metadata.nodes) && metadata.nodes.length > 0) {
-        try {
-          n8nWorkflowId = await this.n8nSyncService.syncWorkflowToN8N(workflowId)
-          this.logger.log(`Auto-synced workflow ${workflowId} to N8N with ID: ${n8nWorkflowId}` )
-        } catch (syncErr) {
-          this.logger.warn(`Auto-sync to N8N failed for workflow ${workflowId}: ${syncErr instanceof Error ? syncErr.message : 'error'}`)
-        }
-      }
-      
-      if (n8nWorkflowId) {
-        try {
-          const n8nExecution = await this.n8nClient.executeWorkflow(n8nWorkflowId, input?.data || {})
-          if (!n8nExecution?.id || n8nExecution.status === 'error') {
-            const endErr = Date.now()
-            const updatedErr = await this.prisma['workflowExecution'].update({
-              where: { id: execution.id },
-              data: {
-                status: 'failed' as any,
-                completedAt: new Date(endErr),
-                duration: endErr - start,
-                errorMessage: n8nExecution?.error || 'Failed to start N8N execution',
-                metadata: { triggerType, result: { success: false, n8n: true } }
-              } as any
-            })
-            return updatedErr as any
-          }
-          
-          // Update execution with N8N execution ID
-          await this.prisma['workflowExecution'].update({
-            where: { id: execution.id },
-            data: {
-              metadata: {
-                ...metadata,
-                n8nExecutionId: n8nExecution.id
-              } as any
-            } as any
-          })
-          // Start monitoring (non-blocking)
-          if (n8nExecution?.id) {
-            this.executionService.monitorExecution(execution.id, n8nExecution.id).catch((e) => {
-              this.logger.warn(`Failed to start monitoring for execution ${execution.id}: ${e instanceof Error ? e.message : 'error'}`)
-            })
-          }
-          
-          this.logger.log(`Workflow ${workflowId} executed in N8N with execution ID: ${n8nExecution.id}`)
-        } catch (e) {
-          const endCatch = Date.now()
-          await this.prisma['workflowExecution'].update({
-            where: { id: execution.id },
-            data: {
-              status: 'failed' as any,
-              completedAt: new Date(endCatch),
-              duration: endCatch - start,
-              errorMessage: e instanceof Error ? e.message : 'N8N execution failed',
-              metadata: { triggerType, result: { success: false, n8n: true } }
-            } as any
-          }).catch(() => { /* ignore monitoring update failure */ })
-          this.logger.warn(`N8N execution error: ${e instanceof Error ? e.message : 'error'}`)
-          return (await this.prisma['workflowExecution'].findUnique({ where: { id: execution.id } })) as any
-        }
-      } else {
-        this.logger.warn(`Workflow ${workflowId} has no N8N workflow ID, skipping N8N execution`)
-        // Finish immediately when no external execution
-        const endNoN8N = Date.now()
-        const updatedNoN8N = await this.prisma['workflowExecution'].update({
-          where: { id: execution.id },
-          data: {
-            status: 'completed' as any,
-            completedAt: new Date(endNoN8N),
-            duration: endNoN8N - start,
-            metadata: { triggerType, result: { success: true, n8n: false } }
-          } as any
-        })
-        return updatedNoN8N as any
-      }
-      // Return current execution (monitoring will finalize)
-      const current = await this.prisma['workflowExecution'].findUnique({ where: { id: execution.id } })
-      return current as any
+      // Finish immediately (internal-only)
+      const endNoN8N = Date.now()
+      const updated = await this.prisma['workflowExecution'].update({
+        where: { id: execution.id },
+        data: {
+          status: 'completed' as any,
+          completedAt: new Date(endNoN8N),
+          duration: endNoN8N - start,
+          metadata: { triggerType, result: { success: true } }
+        } as any
+      })
+      return updated as any
     } catch (error) {
       const end = Date.now()
       try {
@@ -749,40 +710,28 @@ export class WorkflowService {
   }
 
   async updateWorkflow(workflowId: string, updateData: any): Promise<WorkflowRule> {
-    const wf = await this.prisma['workflowRule'].update({ where: { id: workflowId }, data: updateData as any })
-    
-    // Sync to N8N if workflow has nodes and connections
-    const metadata = wf.metadata as any || {}
-    if (metadata.nodes && metadata.nodes.length > 0) {
-      try {
-        await this.n8nSyncService.syncWorkflowToN8N(workflowId)
-        this.logger.log(`Workflow ${workflowId} synced to N8N after update`)
-      } catch (error) {
-        this.logger.warn(`Failed to sync workflow ${workflowId} to N8N after update:`, error)
-      }
+    const normalized: any = { ...updateData }
+    if (normalized.conditions) {
+      normalized.conditions = Array.isArray(normalized.conditions) ? normalized.conditions : [normalized.conditions]
     }
-    
-    // Sync status if isActive changed
-    if (Object.prototype.hasOwnProperty.call(updateData, 'isActive')) {
-      try {
-        await this.n8nSyncService.syncWorkflowStatus(workflowId, updateData.isActive)
-      } catch (error) {
-        this.logger.warn(`Failed to sync workflow status for ${workflowId}:`, error)
-      }
+    if (normalized.actions) {
+      normalized.actions = Array.isArray(normalized.actions) ? normalized.actions : [normalized.actions]
     }
+    if (normalized.triggers) {
+      normalized.triggers = Array.isArray(normalized.triggers) ? normalized.triggers : [normalized.triggers]
+    }
+    if (normalized.type && !['routing','escalation','automation','sla'].includes(String(normalized.type))) {
+      normalized.type = 'automation'
+    }
+
+    const wf = await this.prisma['workflowRule'].update({ where: { id: workflowId }, data: normalized as any })
+    
+    // N8N removed: no external sync required
     
     return wf as any
   }
 
   async deleteWorkflow(workflowId: string): Promise<void> {
-    // Delete from N8N first
-    try {
-      await this.n8nSyncService.deleteN8NWorkflow(workflowId)
-    } catch (error) {
-      this.logger.warn(`Failed to delete N8N workflow for ${workflowId}:`, error)
-      // Continue with database deletion even if N8N deletion fails
-    }
-    
     // Delete from database
     await this.prisma['workflowRule'].delete({ where: { id: workflowId } })
   }

@@ -24,8 +24,7 @@ import {
   AgentAvailabilityRequest
 } from './agent-profile.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard, Roles } from '@glavito/shared-auth';
 
 @ApiTags('agent-profiles')
 @ApiBearerAuth()
@@ -212,5 +211,71 @@ export class AgentProfileController {
       to: to ? new Date(to) : undefined,
     }
     return this.agentProfileService.getTopAgents(tenantId, opts as any)
+  }
+
+  // Agent Goals Endpoints
+
+  @Post(':userId/goals')
+  @ApiOperation({ summary: 'Create agent goal' })
+  async createGoal(
+    @Request() req: any,
+    @Param('userId') userId: string,
+    @Body() body: {
+      type: 'daily' | 'weekly' | 'monthly';
+      metric: 'tickets_resolved' | 'response_time' | 'csat_score';
+      target: number;
+      startDate: string;
+      endDate: string;
+    }
+  ) {
+    // Dynamically import to avoid circular dependency
+    const { AgentGoalsService } = await import('./agent-goals.service');
+    const goalsService = new AgentGoalsService(this.agentProfileService['db']);
+    
+    return goalsService.createGoal({
+      userId,
+      type: body.type,
+      metric: body.metric,
+      target: body.target,
+      startDate: new Date(body.startDate),
+      endDate: new Date(body.endDate),
+    });
+  }
+
+  @Get(':userId/goals')
+  @ApiOperation({ summary: 'Get agent goals' })
+  @ApiQuery({ name: 'type', required: false, type: String })
+  async getGoals(
+    @Request() req: any,
+    @Param('userId') userId: string,
+    @Query('type') type?: string,
+  ) {
+    const { AgentGoalsService } = await import('./agent-goals.service');
+    const goalsService = new AgentGoalsService(this.agentProfileService['db']);
+    return goalsService.getGoals(userId, type);
+  }
+
+  @Get(':userId/achievements')
+  @ApiOperation({ summary: 'Get agent achievements' })
+  async getAchievements(
+    @Request() req: any,
+    @Param('userId') userId: string,
+  ) {
+    const { AgentGoalsService } = await import('./agent-goals.service');
+    const goalsService = new AgentGoalsService(this.agentProfileService['db']);
+    return goalsService.getAchievements(userId);
+  }
+
+  @Post(':userId/goals/:goalId/progress')
+  @ApiOperation({ summary: 'Update goal progress' })
+  async updateGoalProgress(
+    @Request() req: any,
+    @Param('userId') userId: string,
+    @Param('goalId') goalId: string,
+    @Body() body: { current: number },
+  ) {
+    const { AgentGoalsService } = await import('./agent-goals.service');
+    const goalsService = new AgentGoalsService(this.agentProfileService['db']);
+    return goalsService.updateGoalProgress(goalId, body.current);
   }
 }

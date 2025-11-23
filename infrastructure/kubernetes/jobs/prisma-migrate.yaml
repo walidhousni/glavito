@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: prisma-migrate
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: prisma-migrate
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: registry.me-east-1.aliyuncs.com/glavito/api:latest
+          command: ["/bin/sh","-c"]
+          args:
+            - npx prisma migrate deploy
+          envFrom:
+            - secretRef:
+                name: api-gateway-env
+

@@ -18,6 +18,35 @@ export interface AnalyticsDashboard {
   updatedAt: Date;
 }
 
+// UI-friendly analytics response shapes used by web/mobile clients
+export interface RealTimeMetricsUI {
+  timestamp?: Date
+  activeTickets: number
+  activeAgents: number
+  averageResponseTime: number
+  customerSatisfactionScore: number
+  ticketVelocity?: number
+  averageResolutionTime?: number
+  queueLength: number
+  slaBreachRate: number
+  channelDistribution: Array<any>
+  priorityDistribution: Array<any>
+  _raw?: unknown
+}
+
+export interface KPIMetricUI {
+  id: string
+  name: string
+  value: number
+  previousValue?: number
+  changePercentage?: number
+  trend: 'up' | 'down' | 'stable'
+  target?: number
+  unit: string
+  category?: string
+  timestamp?: Date
+}
+
 export interface DashboardLayout {
   columns: number;
   rows: number;

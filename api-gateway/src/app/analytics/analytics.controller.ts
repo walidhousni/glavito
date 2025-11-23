@@ -13,12 +13,11 @@ import {
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { RolesGuard } from '../auth/guards/roles.guard'
-import { CurrentTenant } from '@glavito/shared-auth'
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import { CurrentUser } from '@glavito/shared-auth'
-import { Roles } from '../auth/decorators/roles.decorator'
+import { RolesGuard, Roles, CurrentTenant, CurrentUser } from '@glavito/shared-auth'
 import { AnalyticsService } from '@glavito/shared-analytics'
+import { DatabaseService } from '@glavito/shared-database'
+import { Optional } from '@nestjs/common'
+import { TicketsGateway } from '../tickets/tickets.gateway'
 import { AnalyticsService as GatewayAnalyticsService } from './analytics.service'
 import { AnalyticsReportingService } from './analytics-reporting.service'
 import {
@@ -30,8 +29,14 @@ import {
   CreateCustomReportDto,
   ExecuteCustomReportDto,
   CreateDashboardDto,
-  UpdateDashboardDto
+  UpdateDashboardDto,
+  GetRevenueAttributionDto,
+  GetCostAnalyticsDto,
+  GetROIAnalyticsDto,
+  GetChannelAnalyticsDto,
+  GetBusinessInsightsDto
 } from './dto/analytics.dto'
+import { ok, fail } from '../../common/api-response'
 
 @ApiTags('Analytics')
 @ApiBearerAuth()
@@ -44,6 +49,8 @@ export class AnalyticsController {
     private readonly analyticsService: AnalyticsService,
     private readonly reporting: AnalyticsReportingService,
     private readonly gatewayAnalytics: GatewayAnalyticsService,
+    private readonly db: DatabaseService,
+    @Optional() private readonly ticketsGateway?: TicketsGateway,
   ) {}
 
   @Get('real-time-metrics')
@@ -59,11 +66,36 @@ export class AnalyticsController {
 
       const metrics = await this.analyticsService.getRealTimeMetrics(tenantId, query.timeframe)
 
+      // Prefer live counts for active tickets/agents when possible
+      const [liveActiveTickets, agentsViaProfile] = await Promise.all([
+        (async () => {
+          try {
+            return await (this.db as any).ticket.count({ where: { tenantId, status: { in: ['open', 'in_progress', 'waiting'] } } })
+          } catch { return undefined }
+        })(),
+        (async () => {
+          try {
+            // Prefer availability from agent profiles when present
+            const count = await (this.db as any).agentProfile.count({ where: { availability: 'available', user: { tenantId, role: { in: ['agent','admin'] }, status: 'active' } } })
+            return count
+          } catch { return undefined }
+        })(),
+      ])
+
+      // If no available agents found via profiles, fall back to presence from TicketsGateway
+      let liveActiveAgents = typeof agentsViaProfile === 'number' ? agentsViaProfile : undefined
+      if (!liveActiveAgents || liveActiveAgents === 0) {
+        try {
+          const viaGateway = this.ticketsGateway?.getActiveAgents?.(tenantId)
+          if (typeof viaGateway === 'number') liveActiveAgents = viaGateway
+        } catch { /* noop */ }
+      }
+
       // Flatten to UI-friendly shape while preserving raw structure
       const ui = {
         // Common top-level fields expected by the frontend dashboard
-        activeTickets: metrics?.metrics?.openTickets ?? 0,
-        activeAgents: metrics?.metrics?.activeAgents ?? 0,
+        activeTickets: (typeof liveActiveTickets === 'number' ? liveActiveTickets : (metrics as any)?.metrics?.openTickets) ?? 0,
+        activeAgents: (typeof liveActiveAgents === 'number' ? liveActiveAgents : (metrics as any)?.metrics?.activeAgents) ?? 0,
         averageResponseTime: metrics?.metrics?.averageResponseTime ?? 0,
         customerSatisfactionScore: metrics?.metrics?.satisfactionScore ?? 0,
         // Optional fields used in charts – default to sane fallbacks
@@ -75,7 +107,7 @@ export class AnalyticsController {
         _raw: metrics,
       }
 
-      return { success: true, data: ui }
+      return ok(ui)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get real-time metrics: ${errorMessage}`)
@@ -91,7 +123,7 @@ export class AnalyticsController {
         slaBreachRate: 0,
         _raw: null,
       }
-      return { success: false, data: fallback }
+      return fail(fallback)
     }
   }
 
@@ -114,13 +146,18 @@ export class AnalyticsController {
         'sla_compliance'
       ]
 
-      const metrics = await this.analyticsService.getCustomKPIs(tenantId, kpiIds)
-      return { success: true, data: metrics }
+      const dateRange = {
+        startDate: new Date(query.startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(query.endDate || Date.now())
+      }
+
+      const metrics = await this.analyticsService.getCustomKPIs(tenantId, kpiIds, dateRange as any)
+      return ok(metrics)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get KPI metrics: ${errorMessage}`)
       // Return safe fallback instead of 500 to avoid breaking the UI
-      return { success: false, data: [] }
+      return fail([])
     }
   }
 
@@ -137,7 +174,7 @@ export class AnalyticsController {
       
       const forecastDuration = query.duration || 30
       const forecast = await this.analyticsService.getDemandForecast(tenantId, forecastDuration)
-      return { success: true, data: forecast }
+      return ok(forecast)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get demand forecast: ${errorMessage}`)
@@ -148,7 +185,7 @@ export class AnalyticsController {
         seasonalPatterns: [],
         recommendations: []
       }
-      return { success: false, data: fallback }
+      return fail(fallback)
     }
   }
 
@@ -188,12 +225,12 @@ export class AnalyticsController {
         _raw: prediction
       }
 
-      return { success: true, data: ui }
+      return ok(ui)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get capacity prediction: ${errorMessage}`)
       // Return safe fallback instead of 500 to avoid breaking the UI
-      return { success: false, data: { currentCapacity: 0, predictedDemand: 0, utilizationRate: 0, _raw: null } }
+      return fail({ currentCapacity: 0, predictedDemand: 0, utilizationRate: 0, _raw: null })
     }
   }
 
@@ -209,12 +246,12 @@ export class AnalyticsController {
       this.logger.log(`Getting churn prediction for tenant: ${tenantId}`)
 
       const predictions = await this.analyticsService.getChurnPrediction(tenantId, query.customerId)
-      return { success: true, data: predictions }
+      return ok(predictions)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get churn prediction: ${errorMessage}`)
       // Return safe fallback instead of 500
-      return { success: false, data: [] }
+      return fail([])
     }
   }
 
@@ -235,12 +272,12 @@ export class AnalyticsController {
       }
 
       const metrics = await this.analyticsService.getCustomerSatisfactionMetrics(tenantId, dateRange)
-      return { success: true, data: metrics }
+      return ok(metrics)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get customer satisfaction metrics: ${errorMessage}`)
       // Safe fallback
-      return { success: false, data: { averageRating: 0, totalResponses: 0, distribution: [] } }
+      return fail({ averageRating: 0, totalResponses: 0, distribution: [] })
     }
   }
 
@@ -267,12 +304,12 @@ export class AnalyticsController {
       const effectiveAgentId = (!agentId && user?.role === 'agent') ? (user.id || undefined) : agentId
 
       const performance = await this.analyticsService.getAgentPerformanceAnalytics(tenantId, effectiveAgentId, dateRange)
-      return { success: true, data: performance }
+      return ok(performance)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get agent performance metrics: ${errorMessage}`)
       // Safe fallback
-      return { success: false, data: { agents: [], summary: { averageHandleTime: 0, ticketsResolved: 0, qualityScore: 0 } } }
+      return fail({ agents: [], summary: { averageHandleTime: 0, ticketsResolved: 0, qualityScore: 0 } })
     }
   }
 
@@ -282,24 +319,22 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Channel analytics retrieved successfully' })
   async getChannelAnalytics(
     @CurrentTenant() tenantId: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('channelId') _channelId?: string
+    @Query() query?: GetChannelAnalyticsDto
   ) {
     try {
       this.logger.log(`Getting channel analytics for tenant: ${tenantId}`)
       
       const dateRange = {
-        startDate: new Date(startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(endDate || Date.now())
+        startDate: new Date(query?.startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(query?.endDate || Date.now())
       }
 
       const analytics = await this.analyticsService.getChannelEffectiveness(tenantId, dateRange)
-      return { success: true, data: analytics }
+      return ok(analytics)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get channel analytics: ${errorMessage}`)
-      return { success: false, data: { channels: [], summary: { volume: 0, csat: 0 } } }
+      return fail({ channels: [], summary: { volume: 0, csat: 0 } } as any)
     }
   }
 
@@ -309,23 +344,22 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Revenue attribution analytics retrieved successfully' })
   async getRevenueAttribution(
     @CurrentTenant() tenantId: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
+    @Query() query?: GetRevenueAttributionDto
   ) {
     try {
       this.logger.log(`Getting revenue attribution analytics for tenant: ${tenantId}`)
       
       const dateRange = {
-        startDate: new Date(startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(endDate || Date.now())
+        startDate: new Date(query?.startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(query?.endDate || Date.now())
       }
 
       const attribution = await this.analyticsService.getRevenueAttribution(tenantId, dateRange)
-      return { success: true, data: attribution }
+      return ok(attribution)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get revenue attribution analytics: ${errorMessage}`)
-      return { success: false, data: { touchpoints: [], totalAttributedRevenue: 0 } }
+      return fail({ touchpoints: [], totalAttributedRevenue: 0 } as any)
     }
   }
 
@@ -335,23 +369,22 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Cost analytics retrieved successfully' })
   async getCostAnalytics(
     @CurrentTenant() tenantId: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
+    @Query() query?: GetCostAnalyticsDto
   ) {
     try {
       this.logger.log(`Getting cost analytics for tenant: ${tenantId}`)
       
       const dateRange = {
-        startDate: new Date(startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(endDate || Date.now())
+        startDate: new Date(query?.startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(query?.endDate || Date.now())
       }
 
       const analytics = await this.analyticsService.getCostAnalysis(tenantId, dateRange)
-      return { success: true, data: analytics }
+      return ok(analytics)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get cost analytics: ${errorMessage}`)
-      return { success: false, data: { breakdown: [], totalCost: 0 } }
+      return fail({ breakdown: [], totalCost: 0 } as any)
     }
   }
 
@@ -361,23 +394,45 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'ROI analytics retrieved successfully' })
   async getROIAnalytics(
     @CurrentTenant() tenantId: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
+    @Query() query?: GetROIAnalyticsDto
   ) {
     try {
       this.logger.log(`Getting ROI analytics for tenant: ${tenantId}`)
       
       const dateRange = {
-        startDate: new Date(startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(endDate || Date.now())
+        startDate: new Date(query?.startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(query?.endDate || Date.now())
       }
 
       const analytics = await this.analyticsService.getBusinessImpactAnalytics(tenantId, dateRange)
-      return { success: true, data: analytics }
+      return ok(analytics)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to get ROI analytics: ${errorMessage}`)
-      return { success: false, data: { roi: 0, revenue: 0, cost: 0 } }
+      return fail({ roi: 0, revenue: 0, cost: 0 } as any)
+    }
+  }
+
+  // Business Insights: orders, confirmations, deliveries, earnings
+  @Get('business-insights')
+  @Roles('admin', 'manager')
+  @ApiOperation({ summary: 'Get business insights (orders, confirmations, deliveries, earnings)' })
+  @ApiResponse({ status: 200, description: 'Business insights retrieved successfully' })
+  async getBusinessInsights(
+    @CurrentTenant() tenantId: string,
+    @Query() query?: GetBusinessInsightsDto
+  ) {
+    try {
+      const dateRange = {
+        startDate: new Date(query?.startDate || Date.now() - 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(query?.endDate || Date.now())
+      }
+      const insights = await this.analyticsService.getBusinessInsights(tenantId, dateRange as any)
+      return ok(insights)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      this.logger.error(`Failed to get business insights: ${errorMessage}`)
+      return fail({ summary: { orders: 0, confirmations: 0, deliveries: 0, earnings: 0 }, trends: { daily: [] } })
     }
   }
 
@@ -389,7 +444,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'List report templates' })
   async listTemplates(@CurrentTenant() tenantId: string) {
     const items = await this.reporting.listTemplates(tenantId)
-    return { success: true, data: items }
+    return ok(items)
   }
 
   @Post('report-templates')
@@ -400,7 +455,7 @@ export class AnalyticsController {
     @Body() body: { name: string; category?: string; definition: Record<string, unknown> }
   ) {
     const created = await this.reporting.createTemplate(tenantId, body)
-    return { success: true, data: created }
+    return ok(created)
   }
 
   @Post('exports')
@@ -411,7 +466,7 @@ export class AnalyticsController {
     @Body() body: { type: 'dashboard' | 'metric' | 'survey'; sourceId?: string; templateId?: string; format: 'pdf' | 'csv' | 'excel' | 'json'; parameters?: Record<string, unknown> }
   ) {
     const job = await this.reporting.requestExport(tenantId, body)
-    return { success: true, data: job }
+    return ok(job)
   }
 
   @Get('exports')
@@ -419,7 +474,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'List export jobs' })
   async listExports(@CurrentTenant() tenantId: string) {
     const jobs = await this.reporting.listExports(tenantId)
-    return { success: true, data: jobs }
+    return ok(jobs)
   }
 
   @Post('custom-reports')
@@ -456,7 +511,7 @@ export class AnalyticsController {
       }
 
       const report = await this.analyticsService.createCustomReport(tenantId, reportDefinition)
-      return { success: true, data: report }
+      return ok(report)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to create custom report: ${errorMessage}`)
@@ -474,7 +529,7 @@ export class AnalyticsController {
     @CurrentTenant() tenantId: string
   ) {
     const items = await this.analyticsService.getCustomReports(tenantId as any)
-    return { success: true, data: items }
+    return ok(items)
   }
 
   @Post('custom-reports/:reportId/execute')
@@ -490,7 +545,7 @@ export class AnalyticsController {
       this.logger.log(`Executing custom report ${reportId} for tenant: ${tenantId}`)
       
       const result = await this.analyticsService.executeReport(tenantId, reportId, executeDto.parameters || {})
-      return { success: true, data: result }
+      return ok(result)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.logger.error(`Failed to execute custom report: ${errorMessage}`)
@@ -519,7 +574,7 @@ export class AnalyticsController {
       isPublic: createDashboardDto.isPublic,
       createdBy: 'system',
     } as any)
-    return { success: true, data: created }
+    return ok(created)
   }
 
   @Get('dashboards')
@@ -527,7 +582,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get all dashboards' })
   async getDashboards(@CurrentTenant() tenantId: string) {
     const items = await this.gatewayAnalytics.getDashboards(tenantId as any)
-    return { success: true, data: items }
+    return ok(items)
   }
 
   @Get('dashboards/:dashboardId')
@@ -538,7 +593,7 @@ export class AnalyticsController {
     @Param('dashboardId') dashboardId: string
   ) {
     const d = await this.gatewayAnalytics.getDashboard(tenantId as any, dashboardId)
-    return { success: true, data: d }
+    return ok(d)
   }
 
   @Put('dashboards/:dashboardId')
@@ -550,7 +605,7 @@ export class AnalyticsController {
     @Body() updateDashboardDto: UpdateDashboardDto
   ) {
     const d = await this.gatewayAnalytics.updateDashboard(tenantId as any, dashboardId, updateDashboardDto as any)
-    return { success: true, data: d }
+    return ok(d)
   }
 
   // ---------------------
@@ -574,7 +629,7 @@ export class AnalyticsController {
       filters: body.filters || {},
       isActive: true,
     } as any)
-    return { success: true, data: schedule }
+    return ok(schedule)
   }
 
   @Get('schedules')
@@ -582,7 +637,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'List scheduled analytics reports' })
   async listSchedules(@CurrentTenant() tenantId: string) {
     const items = await (this.analyticsService as any).getScheduledReports(tenantId as any)
-    return { success: true, data: items }
+    return ok(items)
   }
 
   @Get('executive-summary')
@@ -594,6 +649,6 @@ export class AnalyticsController {
     const roi = bi?.roi?.overall ?? 0
     const topChannel = (bi?.revenue?.attribution?.byChannel || bi?.revenue?.attribution?.byChannel || []).sort((a: any,b: any)=> (b.revenue||0)-(a.revenue||0))[0]
     const summary = `In the last 30 days, revenue was $${Number(revenue).toFixed(2)} with an overall ROI of ${(roi*100).toFixed(1)}%. Top channel: ${topChannel?.channel || 'n/a'} (${topChannel?.percentage ? (topChannel.percentage*100).toFixed(1)+'%' : '0%'} of revenue).`
-    return { success: true, data: { summary } }
+    return ok({ summary })
   }
 }

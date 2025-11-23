@@ -12,6 +12,7 @@ export interface TicketSearchFilters {
   tags?: string[];
   dateFrom?: string;
   dateTo?: string;
+  campaignId?: string; // New: for cross-search by campaign
 }
 
 export interface TicketSearchOptions {
@@ -90,14 +91,62 @@ export class TicketsSearchService {
     });
   }
 
+  async indexCampaign(campaignId: string, tenantId: string): Promise<void> {
+    try {
+      // Query campaign and related deliveries/customers
+      const campaign = await this.db.marketingCampaign.findFirst({
+        where: { id: campaignId, tenantId },
+        include: {
+          campaignDeliveries: {
+            where: { status: { in: ['sent', 'failed', 'delivered'] } }, // Recent/relevant deliveries
+            include: {
+              customer: true,
+            },
+            take: 100, // Limit to avoid perf issues
+          },
+        },
+      });
+
+      if (!campaign) return;
+
+      // Get unique customers from deliveries
+      const customers = [...new Set(campaign.campaignDeliveries?.map((d: any) => d.customerId) || [])];
+
+      for (const customerId of customers) {
+        // For each customer, find recent tickets (limit 50) and reindex
+        const tickets = await this.db.ticket.findMany({
+          where: { customerId, tenantId },
+          take: 50,
+          orderBy: { updatedAt: 'desc' },
+        });
+
+        for (const ticket of tickets) {
+          try {
+            // Build enhanced searchableText with campaign context
+            const deliveryContext = campaign.campaignDeliveries
+              ?.filter((d: any) => d.customerId === customerId)
+              .map((d: any) => `Delivery ${d.id}: ${d.status} via ${d.channel}`)
+              .join('; ') || 'Recent campaign interaction';
+
+            // Append to ticket's searchableText (but since indexTicket handles full rebuild, just call it)
+            await this.indexTicket(ticket.id, tenantId);
+          } catch (error) {
+            console.warn(`Failed to reindex ticket ${ticket.id} for campaign ${campaignId}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to index campaign ${campaignId}:`, error);
+    }
+  }
+
   async search(
     tenantId: string,
     q: string | undefined,
     filters: TicketSearchFilters = {},
     options: TicketSearchOptions = {},
     userId?: string,
-  ): Promise<{ data: any[]; total: number; page: number; limit: number; facets: TicketFacetCounts }>
-  {
+  ): Promise<{ data: any[]; total: number; page: number; limit: number; facets: TicketFacetCounts }> {
     const startedAt = Date.now();
     const page = Math.max(1, options.page || 1);
     const limit = Math.min(100, Math.max(1, options.limit || 20));
@@ -114,6 +163,15 @@ export class TicketsSearchService {
       baseWhere.createdAt = {
         gte: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
         lte: filters.dateTo ? new Date(filters.dateTo) : undefined,
+      };
+    }
+
+    // New: Campaign filter (join via customer to CampaignDelivery -> MarketingCampaign)
+    if (filters.campaignId) {
+      baseWhere.campaignDeliveries = {
+        some: {
+          campaign: { id: filters.campaignId },
+        },
       };
     }
 

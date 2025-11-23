@@ -25,6 +25,23 @@ export class CrmAnalyticsController {
     const periodDays = Math.max(1, Math.min(90, Number(days || 30)));
     return this.analytics.getSalesForecast(tenantId, periodDays);
   }
+
+  @Get('funnel')
+  @Roles('admin', 'agent')
+  getFunnel(@Req() req: any, @Query('pipelineId') pipelineId?: string) {
+    const tenantId = req?.user?.tenantId as string;
+    return this.analytics.getPipelineFunnel(tenantId, pipelineId);
+  }
+
+  @Get('rep-performance')
+  @Roles('admin', 'agent')
+  getRepPerformance(@Req() req: any, @Query('timeframe') timeframe?: string) {
+    const tenantId = req?.user?.tenantId as string;
+    const validTimeframe = ['week', 'month', 'quarter'].includes(timeframe || '')
+      ? (timeframe as 'week' | 'month' | 'quarter')
+      : 'month';
+    return this.analytics.getRepPerformance(tenantId, validTimeframe);
+  }
 }
 
 

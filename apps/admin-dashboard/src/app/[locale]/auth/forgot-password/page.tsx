@@ -46,55 +46,46 @@ export default function ForgotPasswordPage() {
   if (success) {
     return (
       <ModernAuthLayout
-        title="Check Your Email"
+        title="Check your email"
         subtitle="We've sent you a password reset link"
       >
         <ModernAuthCard>
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="text-center space-y-6"
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center"
-            >
-              <CheckCircle className="h-8 w-8 text-white" />
-            </motion.div>
+            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
 
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Reset link sent!
-              </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                We've sent a password reset link to <strong>{email}</strong>
+                We've sent a password reset link to<br />
+                <span className="font-semibold text-gray-900 dark:text-white">{email}</span>
               </p>
             </div>
 
-            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-xl border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
                 Didn't receive the email? Check your spam folder or try again in a few minutes.
               </p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 pt-2">
               <ModernButton
                 onClick={() => setSuccess(false)}
-                className="w-full"
-                gradient={false}
-                variant="outline"
+                className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Try different email
               </ModernButton>
 
               <Link
                 href="/auth/login"
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-600 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 group"
+                className="flex items-center justify-center space-x-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
               >
-                <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                <ArrowLeft className="h-4 w-4" />
                 <span>Back to login</span>
               </Link>
             </div>
@@ -106,7 +97,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <ModernAuthLayout
-      title="Forgot Password?"
+      title="Forgot password?"
       subtitle="Enter your email to receive reset instructions"
     >
       <ModernAuthCard>
@@ -114,13 +105,13 @@ export default function ForgotPasswordPage() {
           <AnimatePresence>
             {error && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20">
-                  <AlertTriangle className="h-4 w-4" />
+                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
                   {error}
                 </Alert>
               </motion.div>
@@ -132,60 +123,32 @@ export default function ForgotPasswordPage() {
             name="email"
             label="Email Address"
             type="email"
-            placeholder="Enter your email address"
+            placeholder="name@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            icon={<Mail className="h-4 w-4" />}
-            helperText="We'll send you a link to reset your password"
             required
+            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
           />
 
           <ModernButton
             type="submit"
-            className="w-full"
+            className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200"
             loading={isLoading}
-            loadingText="Sending reset link..."
-            icon={<Send className="h-4 w-4" />}
+            loadingText="Sending link..."
           >
             Send Reset Link
           </ModernButton>
         </form>
 
-        {/* Back to Login */}
-        <div className="mt-6">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+        <div className="mt-8 text-center">
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center space-x-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors group"
           >
-            <Link
-              href="/auth/login"
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-600 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 group"
-            >
-              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              <span>Back to login</span>
-            </Link>
-          </motion.div>
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            <span>Back to login</span>
+          </Link>
         </div>
-
-        {/* Help Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700"
-        >
-          <div className="text-center space-y-2">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Need help?
-            </h4>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Contact our support team at{' '}
-              <a href="mailto:support@glavito.com" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                support@glavito.com
-              </a>
-            </p>
-          </div>
-        </motion.div>
       </ModernAuthCard>
     </ModernAuthLayout>
   );

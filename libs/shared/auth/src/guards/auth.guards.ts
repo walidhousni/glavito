@@ -29,8 +29,11 @@ export class AuthGuard implements CanActivate {
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     
     if (!requiredRoles) {
       return true;
@@ -43,9 +46,34 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException('User not authenticated');
     }
 
-    const hasRole = requiredRoles.some(role => user.role === role);
+    const userRole: string | string[] | undefined = user?.role;
+
+    if (!userRole) {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
+    const hasRole = (neededRole: string): boolean => {
+      // Support both string and array roles
+      const roleMatches = Array.isArray(userRole)
+        ? userRole.includes(neededRole)
+        : userRole === neededRole;
+
+      if (roleMatches) return true;
+
+      // Treat super_admin as superset of admin and agent
+      if (!Array.isArray(userRole) && userRole === 'super_admin') {
+        return neededRole === 'admin' || neededRole === 'agent';
+      }
+      if (Array.isArray(userRole) && userRole.includes('super_admin')) {
+        return neededRole === 'admin' || neededRole === 'agent';
+      }
+
+      return false;
+    };
+
+    const hasRequiredRole = requiredRoles.some(hasRole);
     
-    if (!hasRole) {
+    if (!hasRequiredRole) {
       throw new ForbiddenException('Insufficient permissions');
     }
 
@@ -58,7 +86,7 @@ export class TenantGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const user: AuthUser = request.user;
-    const tenantId = request.params.tenantId || request.body.tenantId || request.query.tenantId;
+    const tenantId = request.params?.tenantId || request.body?.tenantId || request.query?.tenantId;
 
     if (!user) {
       throw new UnauthorizedException('User not authenticated');
@@ -153,7 +181,7 @@ export class ApiKeyGuard implements CanActivate {
   }
 }
 
-// Decorators for guards
+// Decorators for guards - these are re-exported from decorators for backward compatibility
 export const ROLES_KEY = 'roles';
 export const PERMISSIONS_KEY = 'permissions';
 export const SKIP_AUTH = 'skip-auth';

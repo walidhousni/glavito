@@ -21,9 +21,9 @@ import type {
 @Injectable()
 export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(AdvancedEventBusService.name);
-  private kafka: Kafka;
-  private producer: Producer;
-  private admin: Admin;
+  private kafka?: Kafka;
+  private producer?: Producer;
+  private admin?: Admin;
   private consumers: Map<string, Consumer> = new Map();
   private subscriptions: Map<string, EventSubscription> = new Map();
   private isConnected = false;
@@ -39,6 +39,17 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
       replicationFactor: 3,
       configs: {
         'retention.ms': '604800000', // 7 days
+        'compression.type': 'snappy',
+        'cleanup.policy': 'delete'
+      }
+    },
+    // Outbound dispatch events (message queue)
+    {
+      name: 'outbound-events',
+      partitions: 6,
+      replicationFactor: 3,
+      configs: {
+        'retention.ms': '2592000000', // 30 days
         'compression.type': 'snappy',
         'cleanup.policy': 'delete'
       }
@@ -138,29 +149,38 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
     const enabledEnv = this.configService.get<string>('ENABLE_KAFKA');
     this.kafkaEnabled = enabledEnv === undefined ? true : enabledEnv === 'true' || enabledEnv === '1';
     
+    // Only initialize Kafka client if enabled
+    if (!this.kafkaEnabled) {
+      this.logger.debug('Kafka is disabled. Event bus will operate in degraded mode.');
+      return;
+    }
+    
     this.kafka = new Kafka({
       clientId: `${this.serviceName}-${uuidv4()}`,
       brokers: this.getBrokers(),
-      connectionTimeout: 10000,
-      authenticationTimeout: 5000,
+      connectionTimeout: 5000, // Reduced for faster failure
+      authenticationTimeout: 3000,
       reauthenticationThreshold: 10000,
-      requestTimeout: 30000,
+      requestTimeout: 10000, // Reduced for faster failure
       enforceRequestTimeout: true,
       retry: {
         initialRetryTime: 100,
-        retries: 8,
-        maxRetryTime: 30000,
+        retries: 3, // Reduced from 8 for faster failure when Kafka isn't available
+        maxRetryTime: 5000, // Reduced from 30000
         factor: 2,
         multiplier: 2,
         restartOnFailure: async (e: Error) => {
-          this.logger.error('Kafka client restarting due to error:', e);
-          return true;
+          // Only log restart attempts if we were previously connected
+          if (this.isConnected) {
+            this.logger.warn('Kafka client restarting due to error:', e.message);
+          }
+          return false; // Don't restart if not connected - fail gracefully
         }
       },
       ssl: this.getSSLConfig(),
       ...(this.getSASLConfig() ? { sasl: this.getSASLConfig() } : {}),
       logLevel: this.getLogLevel(),
-      logCreator: () => ({ namespace, level, label, log }) => {
+      logCreator: () => ({ namespace, log }) => {
         const { message, ...extra } = log;
         this.logger.log(`[${namespace}] ${message}`, extra);
       }
@@ -169,19 +189,24 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
     this.producer = this.kafka.producer({
       maxInFlightRequests: 5,
       idempotent: true,
-      transactionTimeout: 30000,
+      transactionTimeout: 10000,
       allowAutoTopicCreation: false,
-
-
       retry: {
         initialRetryTime: 100,
-        retries: 5,
-        maxRetryTime: 30000,
+        retries: 2, // Reduced for faster failure
+        maxRetryTime: 5000,
         factor: 2
       }
     });
 
-    this.admin = this.kafka.admin();
+    this.admin = this.kafka.admin({
+      retry: {
+        initialRetryTime: 100,
+        retries: 2,
+        maxRetryTime: 5000,
+        factor: 2
+      }
+    });
   }
 
   async onModuleInit() {
@@ -199,12 +224,25 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
         this.logger.warn('Kafka connection not established. Event bus will operate in degraded mode.');
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Check if it's a connection error (Kafka not running)
+      if (errorMessage.includes('ECONNRESET') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Connection error')) {
+        this.logger.warn(
+          'Kafka is not available (connection refused). Event bus will operate in degraded mode. ' +
+          'To disable Kafka warnings, set ENABLE_KAFKA=false in your environment variables.'
+        );
+      } else {
       this.logger.error('Failed to initialize Advanced Event Bus:', error);
+      }
       // Do not throw to allow the app to continue without Kafka
+      this.isConnected = false;
     }
   }
 
   async onModuleDestroy() {
+    if (!this.kafkaEnabled || !this.isConnected) {
+      return;
+    }
     try {
       await this.disconnectAll();
       this.logger.log('Advanced Event Bus destroyed successfully');
@@ -214,8 +252,8 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
   }
 
   async publish(event: DomainEvent): Promise<void> {
-    if (!this.isConnected) {
-      this.logger.warn(`Event bus not connected. Dropping event ${event.eventType}`);
+    if (!this.isConnected || !this.producer) {
+      // Silently drop events when Kafka is not available (avoid log spam)
       return;
     }
 
@@ -244,7 +282,7 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
 
   async publishBatch(events: DomainEvent[]): Promise<void> {
     if (!this.isConnected) {
-      this.logger.warn(`Event bus not connected. Dropping batch of ${events.length} events`);
+      // Silently drop events when Kafka is not available (avoid log spam)
       return;
     }
 
@@ -264,6 +302,8 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
     }
 
     try {
+      if (!this.producer) return;
+      
       const promises = Array.from(eventsByTopic.entries()).map(([topic, topicEvents]) => {
         const messages = topicEvents.map(event => ({
           key: this.generatePartitionKey(event),
@@ -272,7 +312,7 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
           timestamp: event.timestamp.getTime().toString()
         }));
 
-        return this.producer.send({ topic, messages });
+        return this.producer!.send({ topic, messages });
       });
 
       await Promise.all(promises);
@@ -285,6 +325,10 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
   }
 
   async subscribe(subscription: EventSubscription): Promise<void> {
+    if (!this.kafka) {
+      throw new Error('Kafka is not initialized. Cannot create subscription.');
+    }
+    
     if (this.subscriptions.has(subscription.id)) {
       throw new Error(`Subscription ${subscription.id} already exists`);
     }
@@ -352,6 +396,10 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
   }
 
   async createStream(config: KafkaStreamConfig): Promise<void> {
+    if (!this.producer) {
+      throw new Error('Kafka producer is not initialized. Cannot create stream.');
+    }
+    
     // Create a consumer for the input topic and producer for output topic
     const streamId = `stream-${config.inputTopic}-${config.outputTopic}`;
     
@@ -365,7 +413,7 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
             if (outputEvents.length > 0) {
               // Publish processed events to output topic
               for (const outputEvent of outputEvents) {
-                await this.producer.send({
+                await this.producer!.send({
                   topic: config.outputTopic,
                   messages: [{
                     key: this.generatePartitionKey(outputEvent),
@@ -405,18 +453,47 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
   }
 
   private async connectKafka(): Promise<void> {
+    if (!this.kafka || !this.admin || !this.producer) {
+      throw new Error('Kafka client not initialized');
+    }
+    
     try {
-      await this.admin.connect();
-      await this.producer.connect();
+      // Set a shorter timeout for connection attempts to fail fast
+      const connectTimeout = 5000; // 5 seconds
+      
+      const adminConnectPromise = this.admin.connect();
+      const producerConnectPromise = this.producer.connect();
+      
+      // Race against timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), connectTimeout);
+      });
+      
+      await Promise.race([
+        Promise.all([adminConnectPromise, producerConnectPromise]),
+        timeoutPromise
+      ]);
+      
       this.isConnected = true;
       this.logger.log('Connected to Kafka cluster');
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Don't log connection errors as ERROR level if Kafka is likely not running
+      if (errorMessage.includes('ECONNRESET') || errorMessage.includes('ECONNREFUSED') || 
+          errorMessage.includes('Connection error') || errorMessage.includes('timeout')) {
+        // These are expected when Kafka isn't running - will be handled gracefully
+        throw error; // Re-throw to be caught by onModuleInit
+      }
       this.logger.error('Failed to connect to Kafka:', error);
       throw error;
     }
   }
 
   private async createTopics(): Promise<void> {
+    if (!this.admin) {
+      return;
+    }
+    
     try {
       // Determine broker count to calibrate replication factor and partitions for dev clusters
       const cluster = await this.admin.describeCluster();
@@ -465,18 +542,22 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
       );
     }
 
-    // Disconnect producer and admin
+    // Disconnect producer and admin if they exist
+    if (this.producer) {
     disconnectPromises.push(
       this.producer.disconnect().catch(error => 
         this.logger.error('Error disconnecting producer:', error)
       )
     );
+    }
 
+    if (this.admin) {
     disconnectPromises.push(
       this.admin.disconnect().catch(error => 
         this.logger.error('Error disconnecting admin:', error)
       )
     );
+    }
 
     await Promise.all(disconnectPromises);
     this.isConnected = false;
@@ -521,6 +602,11 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
     error: Error,
     originalTopic: string
   ): Promise<void> {
+    if (!this.producer) {
+      this.logger.warn('Cannot send to dead letter queue: producer not initialized');
+      return;
+    }
+    
     try {
       // Send failed message to dead letter queue
       await this.producer.send({
@@ -551,7 +637,8 @@ export class AdvancedEventBusService implements EventBus, OnModuleInit, OnModule
       'workflow': 'workflow-events',
       'sla': 'sla-events',
       'analytics': 'analytics-events',
-      'integration': 'integration-events'
+      'integration': 'integration-events',
+      'outbound': 'outbound-events'
     };
 
     return topicMap[event.aggregateType] || 'conversation-events';

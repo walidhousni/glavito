@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common'
-import { WorkflowModule as SharedWorkflowModule } from '@glavito/shared-workflow'
-import { WorkflowsController } from './workflows.controller'
-import { WorkflowEventHandler } from './workflow-event.handler'
+import { Module } from '@nestjs/common';
+import { WorkflowModule } from '@glavito/shared-workflow';
+import { WorkflowsController } from './workflows.controller';
+import { WorkflowEventHandler } from './workflow-event.handler';
 
 @Module({
   imports: [
-    SharedWorkflowModule.forFeature()
+    WorkflowModule.forFeature()
   ],
   controllers: [WorkflowsController],
   providers: [WorkflowEventHandler],

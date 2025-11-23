@@ -1,277 +1,306 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Award, 
-  Star, 
-  Users,
-  Trophy,
-  Medal
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useAgentStore } from '@/lib/store/agent-store';
+import React from 'react'
 import { useTranslations } from 'next-intl';
+import { motion } from 'framer-motion';
+import { TrendingUp, Users, Star, Clock, ArrowRight, Trophy, Medal, Crown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Link } from '@/i18n.config';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
+import { agentApi } from '@/lib/api/team'
 
-interface Agent {
-  id: string;
+
+
+const staggerChildren = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
+
+interface AgentPerfItem {
+  id: string | number;
   name: string;
   avatar?: string;
+  initials?: string;
   tickets: number;
-  satisfaction: number;
-  responseTime: string;
-  resolutionRate: number;
-  rank?: number;
+  rating: number; // 0..5
+  responseTime: string; // minutes text
+  resolutionRate: number; // 0..100
+  badge: 'top' | 'second' | 'third' | string;
 }
 
-interface PerformanceOverviewProps {
-  agents?: Agent[];
-  loading?: boolean;
-  showRankings?: boolean;
-}
-
-const mockAgents: Agent[] = [
-  { 
-    id: '1', 
-    name: 'Alice Wilson', 
-    tickets: 47, 
-    satisfaction: 4.9, 
-    responseTime: '2.3h', 
-    resolutionRate: 94,
-    rank: 1
-  },
-  { 
-    id: '2', 
-    name: 'Bob Brown', 
-    tickets: 42, 
-    satisfaction: 4.8, 
-    responseTime: '2.7h', 
-    resolutionRate: 91,
-    rank: 2
-  },
-  { 
-    id: '3', 
-    name: 'Carol Davis', 
-    tickets: 38, 
-    satisfaction: 4.7, 
-    responseTime: '3.1h', 
-    resolutionRate: 89,
-    rank: 3
-  },
-  { 
-    id: '4', 
-    name: 'David Miller', 
-    tickets: 35, 
-    satisfaction: 4.6, 
-    responseTime: '3.4h', 
-    resolutionRate: 87
-  },
-  { 
-    id: '5', 
-    name: 'Eva Garcia', 
-    tickets: 33, 
-    satisfaction: 4.5, 
-    responseTime: '3.8h', 
-    resolutionRate: 85
-  }
-];
-
-export function PerformanceOverview({ 
-  agents = mockAgents, 
-  loading = false,
-  showRankings = true 
-}: PerformanceOverviewProps) {
-  const t = useTranslations('dashboard.performanceOverview');
-  const { topAgents, isLoading, fetchTopAgents } = useAgentStore();
+export function PerformanceOverview() {
+  const t = useTranslations('dashboard.performance');
+  const [agents, setAgents] = React.useState<AgentPerfItem[]>([])
+  const [loading, setLoading] = React.useState<boolean>(true)
 
   React.useEffect(() => {
-    // Load top performers for last ~30 days (default)
-    fetchTopAgents({ limit: 5 }).catch(() => void 0);
-  }, [fetchTopAgents]);
+    let cancelled = false
+    ;(async () => {
+      try {
+        setLoading(true)
+        const list = await agentApi.getTopAgents({ limit: 3 }).catch(() => [])
+        if (cancelled) return
 
-  const mappedFromStore: Agent[] = (topAgents || []).map((a, index) => ({
-    id: a.userId,
-    name: a.name,
-    avatar: a.avatar,
-    tickets: a.ticketsResolved,
-    satisfaction: Math.max(3.5, Math.min(5, Math.round(((a.resolutionRate / 25) + 3.5) * 10) / 10)),
-    responseTime: `${Math.max(1, Math.round((a.averageFirstResponseMinutes / 60) * 10) / 10)}h`,
-    resolutionRate: a.resolutionRate,
-    rank: index + 1,
-  }));
+        if (!Array.isArray(list) || list.length === 0) {
+          setAgents([])
+          return
+        }
 
-  const displayAgents: Agent[] = agents && agents.length > 0
-    ? agents
-    : (mappedFromStore.length > 0 ? mappedFromStore : mockAgents);
-  const getRankIcon = (rank?: number) => {
-    switch (rank) {
-      case 1: return <Trophy className="h-4 w-4 text-yellow-500" />;
-      case 2: return <Medal className="h-4 w-4 text-gray-400" />;
-      case 3: return <Award className="h-4 w-4 text-orange-500" />;
-      default: return null;
+        type TopAgent = { userId: string | number; name?: string; displayName?: string; firstName?: string; lastName?: string; avatar?: string; avatarUrl?: string; ticketsResolved?: number; ticketsAssigned?: number; customerSatisfaction?: number; averageFirstResponseMinutes?: number; responseTime?: number; resolutionRate?: number };
+        const mapped: AgentPerfItem[] = (list as TopAgent[]).map((a: TopAgent, idx: number) => {
+          const fullName = String(a.name || a.displayName || `${a.firstName || ''} ${a.lastName || ''}` || 'Agent').trim()
+          const initials = (fullName || 'AG').split(' ').map((p: string) => p[0]).join('').slice(0,2).toUpperCase()
+          const tickets = Number(a.ticketsResolved ?? a.ticketsAssigned ?? 0)
+          const rating = Number(a.customerSatisfaction ?? 0)
+          const respMin = Number(a.averageFirstResponseMinutes ?? a.responseTime ?? 0)
+          const resolutionRate = Number(a.resolutionRate ?? 0)
+          const badge: AgentPerfItem['badge'] = idx === 0 ? 'top' : idx === 1 ? 'second' : idx === 2 ? 'third' : 'other'
+          return {
+            id: (a as { userId?: string | number; id?: string | number }).userId || (a as { id?: string | number }).id || idx,
+            name: fullName,
+            avatar: a.avatarUrl || a.avatar,
+            initials,
+            tickets,
+            rating: isFinite(rating) ? Math.max(0, Math.min(5, rating)) : 0,
+            responseTime: isFinite(respMin) ? `${respMin.toFixed(respMin >= 1 ? 0 : 1)}m` : '—',
+            resolutionRate: isFinite(resolutionRate) ? Math.max(0, Math.min(100, resolutionRate)) : 0,
+            badge,
+          }
+        }).slice(0, 3)
+        setAgents(mapped)
+      } catch {
+        setAgents([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
+
+  const getBadgeIcon = (badge: string) => {
+    switch (badge) {
+      case 'top':
+        return <Crown className="h-3 w-3" />;
+      case 'second':
+        return <Medal className="h-3 w-3" />;
+      case 'third':
+        return <Trophy className="h-3 w-3" />;
+      default:
+        return null;
     }
   };
 
-  const getRankBadge = (rank?: number) => {
-    switch (rank) {
-      case 1: return 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white';
-      case 2: return 'bg-gradient-to-r from-gray-400 to-gray-600 text-white';
-      case 3: return 'bg-gradient-to-r from-orange-400 to-orange-600 text-white';
-      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
+  const getBadgeVariant = (badge: string) => {
+    switch (badge) {
+      case 'top':
+        return 'default';
+      case 'second':
+        return 'secondary';
+      case 'third':
+        return 'outline';
+      default:
+        return 'outline';
     }
   };
 
-  if (loading || isLoading) {
-    return (
-      <Card className="border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm shadow-xl border border-slate-200/60 dark:border-slate-700/60 rounded-2xl">
-        <CardHeader className="pb-6">
-          <div className="flex items-center space-x-3">
-            <div className="h-12 w-12 bg-slate-200 dark:bg-slate-700 rounded-2xl animate-pulse" />
-            <div className="space-y-3">
-              <div className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-              <div className="h-5 w-56 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-700/30 border border-slate-200/60 dark:border-slate-600/40">
-                <div className="h-14 w-14 bg-slate-200 dark:bg-slate-700 rounded-2xl animate-pulse" />
-                <div className="flex-1 space-y-3">
-                  <div className="h-5 w-28 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
-                  <div className="h-4 w-36 bg-slate-200 dark:bg-slate-700 rounded-md animate-pulse" />
-                </div>
-                <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const getRankColors = (badge: string) => {
+    switch (badge) {
+      case 'top':
+        return {
+          bg: 'from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20',
+          border: 'border-amber-200/50 dark:border-amber-800/50',
+          accent: 'text-amber-600 dark:text-amber-400'
+        };
+      case 'second':
+        return {
+          bg: 'from-slate-50 to-gray-50 dark:from-slate-950/20 dark:to-gray-950/20',
+          border: 'border-slate-200/50 dark:border-slate-800/50',
+          accent: 'text-slate-600 dark:text-slate-400'
+        };
+      case 'third':
+        return {
+          bg: 'from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20',
+          border: 'border-orange-200/50 dark:border-orange-800/50',
+          accent: 'text-orange-600 dark:text-orange-400'
+        };
+      default:
+        return {
+          bg: 'from-muted/50 to-muted/30',
+          border: 'border-border/50',
+          accent: 'text-muted-foreground'
+        };
+    }
+  };
 
   return (
-    <Card className="border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl">
+    <Card className="dashboard-card-elevated h-full">
       <CardHeader className="pb-6">
-        <div className="flex items-center space-x-4">
-          <div className="p-4 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-lg">
-            <Trophy className="h-6 w-6 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-xl font-semibold">
+              {t('topPerformers')}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {t('leadingAgentsThisMonth')}
+            </p>
           </div>
-          <div>
-            <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">{t('title')}</CardTitle>
-            <CardDescription className="text-base text-slate-600 dark:text-slate-400">{t('description')}</CardDescription>
-          </div>
+          <Link href="/dashboard/admin-settings?tab=team">
+            <Button variant="ghost" size="sm" className="gap-2">
+              {t('viewAll')}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {displayAgents.map((agent, index) => (
-            <motion.div
-              key={agent.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.3 }}
-              whileHover={{ scale: 1.02, y: -2 }}
-              className={cn(
-                'flex items-center space-x-4 p-5 rounded-2xl transition-all duration-300 hover:shadow-xl border',
-                agent.rank && agent.rank <= 3 
-                  ? 'bg-gradient-to-r from-amber-50/80 to-yellow-50/80 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200/60 dark:border-amber-800/40 shadow-amber-100/50 dark:shadow-amber-900/20'
-                  : 'bg-slate-50/50 dark:bg-slate-700/30 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 border-slate-200/60 dark:border-slate-600/40'
-              )}
-            >
-              <div className="relative">
-                <Avatar className="h-14 w-14 ring-2 ring-white/60 dark:ring-slate-700/60 shadow-lg">
-                  <AvatarImage src={agent.avatar} />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-base">
-                    {agent.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                {showRankings && agent.rank && agent.rank <= 3 && (
-                  <div className={cn(
-                    'absolute -top-1 -right-1 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800',
-                    getRankBadge(agent.rank)
-                  )}>
-                    {getRankIcon(agent.rank) || `#${agent.rank}`}
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-3">
-                  <p className="font-semibold text-slate-900 dark:text-white">{agent.name}</p>
-                  {agent.rank === 1 && (
-                    <Badge className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs px-2 py-1 shadow-sm">
-                      <Trophy className="h-3 w-3 mr-1" />
-                      {t('badges.topAgent')}
-                    </Badge>
-                  )}
-                  {agent.rank === 2 && (
-                    <Badge className="bg-gradient-to-r from-slate-400 to-slate-500 text-white text-xs px-2 py-1 shadow-sm">
-                      <Medal className="h-3 w-3 mr-1" />
-                      {t('badges.secondPlace')}
-                    </Badge>
-                  )}
-                  {agent.rank === 3 && (
-                    <Badge className="bg-gradient-to-r from-orange-400 to-orange-500 text-white text-xs px-2 py-1 shadow-sm">
-                      <Award className="h-3 w-3 mr-1" />
-                      {t('badges.thirdPlace')}
-                    </Badge>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="text-center p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl shadow-sm">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{t('metrics.tickets')}</p>
-                    <p className="font-bold text-slate-900 dark:text-white text-lg">{agent.tickets}</p>
-                  </div>
-                  <div className="text-center p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl shadow-sm">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{t('metrics.rating')}</p>
-                    <div className="flex items-center justify-center space-x-1">
-                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      <span className="font-bold text-slate-900 dark:text-white text-lg">{agent.satisfaction}</span>
-                    </div>
-                  </div>
-                  <div className="text-center p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl shadow-sm">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{t('metrics.response')}</p>
-                    <p className="font-bold text-slate-900 dark:text-white text-lg">{agent.responseTime}</p>
-                  </div>
-                </div>
-                
-                {/* Resolution Rate Progress */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">{t('metrics.resolutionRate')}</span>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">{agent.resolutionRate}%</span>
-                  </div>
-                  <div className="relative">
-                    <Progress 
-                      value={agent.resolutionRate} 
-                      className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full"
-                    />
-                    <div 
-                      className="absolute top-0 left-0 h-3 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-500"
-                      style={{ width: `${agent.resolutionRate}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-        
-        {displayAgents.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-              <Users className="h-12 w-12 text-slate-400" />
-            </div>
-            <p className="text-slate-500 dark:text-slate-400 font-semibold text-lg">{t('emptyState.title')}</p>
-            <p className="text-slate-400 dark:text-slate-500 text-base mt-2">{t('emptyState.description')}</p>
+
+      <CardContent className="space-y-4">
+        {loading ? (
+          <div className="flex items-center justify-center h-40">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
+        ) : agents.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+            <Users className="h-8 w-8 mb-2 opacity-50" />
+            <p>{t('noData', { fallback: 'No performance data available' })}</p>
+          </div>
+        ) : (
+          <motion.div
+            className="space-y-3"
+            variants={staggerChildren}
+            initial="hidden"
+            animate="visible"
+          >
+            {agents.map((agent, index) => {
+              const colors = getRankColors(agent.badge);
+              
+              return (
+                <motion.div
+                  key={agent.id}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.01 }}
+                  className="group cursor-pointer"
+                >
+                  <Card className={cn(
+                    "performance-card border transition-all duration-300 hover:shadow-md",
+                    colors.border
+                  )}>
+                    {/* Background Gradient */}
+                    <div className={cn(
+                      "performance-card-gradient bg-gradient-to-br",
+                      colors.bg
+                    )} />
+
+                    <CardContent className="relative p-4">
+                      <div className="flex items-center gap-4">
+                        {/* Avatar with Rank Badge */}
+                        <div className="relative flex-shrink-0">
+                          <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+                            <AvatarImage src={agent.avatar} alt={agent.name} />
+                            <AvatarFallback className={cn(
+                              "font-semibold text-white bg-gradient-to-br",
+                              index === 0 ? 'from-yellow-400 to-orange-500' : index === 1 ? 'from-slate-400 to-slate-600' : 'from-amber-600 to-orange-700'
+                            )}>
+                              {agent.initials || (agent.name || 'AG').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          {/* Rank Badge */}
+                          <Badge 
+                            variant={getBadgeVariant(agent.badge)}
+                            className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center"
+                          >
+                            {getBadgeIcon(agent.badge)}
+                          </Badge>
+                        </div>
+
+                        {/* Agent Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold text-foreground truncate">
+                                {agent.name}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {t('rank')} #{index + 1}
+                              </p>
+                            </div>
+                            <Badge variant="secondary" className="text-xs">
+                              {agent.resolutionRate}% {t('success')}
+                            </Badge>
+                          </div>
+
+                          {/* Stats */}
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Users className="h-4 w-4 text-blue-500" />
+                              <span className="text-muted-foreground">
+                                {agent.tickets}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm">
+                              <Star className="h-4 w-4 text-amber-500" />
+                              <span className="text-muted-foreground">
+                                {agent.rating}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm">
+                              <Clock className="h-4 w-4 text-purple-500" />
+                              <span className="text-muted-foreground">
+                                {agent.responseTime}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm">
+                              <TrendingUp className="h-4 w-4 text-emerald-500" />
+                              <span className="text-muted-foreground">
+                                {agent.resolutionRate}%
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{t('performance')}</span>
+                              <span className="font-medium">{agent.resolutionRate}%</span>
+                            </div>
+                            <Progress 
+                              value={agent.resolutionRate} 
+                              className="h-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </motion.div>
         )}
       </CardContent>
     </Card>

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -36,13 +37,13 @@ export class CallsGateway {
   @WebSocketServer()
   server!: Server;
 
-  constructor(private readonly jwt: JwtService) {}
+  constructor(private readonly jwt: JwtService, private readonly config: ConfigService) {}
 
   private authenticate(client: Socket): { userId: string; tenantId: string } | null {
     const token = (client.handshake.auth as any)?.token || (client.handshake.headers as any)?.authorization?.replace('Bearer ', '');
     if (!token) return null;
     try {
-      const secret = process.env.JWT_SECRET || process.env.AUTH_JWT_SECRET || 'change_me';
+      const secret = this.config.get<string>('AUTH_JWT_SECRET') || this.config.get<string>('JWT_SECRET') || 'change_me';
       const payload: any = this.jwt.verify(token, { secret });
       return { userId: payload.sub, tenantId: payload.tenantId };
     } catch (e) {

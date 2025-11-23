@@ -1,175 +1,215 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useEffect, useState, useMemo } from 'react';
 import { useIntegrationsStore } from '@/lib/store/integrations-store';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { IntegrationCard } from '@/components/integrations/integration-card';
+import { IntegrationEmptyState } from '@/components/integrations/integration-empty-state';
+import { SyncProgress } from '@/components/integrations/sync-progress';
+import {
+  FaSearch,
+  FaChartLine,
+  FaBolt,
+  FaShieldAlt,
+  FaClock,
+  FaRocket,
+  FaLink,
+} from 'react-icons/fa';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { MappingEditor } from '@/components/integrations/mapping-editor';
+import { RulesEditor } from '@/components/integrations/rules-editor';
 
 export default function IntegrationsPage() {
-  const t = useTranslations('integrations');
+  const { toast } = useToast();
+  const router = useRouter();
+  
   const {
     statuses,
     connectors,
-    isLoading,
-    error,
+    catalog,
+    healthStatuses,
+    syncProgress: storeSyncProgress,
     fetchStatuses,
-    upsertStatus,
     fetchConnectors,
+    fetchCatalog,
+    fetchHealthStatuses,
     manualSync,
     disableConnector,
-    // new
-    docsByProvider,
-    fetchDocs,
-    getAuthorizeUrl,
-    mappingsByProvider,
-    fetchMappings,
-    upsertMapping,
-    deleteMapping,
+    testConnection,
   } = useIntegrationsStore();
 
-  const [docsOpenFor, setDocsOpenFor] = useState<string | null>(null);
-  const [mappingsOpenFor, setMappingsOpenFor] = useState<string | null>(null);
-  const [newMapping, setNewMapping] = useState<{ sourceEntity: string; targetEntity?: string; direction: 'inbound' | 'outbound' | 'both'; mappingsJson: string; id?: string }>({ sourceEntity: 'customer', targetEntity: '', direction: 'both', mappingsJson: '{\n  "email": "Email",\n  "firstName": "FirstName"\n}' });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [activeTab, setActiveTab] = useState<'connected' | 'available'>('available');
+  const [syncingProvider, setSyncingProvider] = useState<string | null>(null);
+  const [mappingProvider, setMappingProvider] = useState<string | null>(null);
+  const [rulesProvider, setRulesProvider] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStatuses();
     fetchConnectors();
-  }, [fetchStatuses, fetchConnectors]);
+    fetchCatalog();
+    fetchHealthStatuses();
+  }, [fetchStatuses, fetchConnectors, fetchCatalog, fetchHealthStatuses]);
 
-  const openDocs = async (provider: string) => {
+  // Poll health statuses every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchHealthStatuses();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchHealthStatuses]);
+
+  // Determine which integrations are connected
+  const connectedProviders = useMemo(() => {
+    return new Set([
+      ...connectors.filter((c) => c.status === 'connected' || c.status === 'syncing').map((c) => c.provider),
+      ...statuses.filter((s) => s.status === 'connected').map((s) => s.integrationType),
+    ]);
+  }, [connectors, statuses]);
+
+  const items = useMemo(() => catalog?.items || [], [catalog?.items]);
+  const categories = useMemo(() => catalog?.categories || [], [catalog?.categories]);
+  const metrics = useMemo(() => catalog?.metrics || { prebuilt: 0, avgSetupMinutes: 0, uptime: 99.9, support: '24/7' }, [catalog?.metrics]);
+
+  // Filter integrations
+  const filteredIntegrations = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSearch = searchQuery === '' ||
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      
+      if (activeTab === 'connected') {
+        return matchesSearch && matchesCategory && connectedProviders.has(item.provider);
+      }
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [items, searchQuery, selectedCategory, activeTab, connectedProviders]);
+
+  // Handle sync
+  const handleSync = async (provider: string) => {
     try {
-      await fetchDocs(provider);
-      setDocsOpenFor(provider);
-    } catch {}
-  };
-
-  const openMappings = async (provider: string) => {
-    try {
-      await fetchMappings(provider);
-      setMappingsOpenFor(provider);
-    } catch {}
-  };
-
-  const docs = useMemo(() => (docsByProvider && docsOpenFor ? docsByProvider[docsOpenFor] : undefined), [docsByProvider, docsOpenFor]);
-  const mappings = useMemo(() => (mappingsByProvider && mappingsOpenFor ? mappingsByProvider[mappingsOpenFor] || [] : []), [mappingsByProvider, mappingsOpenFor]);
-
-  const statusColor = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return 'badge-success';
-      case 'error':
-        return 'badge-danger';
-      case 'disabled':
-        return 'badge-info';
-      default:
-        return 'badge-warning';
+      setSyncingProvider(provider);
+      await manualSync(provider, 'customers');
+      toast({
+        title: 'Sync completed',
+        description: `Successfully synced data from ${provider}`,
+      });
+      await fetchConnectors();
+      await fetchHealthStatuses();
+      setSyncingProvider(null);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred during sync';
+      toast({
+        title: 'Sync failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      setSyncingProvider(null);
     }
   };
 
+  const handleDisable = async (provider: string) => {
+    try {
+      await disableConnector(provider);
+      toast({
+        title: 'Integration disabled',
+        description: `${provider} has been disconnected`,
+      });
+      await fetchConnectors();
+      await fetchHealthStatuses();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to disable integration';
+      toast({
+        title: 'Failed to disable',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleTestConnection = async (provider: string) => {
+    try {
+      await testConnection(provider);
+      toast({
+        title: 'Connection test successful',
+        description: `${provider} is connected and healthy`,
+      });
+      await fetchHealthStatuses();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unable to connect';
+      toast({
+        title: 'Connection test failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const connectedCount = connectedProviders.size;
+  const hasConnections = connectedCount > 0;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <p className="text-muted-foreground">{t('subtitle')}</p>
+    <div className="min-h-screen bg-background p-6 space-y-8">
+      {/* Header */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                <FaLink className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">Integrations</h1>
+                <p className="text-sm text-muted-foreground">
+                  Connect your tools and services
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-        <Button variant="outline" onClick={() => fetchStatuses()}>{t('reload')}</Button>
-      </div>
 
-      {error && <div className="text-red-500">{error}</div>}
+        {/* Get Started Section */}
+        {!hasConnections && activeTab === 'available' && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+                <FaRocket className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h2 className="text-lg font-semibold mb-2">Get started by connecting your first integration</h2>
+              <p className="text-sm text-muted-foreground max-w-md">
+                Sync data from your commerce store, CRM, and marketing tools
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-      {isLoading ? (
-        <p>{t('loading')}</p>
-      ) : statuses.length === 0 ? (
-        <p>{t('empty')}</p>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {statuses.map((s) => (
-            <Card key={s.id} className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="capitalize">{s.integrationType}</span>
-                  <Badge className={statusColor(s.status)}>{s.status}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-sm text-muted-foreground">
-                  {s.errorMessage ? s.errorMessage : t('noErrors')}
-                </div>
-                <div className="flex gap-2">
-                  {s.status !== 'connected' && (
-                    <Button size="sm" onClick={() => upsertStatus({ type: s.integrationType, status: 'connected' })}>
-                      {t('actions.connect')}
-                    </Button>
-                  )}
-                  {s.status === 'connected' && (
-                    <Button size="sm" variant="outline" onClick={() => upsertStatus({ type: s.integrationType, status: 'disabled' })}>
-                      {t('actions.disable')}
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Connectors</h2>
-        {isLoading ? (
-          <p>{t('loading')}</p>
-        ) : connectors.length === 0 ? (
-          <p>{t('empty')}</p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {connectors.map((c) => (
-              <Card key={c.id} className="glass-card connector-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="capitalize">{c.provider}</span>
-                    <Badge className={statusColor(c.status)}>{c.status}</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-sm text-muted-foreground">
-                    {c.lastError ? c.lastError : t('noErrors')}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="outline">Sync</Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        <DropdownMenuItem onClick={() => manualSync(c.provider, 'customers')}>Customers</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => manualSync(c.provider, 'leads')}>Leads</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => manualSync(c.provider, 'deals')}>Deals</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <Button size="sm" variant="outline" onClick={() => openDocs(c.provider)}>Docs</Button>
-                    <Button size="sm" variant="outline" onClick={() => openMappings(c.provider)}>Mappings</Button>
-                    {c.status !== 'connected' && (
-                      <Button
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            const redirectUri = window.location.origin + '/api/oauth/return';
-                            const url = await getAuthorizeUrl(c.provider, redirectUri);
-                            if (url) window.open(url, '_blank');
-                          } catch {}
-                        }}
-                      >Authorize</Button>
-                    )}
-                    {c.status === 'connected' && (
-                      <Button size="sm" variant="destructive" onClick={() => disableConnector(c.provider)}>Disable</Button>
-                    )}
+        {/* Metrics */}
+        {hasConnections && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: FaBolt, label: 'Pre-built', value: `${metrics.prebuilt}+` },
+              { icon: FaClock, label: 'Avg Setup', value: `${metrics.avgSetupMinutes} min` },
+              { icon: FaChartLine, label: 'Uptime', value: `${metrics.uptime}%` },
+              { icon: FaShieldAlt, label: 'Support', value: metrics.support },
+            ].map((metric) => (
+              <Card key={metric.label}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <metric.icon className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xl font-semibold">{metric.value}</p>
+                      <p className="text-xs text-muted-foreground">{metric.label}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -178,107 +218,159 @@ export default function IntegrationsPage() {
         )}
       </div>
 
-      {/* Docs Dialog */}
-      <Dialog open={!!docsOpenFor} onOpenChange={(open) => setDocsOpenFor(open ? docsOpenFor : null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{docs?.name || docsOpenFor}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{docs?.description}</p>
-            {docs?.setup?.length ? (
-              <div>
-                <h4 className="text-sm font-medium mb-2">Setup</h4>
-                <ul className="list-disc pl-5 space-y-1 text-sm">
-                  {docs.setup.map((s, i) => (<li key={i}>{s}</li>))}
-                </ul>
-              </div>
-            ) : null}
-            {docs?.env?.length ? (
-              <div>
-                <h4 className="text-sm font-medium mb-2">Environment Variables</h4>
-                <div className="flex flex-wrap gap-2">
-                  {docs.env.map((e) => (<span key={e} className="chip chip-muted">{e}</span>))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Main Content */}
+      <div className="space-y-6">
+        {/* Search and Tabs */}
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="relative flex-1">
+              <FaSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search integrations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
 
-      {/* Mappings Dialog */}
-      <Dialog open={!!mappingsOpenFor} onOpenChange={(open) => setMappingsOpenFor(open ? mappingsOpenFor : null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Field Mappings {mappingsOpenFor ? `- ${mappingsOpenFor}` : ''}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="border rounded-lg p-3">
-              <h4 className="text-sm font-medium mb-2">Add or Update Mapping</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-xs">Source Entity</Label>
-                  <Input value={newMapping.sourceEntity} onChange={(e) => setNewMapping((p) => ({ ...p, sourceEntity: e.target.value }))} placeholder="customer | lead | deal | product" />
-                </div>
-                <div>
-                  <Label className="text-xs">Target Entity</Label>
-                  <Input value={newMapping.targetEntity || ''} onChange={(e) => setNewMapping((p) => ({ ...p, targetEntity: e.target.value }))} placeholder="optional" />
-                </div>
-                <div>
-                  <Label className="text-xs">Direction</Label>
-                  <Input value={newMapping.direction} onChange={(e) => setNewMapping((p) => ({ ...p, direction: (e.target.value as any) }))} placeholder="inbound | outbound | both" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <Label className="text-xs">Mappings (JSON)</Label>
-                <Textarea rows={6} value={newMapping.mappingsJson} onChange={(e) => setNewMapping((p) => ({ ...p, mappingsJson: e.target.value }))} />
-              </div>
-              <div className="mt-3 flex gap-2">
-                <Button size="sm" onClick={async () => {
-                  if (!mappingsOpenFor) return;
-                  try {
-                    const body = {
-                      id: newMapping.id,
-                      sourceEntity: newMapping.sourceEntity,
-                      targetEntity: newMapping.targetEntity || undefined,
-                      direction: newMapping.direction,
-                      mappings: JSON.parse(newMapping.mappingsJson || '{}'),
-                    } as any;
-                    await upsertMapping(mappingsOpenFor, body);
-                    setNewMapping({ sourceEntity: 'customer', targetEntity: '', direction: 'both', mappingsJson: '{\n  "email": "Email"\n}' });
-                  } catch (e) {
-                    // ignore
-                  }
-                }}>Save Mapping</Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Existing Mappings</h4>
-              {mappings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No mappings yet</p>
-              ) : (
-                <div className="space-y-2">
-                  {mappings.map((m) => (
-                    <div key={m.id} className="flex items-start justify-between border rounded-lg p-3">
-                      <div className="text-sm">
-                        <div className="font-medium">{m.sourceEntity} → {m.targetEntity || 'remote'}</div>
-                        <div className="text-muted-foreground text-xs">{m.direction}</div>
-                        <pre className="text-xs mt-2 whitespace-pre-wrap break-all bg-muted p-2 rounded">{JSON.stringify(m.mappings, null, 2)}</pre>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setNewMapping({ id: m.id, sourceEntity: m.sourceEntity, targetEntity: m.targetEntity || '', direction: m.direction as any, mappingsJson: JSON.stringify(m.mappings, null, 2) })}>Edit</Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteMapping(mappingsOpenFor!, m.id)}>Delete</Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Connected badge */}
+            {hasConnections && (
+              <Badge variant="secondary" className="h-10 px-4 flex items-center gap-2 text-sm">
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                {connectedCount} Active
+              </Badge>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'connected' | 'available')}>
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="available">
+                Browse All ({items.length})
+              </TabsTrigger>
+              <TabsTrigger value="connected">
+                Connected ({connectedCount})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* Category filter */}
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory('all')}
+            >
+              All
+            </Button>
+            {categories.map((cat) => (
+              <Button
+                key={cat.key}
+                size="sm"
+                variant={selectedCategory === cat.key ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(cat.key)}
+              >
+                {cat.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Empty State */}
+        {activeTab === 'connected' && connectedCount === 0 && (
+          <IntegrationEmptyState onConnect={() => setActiveTab('available')} />
+        )}
+
+        {/* Integrations Grid */}
+        {(activeTab === 'available' || connectedCount > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredIntegrations.map((integration) => {
+              const isConnected = connectedProviders.has(integration.provider);
+              const connector = connectors.find((c) => c.provider === integration.provider);
+              const status = connector?.status || 'pending';
+              const syncKey = `${integration.provider}:customers`;
+              const progress = storeSyncProgress[syncKey];
+              const health = healthStatuses.find(h => h.integration?.provider === integration.provider);
+
+              return (
+                <div key={integration.provider} className="space-y-2">
+                  <IntegrationCard
+                    provider={integration.provider}
+                    name={integration.name}
+                    description={integration.description}
+                    category={integration.category}
+                    badges={integration.badges}
+                    isConnected={isConnected}
+                    status={status as 'pending' | 'connected' | 'syncing' | 'error' | 'disabled'}
+                    healthStatus={health?.status}
+                    lastSync={connector?.lastSyncAt}
+                    lastError={connector?.lastError}
+                    syncProgress={progress ? {
+                      progress: progress.progress,
+                      totalRecords: progress.totalRecords,
+                      processedRecords: progress.processedRecords,
+                      entity: progress.entity,
+                      status: progress.status,
+                      error: progress.error,
+                    } : undefined}
+                    onConnect={async () => {
+                      await fetchConnectors();
+                      await fetchHealthStatuses();
+                      toast({
+                        title: 'Integration connected',
+                        description: `${integration.name} has been successfully connected`,
+                      });
+                    }}
+                    onSync={() => handleSync(integration.provider)}
+                    onDisable={() => handleDisable(integration.provider)}
+                    onTestConnection={() => handleTestConnection(integration.provider)}
+                    onViewLogs={() => router.push(`/dashboard/integrations/health?integration=${integration.provider}`)}
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setMappingProvider(integration.provider)}>Mappings</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setRulesProvider(integration.provider)}>Rules</Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* No results */}
+        {filteredIntegrations.length === 0 && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <FaSearch className="h-10 w-10 text-muted-foreground mb-4" />
+              <h3 className="font-semibold text-lg mb-2">No integrations found</h3>
+              <p className="text-muted-foreground text-sm">
+                Try adjusting your search or filter criteria
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Sync Progress Modal */}
+      {syncingProvider && (
+        <SyncProgress
+          provider={syncingProvider}
+          providerName={items.find((i) => i.provider === syncingProvider)?.name || syncingProvider}
+          isOpen={!!syncingProvider}
+          onClose={() => setSyncingProvider(null)}
+          progress={storeSyncProgress[`${syncingProvider}:customers`]?.progress || 0}
+          entities={[]}
+        />
+      )}
+      {/* Editors */}
+      {mappingProvider && (
+        <MappingEditor provider={mappingProvider} open={!!mappingProvider} onOpenChange={(v) => !v ? setMappingProvider(null) : undefined} />
+      )}
+      {rulesProvider && (
+        <RulesEditor provider={rulesProvider} open={!!rulesProvider} onOpenChange={(v) => !v ? setRulesProvider(null) : undefined} />
+      )}
     </div>
   );
 }
-
-

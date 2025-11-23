@@ -85,7 +85,9 @@ export class RequestLoggingInterceptor implements NestInterceptor {
           if (tenantId) {
             const usageService = this.usageTrackingService || (() => {
               try {
-                this.usageTrackingService = this.moduleRef.get(UsageTrackingService, { strict: false });
+                if (this.moduleRef) {
+                  this.usageTrackingService = this.moduleRef.get(UsageTrackingService, { strict: false });
+                }
               } catch (resolveErr) {
                 this.logger.warn('UsageTrackingService not available', resolveErr);
               }
@@ -141,7 +143,9 @@ export class RequestLoggingInterceptor implements NestInterceptor {
           if (tenantId) {
             const usageService = this.usageTrackingService || (() => {
               try {
-                this.usageTrackingService = this.moduleRef.get(UsageTrackingService, { strict: false });
+                if (this.moduleRef) {
+                  this.usageTrackingService = this.moduleRef.get(UsageTrackingService, { strict: false });
+                }
               } catch (resolveErr) {
                 this.logger.warn('UsageTrackingService not available', resolveErr);
               }

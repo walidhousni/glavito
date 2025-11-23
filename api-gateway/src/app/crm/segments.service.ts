@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@glavito/shared-database';
 import { WorkflowService } from '@glavito/shared-workflow';
+import { EmailService } from '../email/email.service';
+import type { EmailSendRequest } from '../email/types';
 
 @Injectable()
 export class SegmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly workflowService: WorkflowService,
+    private readonly emailService: EmailService,
   ) {}
 
   async listSegments(
@@ -149,27 +152,113 @@ export class SegmentsService {
     const applyCondition = (cond: any) => {
       const { field, operator, value, valueTo } = cond || {};
       switch (field) {
+        // Customer fields
         case 'customer.company':
           if (operator === 'contains' && typeof value === 'string') and.push({ company: { contains: value, mode: 'insensitive' } });
           if (operator === 'equals' && typeof value === 'string') and.push({ company: value });
+          if (operator === 'notEquals' && typeof value === 'string') and.push({ company: { not: value } });
+          if (operator === 'in' && Array.isArray(value)) and.push({ company: { in: value } });
+          break;
+        case 'customer.email':
+          if (operator === 'contains' && typeof value === 'string') and.push({ email: { contains: value, mode: 'insensitive' } });
+          if (operator === 'equals' && typeof value === 'string') and.push({ email: value });
+          if (operator === 'endsWith' && typeof value === 'string') and.push({ email: { endsWith: value, mode: 'insensitive' } });
           break;
         case 'customer.tags':
           if (operator === 'contains' && typeof value === 'string') and.push({ tags: { has: value } });
           if (operator === 'in' && Array.isArray(value)) and.push({ tags: { hasSome: value } });
+          if (operator === 'notIn' && Array.isArray(value)) and.push({ NOT: { tags: { hasSome: value } } });
           break;
         case 'customer.healthScore':
           if (operator === 'gte') and.push({ healthScore: { gte: Number(value) } });
           if (operator === 'lte') and.push({ healthScore: { lte: Number(value) } });
+          if (operator === 'equals') and.push({ healthScore: Number(value) });
           if (operator === 'between') and.push({ healthScore: { gte: Number(value), lte: Number(valueTo) } });
           break;
+        case 'customer.churnRisk':
+          if (operator === 'gte') and.push({ churnRisk: { gte: Number(value) } });
+          if (operator === 'lte') and.push({ churnRisk: { lte: Number(value) } });
+          if (operator === 'between') and.push({ churnRisk: { gte: Number(value), lte: Number(valueTo) } });
+          break;
+        case 'customer.createdAt':
+          if (operator === 'after' && value) and.push({ createdAt: { gte: new Date(value) } });
+          if (operator === 'before' && value) and.push({ createdAt: { lte: new Date(value) } });
+          if (operator === 'between' && value && valueTo) and.push({ createdAt: { gte: new Date(value), lte: new Date(valueTo) } });
+          if (operator === 'lastNDays' && typeof value === 'number') {
+            const daysAgo = new Date(Date.now() - value * 24 * 60 * 60 * 1000);
+            and.push({ createdAt: { gte: daysAgo } });
+          }
+          break;
+        
+        // Deal fields
         case 'deal.totalValue':
           if (operator === 'gte') and.push({ deals: { some: { value: { gte: Number(value) } } } });
           if (operator === 'lte') and.push({ deals: { some: { value: { lte: Number(value) } } } });
+          if (operator === 'between') and.push({ deals: { some: { value: { gte: Number(value), lte: Number(valueTo) } } } });
           break;
+        case 'deal.stage':
+          if (operator === 'equals' && typeof value === 'string') and.push({ deals: { some: { stage: value } } });
+          if (operator === 'in' && Array.isArray(value)) and.push({ deals: { some: { stage: { in: value } } } });
+          break;
+        case 'deal.count':
+          if (operator === 'gte') and.push({ deals: { some: {} } });
+          // Note: Exact count filtering requires aggregation which Prisma doesn't support directly in where clauses
+          break;
+        
+        // Ticket fields
         case 'ticket.count':
-          // Not directly expressible; approximate using exists with createdAt window if provided
-          // For v1, require gte and infer last 365 days
-          if (operator === 'gte') and.push({ tickets: { some: { createdAt: { gte: new Date(Date.now() - 365*24*60*60*1000) } } } });
+          if (operator === 'gte' && typeof value === 'number') {
+            const windowDays = valueTo ? Number(valueTo) : 365;
+            const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+            and.push({ tickets: { some: { createdAt: { gte: since } } } });
+          }
+          break;
+        case 'ticket.status':
+          if (operator === 'equals' && typeof value === 'string') and.push({ tickets: { some: { status: value } } });
+          if (operator === 'in' && Array.isArray(value)) and.push({ tickets: { some: { status: { in: value } } } });
+          break;
+        case 'ticket.lastCreatedDays':
+          if (operator === 'lte' && typeof value === 'number') {
+            const daysAgo = new Date(Date.now() - value * 24 * 60 * 60 * 1000);
+            and.push({ tickets: { some: { createdAt: { gte: daysAgo } } } });
+          }
+          if (operator === 'gte' && typeof value === 'number') {
+            const daysAgo = new Date(Date.now() - value * 24 * 60 * 60 * 1000);
+            and.push({ tickets: { none: { createdAt: { gte: daysAgo } } } });
+          }
+          break;
+        
+        // Lead fields
+        case 'lead.status':
+          if (operator === 'equals' && typeof value === 'string') and.push({ leads: { some: { status: value } } });
+          if (operator === 'in' && Array.isArray(value)) and.push({ leads: { some: { status: { in: value } } } });
+          break;
+        case 'lead.score':
+          if (operator === 'gte') and.push({ leads: { some: { score: { gte: Number(value) } } } });
+          if (operator === 'lte') and.push({ leads: { some: { score: { lte: Number(value) } } } });
+          if (operator === 'between') and.push({ leads: { some: { score: { gte: Number(value), lte: Number(valueTo) } } } });
+          break;
+        
+        // Contact/activity fields
+        case 'lastContactDays':
+          if (operator === 'gte' && typeof value === 'number') {
+            const daysAgo = new Date(Date.now() - value * 24 * 60 * 60 * 1000);
+            and.push({
+              OR: [
+                { tickets: { none: { createdAt: { gte: daysAgo } } } },
+                { conversations: { none: { createdAt: { gte: daysAgo } } } }
+              ]
+            });
+          }
+          if (operator === 'lte' && typeof value === 'number') {
+            const daysAgo = new Date(Date.now() - value * 24 * 60 * 60 * 1000);
+            and.push({
+              OR: [
+                { tickets: { some: { createdAt: { gte: daysAgo } } } },
+                { conversations: { some: { createdAt: { gte: daysAgo } } } }
+              ]
+            });
+          }
           break;
       }
     };
@@ -246,6 +335,45 @@ export class SegmentsService {
     return { format: 'json', count: customers.length, data: customers };
   }
 
+  async addCustomersToSegment(tenantId: string, segmentId: string, customerIds: string[]) {
+    const seg = await this.prisma['customerSegment'].findUnique({ where: { id: segmentId } });
+    if (!seg || seg.tenantId !== tenantId) throw new Error('Segment not found');
+    
+    // Verify customers belong to the tenant
+    const customers = await this.prisma['customer'].findMany({
+      where: { id: { in: customerIds }, tenantId },
+      select: { id: true },
+    });
+    
+    const validCustomerIds = customers.map(c => c.id);
+    if (validCustomerIds.length === 0) return { added: 0 };
+    
+    // Check existing memberships
+    const existing = await this.prisma['customerSegmentMembership'].findMany({
+      where: { segmentId, customerId: { in: validCustomerIds } },
+      select: { customerId: true },
+    });
+    
+    const existingIds = new Set(existing.map(m => m.customerId));
+    const toAdd = validCustomerIds.filter(id => !existingIds.has(id));
+    
+    if (toAdd.length > 0) {
+      await this.prisma['customerSegmentMembership'].createMany({
+        data: toAdd.map(customerId => ({ segmentId, customerId })),
+        skipDuplicates: true,
+      });
+      
+      // Update segment count
+      const newCount = await this.prisma['customerSegmentMembership'].count({ where: { segmentId } });
+      await this.prisma['customerSegment'].update({
+        where: { id: segmentId },
+        data: { customerCount: newCount },
+      });
+    }
+    
+    return { added: toAdd.length };
+  }
+
   async triggerWorkflowForSegment(tenantId: string, segmentId: string, workflowId: string) {
     const seg = await this.prisma['customerSegment'].findUnique({ where: { id: segmentId } });
     if (!seg || seg.tenantId !== tenantId) return { triggered: 0 };
@@ -265,6 +393,37 @@ export class SegmentsService {
       }
     }
     return { triggered };
+  }
+
+  async sendEmailToSegment(tenantId: string, segmentId: string, payload: { subject: string; html: string; fromEmail?: string; fromName?: string }): Promise<{ queued: number }> {
+    const seg = await this.prisma['customerSegment'].findUnique({ where: { id: segmentId } });
+    if (!seg || seg.tenantId !== tenantId) return { queued: 0 };
+    const where = this.buildCustomerWhereFromCriteria(tenantId, (seg as any).criteria || {});
+    const customers = await this.prisma['customer'].findMany({
+      where,
+      select: { id: true, email: true, firstName: true, lastName: true },
+      take: 100, // batch initial send
+    });
+    const personalizations = customers
+      .filter((c: any) => !!c.email)
+      .map((c: any) => ({
+        toEmail: String(c.email),
+        toName: [c.firstName, c.lastName].filter(Boolean).join(' ') || undefined,
+        variables: { customerId: c.id },
+      }));
+    if (!personalizations.length) return { queued: 0 };
+    const request: EmailSendRequest = {
+      tenantId,
+      subject: payload.subject,
+      html: payload.html,
+      fromEmail: payload.fromEmail,
+      fromName: payload.fromName,
+      personalizations,
+      campaignId: segmentId,
+      tracking: { open: true, click: true },
+    };
+    await this.emailService.send(request);
+    return { queued: personalizations.length };
   }
 }
 

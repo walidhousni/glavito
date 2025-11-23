@@ -16,6 +16,12 @@ export interface CustomerListItem {
   updatedAt: string;
 }
 
+export interface CustomerPreferences {
+  marketingPreferences?: { whatsappOptOut?: boolean; emailOptOut?: boolean; smsOptOut?: boolean };
+  quietHours?: { start?: string; end?: string; timezone?: string };
+  language?: string;
+}
+
 export const customersApi = {
   async list(q?: string): Promise<CustomerListItem[]> {
     const res = await api.get('/customers', { params: { q } });
@@ -113,14 +119,72 @@ export const customersApi = {
     return (res as any)?.data?.data ?? res.data;
   },
 
-  async getAnalyticsDashboard(): Promise<any> {
-    const res = await api.get(`/customers/analytics/dashboard`);
+  async getAnalyticsDashboard(params?: { timeframe?: '7d' | '30d' | '90d' | '1y' }): Promise<any> {
+    const res = await api.get(`/customers/analytics/dashboard`, { params });
     return (res as any)?.data?.data ?? res.data;
   },
 
   async getBehavioralAnalytics(params: { timeframe?: '7d' | '30d' | '90d' | '1y'; segment?: string } = {}): Promise<any> {
     const res = await api.get(`/customers/behavioral-analytics`, { params });
     return (res as any)?.data?.data ?? res.data;
+  },
+
+  async getPredictiveInsights(): Promise<any> {
+    const res = await api.get(`/customers/predictive-insights`)
+    return (res as any)?.data?.data ?? res.data
+  },
+
+  async getActivities(id: string, params: { limit?: number; since?: string; types?: string[] } = {}): Promise<Array<{ id: string; type: string; subject?: string; status?: string; channel?: any; timestamp: string; metadata?: Record<string, unknown> }>> {
+    const qp: any = { limit: params.limit };
+    if (params.since) qp.since = params.since;
+    if (Array.isArray(params.types) && params.types.length) qp.types = params.types.join(',');
+    const res = await api.get(`/customers/${id}/activities`, { params: qp });
+    const data = (res as any)?.data?.data ?? res.data;
+    return Array.isArray(data) ? data : [];
+  },
+
+  async getRecentOrders(id: string, limit = 5) {
+    const res = await api.get(`/customers/${id}/orders/recent`, { params: { limit } })
+    return (res as any)?.data?.data ?? res.data
+  },
+
+  async createOrder(id: string, payload: { items: Array<{ sku: string; quantity: number; unitPrice: number; currency?: string }>; notes?: string }) {
+    const res = await api.post(`/customers/${id}/orders`, payload)
+    return (res as any)?.data?.data ?? res.data
+  },
+
+  async whatsappOptOut(id: string) {
+    const res = await api.post(`/customers/${id}/preferences/whatsapp/opt-out`, {});
+    return (res as any)?.data?.data ?? res.data;
+  },
+  async whatsappOptIn(id: string) {
+    const res = await api.post(`/customers/${id}/preferences/whatsapp/opt-in`, {});
+    return (res as any)?.data?.data ?? res.data;
+  },
+  async getPreferences(id: string): Promise<{ marketingPreferences?: { whatsappOptOut?: boolean; emailOptOut?: boolean; smsOptOut?: boolean }; quietHours?: { start?: string; end?: string; timezone?: string }; language?: string }>{
+    const res = await api.get(`/customers/${id}/preferences`)
+    const data = (res as any)?.data?.data ?? res.data
+    return data as CustomerPreferences
+  },
+  async updatePreferences(id: string, payload: CustomerPreferences){
+    const res = await api.post(`/customers/${id}/preferences`, payload)
+    const data = (res as any)?.data?.data ?? res.data
+    return data as CustomerPreferences
+  },
+  async getConsentLogs(id: string): Promise<Array<Record<string, unknown>>>{
+    const res = await api.get(`/customers/${id}/consent/logs`)
+    const data = (res as any)?.data?.data ?? res.data
+    return data as Array<Record<string, unknown>>
+  },
+  async appendConsent(id: string, payload: { channel?: 'whatsapp'|'email'|'sms'|'web'; consent: boolean; reason?: string }): Promise<Record<string, unknown>>{
+    const res = await api.post(`/customers/${id}/consent`, payload)
+    const data = (res as any)?.data?.data ?? res.data
+    return data as Record<string, unknown>
+  },
+  async getTrends(params?: { timeframe?: '7d' | '30d' | '90d' | '1y' }): Promise<{ csatTrend: Array<{ label: string; value: number }>; clvTrend: Array<{ label: string; value: number }> }>{
+    const res = await api.get(`/customers/analytics/trends`, { params })
+    const data = (res as any)?.data?.data ?? res.data
+    return data as { csatTrend: Array<{ label: string; value: number }>; clvTrend: Array<{ label: string; value: number }> }
   },
 };
 

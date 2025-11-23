@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { DatabaseService } from '@glavito/shared-database';
-import { PortalService } from '../onboarding/portal.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { CustomFieldsService } from '../custom-fields/custom-fields.service';
 import { ChannelsService } from '../channels/channels.service';
@@ -12,7 +11,6 @@ export class MarketplaceService {
 
   constructor(
     private readonly db: DatabaseService,
-    private readonly portal: PortalService,
     private readonly tenants: TenantsService,
     private readonly customFields: CustomFieldsService,
     private readonly channels: ChannelsService,
@@ -106,14 +104,6 @@ export class MarketplaceService {
           } as any);
           break;
         }
-        case 'portal-theme': {
-          await this.portal.createPortalTheme(tenantId, {
-            name: (item as any).name,
-            description: item.description,
-            ...(configuration || {}),
-          } as any, userId);
-          break;
-        }
         case 'widget': {
           // Store in tenant dashboard settings
           const tenant = await this.tenants.findOne(tenantId);
@@ -191,7 +181,36 @@ export class MarketplaceService {
   }
 
   addReview(itemId: string, userId: string, rating: number, comment?: string) {
-    return this.db.marketplaceReview.create({ data: { itemId, userId, rating, comment } });
+    return this.db.marketplaceReview.create({
+      data: { itemId, userId, rating, comment },
+      include: {
+        user: { select: { firstName: true, lastName: true } },
+        item: { select: { name: true } }
+      }
+    }).then(review => ({
+      ...review,
+      authorName: `${review.user.firstName} ${review.user.lastName}`.trim()
+    }));
+  }
+
+  async getReviewsByItemSlug(slug: string) {
+    const item = await this.getBySlug(slug);
+    if (!item) throw new NotFoundException('Item not found');
+    return this.db.marketplaceReview.findMany({
+      where: { itemId: item.id },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    }).then(reviews => reviews.map((r: any) => ({
+      ...r,
+      authorName: `${r.user?.firstName || ''} ${r.user?.lastName || ''}`.trim() || 'Anonymous'
+    })));
   }
 
   async seedDemo(tenantId: string, userId: string) {

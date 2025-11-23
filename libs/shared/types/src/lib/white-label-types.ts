@@ -1,5 +1,24 @@
 export interface TenantWhiteLabelSettings {
   tier: 'basic' | 'advanced' | 'enterprise';
+  // Company brand and profile
+  company?: {
+    name?: string;
+    website?: string;
+    industry?: string;
+    size?: string;
+    contact?: { email?: string; phone?: string };
+    address?: { street?: string; city?: string; state?: string; postalCode?: string; country?: string };
+    businessHours?: {
+      enabled?: boolean;
+      timezone?: string;
+      days?: Array<{
+        day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+        enabled: boolean;
+        openTime?: string; // Format: "HH:mm" (e.g., "09:00")
+        closeTime?: string; // Format: "HH:mm" (e.g., "17:00")
+      }>;
+    };
+  };
   branding?: {
     primaryColor?: string;
     secondaryColor?: string;
@@ -9,6 +28,14 @@ export interface TenantWhiteLabelSettings {
     fontFamily?: string;
     customCss?: string;
   };
+  // Localization and formatting preferences
+  localization?: {
+    language?: string;
+    timezone?: string;
+    currency?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+  };
   domains?: {
     primary?: string;
     aliases?: string[];
@@ -17,6 +44,13 @@ export interface TenantWhiteLabelSettings {
     enabled: string[];
     disabled: string[];
   };
+  // Optional computed or cached assets map for quick access
+  assets?: {
+    logoUrl?: string;
+    faviconUrl?: string;
+  };
+  // Optional email-specific theming overrides
+  emailTheme?: EmailTheme;
 }
 
 export interface BrandAssetDTO {
@@ -102,4 +136,34 @@ export interface MobileAppConfigDTO {
 export interface UpsertMobileAppConfigRequest extends Partial<MobileAppConfigDTO> {
   appName: string;
   bundleId: string;
+}
+
+// Computed theme returned by API for consistent branding across UIs and emails
+export interface WhiteLabelTheme {
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    surface: string;
+    onPrimary: string;
+  };
+  typography?: {
+    fontFamily?: string;
+  };
+  assets: {
+    logoUrl?: string;
+    faviconUrl?: string;
+  };
+  email: EmailTheme;
+}
+
+export interface EmailTheme {
+  headerBackground: string;
+  bodyBackground: string;
+  contentBackground: string;
+  textColor: string;
+  linkColor: string;
+  buttonBackground: string;
+  buttonTextColor: string;
+  footerText: string;
 }

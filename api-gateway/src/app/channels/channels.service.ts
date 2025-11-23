@@ -13,8 +13,15 @@ export class ChannelsService {
     return this.databaseService.channel.create({ data: createChannelDto });
   }
 
-  findAll() {
-    return this.databaseService.channel.findMany();
+  findAll(tenantId?: string) {
+    const where: any = {};
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+    return this.databaseService.channel.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   findOne(id: string) {
@@ -35,5 +42,33 @@ export class ChannelsService {
 
   async refreshWhatsAppTemplates() {
     return this.whatsappAdapter.listTemplates(true);
+  }
+
+  async testSendWhatsAppTemplate(payload: { to: string; templateId: string; templateParams?: Record<string, string>; language?: string }) {
+    const { to, templateId, templateParams, language } = payload
+    return this.whatsappAdapter.sendMessage('', {
+      recipientId: to,
+      messageType: 'template' as any,
+      templateId,
+      templateParams,
+      metadata: language ? { language } : undefined
+    } as any)
+  }
+
+  async createWhatsAppTemplate(payload: {
+    name: string;
+    category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
+    language: string;
+    body: string;
+    header?: string;
+    footer?: string;
+    buttons?: Array<{
+      type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+      text?: string;
+      url?: string;
+      phoneNumber?: string;
+    }>;
+  }) {
+    return this.whatsappAdapter.createTemplate(payload);
   }
 }

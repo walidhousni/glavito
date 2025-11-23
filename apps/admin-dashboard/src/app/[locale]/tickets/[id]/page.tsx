@@ -16,6 +16,9 @@ import { Separator } from "@/components/ui/separator";
 import { conversationsApi } from "@/lib/api/conversations-client";
 import { callsApi } from "@/lib/api/calls-client";
 import { knowledgeApi } from "@/lib/api/knowledge-client";
+import { ticketsApi } from "@/lib/api/tickets-client";
+import { CallPanel } from "@/components/calls/call-panel";
+import { RoutingSuggestionsPanel } from "@/components/tickets/routing-suggestions-panel";
 // import { CallPanel } from "@/components/calls/call-panel";
 import { useToast } from "@/components/ui/toast";
 
@@ -149,11 +152,23 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     senderType: "customer" | "agent" | "system";
     createdAt: string;
   }>>([]);
+  const [activeCallId, setActiveCallId] = useState<string | null>(null);
+  const [ticketData, setTicketData] = useState<{ assignedAgentId?: string | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     async function loadThread() {
       try {
+        // Load ticket data
+        try {
+          const ticket = await ticketsApi.get(params.id);
+          if (!cancelled && ticket) {
+            setTicketData(ticket as { assignedAgentId?: string | null });
+          }
+        } catch {
+          // ignore, use mock data
+        }
+        
         // find conversations linked to this ticket
         const convList = await conversationsApi.list({ ticketId: params.id, limit: 1, page: 1 });
         const first = Array.isArray(convList)
@@ -218,7 +233,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
   const handleStartVoiceCall = async () => {
     try {
       const call = await callsApi.create({ conversationId: linkedConversationId || params.id, type: 'voice' });
-      console.log('Voice call started', call.id);
+      setActiveCallId(call.id);
     } catch {
       // ignore
     }
@@ -227,7 +242,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
   const handleStartVideoCall = async () => {
     try {
       const call = await callsApi.create({ conversationId: linkedConversationId || params.id, type: 'video' });
-      console.log('Video call started', call.id);
+      setActiveCallId(call.id);
     } catch {
       // ignore
     }
@@ -375,8 +390,12 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
                 </div>
               </div>
 
-              {/* Inline Call Panel when a call is active (placeholder: detect via future state) */}
-              {/* For now, we render when route param id equals linked conversation and call exists via console logs */}
+              {/* Inline Call Panel when a call is active */}
+              {activeCallId && (
+                <div className="mt-4">
+                  <CallPanel callId={activeCallId} isCaller onEnd={() => setActiveCallId(null)} />
+                </div>
+              )}
 
               {linkedConversationId && (
                 <div className="mt-3 text-xs text-muted-foreground">
@@ -510,6 +529,40 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
               </div>
             </CardContent>
           </Card>
+
+          {/* Routing Suggestions */}
+          <RoutingSuggestionsPanel
+            ticketId={params.id}
+            initialAgentId={ticketData?.assignedAgentId || null}
+            onAssign={async (agentId: string) => {
+              try {
+                await ticketsApi.assign(params.id, agentId);
+                push(t('tickets.ticketAssigned') || 'Ticket assigned successfully', 'success');
+                // Reload ticket data
+                const ticket = await ticketsApi.get(params.id);
+                if (ticket) {
+                  setTicketData(ticket as { assignedAgentId?: string | null });
+                }
+              } catch (error) {
+                push(error instanceof Error ? error.message : t('tickets.assignmentFailed') || 'Failed to assign ticket', 'error');
+                throw error;
+              }
+            }}
+            onAutoAssign={async () => {
+              try {
+                await ticketsApi.autoAssign(params.id);
+                push(t('tickets.ticketAutoAssigned') || 'Ticket auto-assigned successfully', 'success');
+                // Reload ticket data
+                const ticket = await ticketsApi.get(params.id);
+                if (ticket) {
+                  setTicketData(ticket as { assignedAgentId?: string | null });
+                }
+              } catch (error) {
+                push(error instanceof Error ? error.message : t('tickets.autoAssignmentFailed') || 'Failed to auto-assign ticket', 'error');
+                throw error;
+              }
+            }}
+          />
 
           {/* AI Analysis */}
           <Card>

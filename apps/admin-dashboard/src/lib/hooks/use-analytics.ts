@@ -1,28 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { RealTimeMetrics, KPIMetric, DemandForecast, CapacityPrediction, ChurnPrediction } from '@/types/analytics'
-import { api } from '@/lib/api/config'
+import { DemandForecast, CapacityPrediction, ChurnPrediction } from '@/types/analytics'
+import { analyticsApi } from '@/lib/api/analytics-client'
+import type { RealTimeMetricsUI, KPIMetricUI } from '@glavito/shared-types'
 
-function getPublicApiBase(): string {
-  // Ensure we point to the API prefix consistently
-  const base = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:3001/api'
-  return base.endsWith('/api') ? base : `${base.replace(/\/$/, '')}/api`
-}
-
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const stored = window.localStorage.getItem('auth-storage')
-  if (!stored) return {}
-  try {
-    const parsed = JSON.parse(stored)
-    const token = parsed?.state?.tokens?.accessToken
-    return token ? { Authorization: `Bearer ${token}` } : {}
-  } catch (_e) {
-    // ignore JSON parse errors in SSR/prerender contexts
-    return {}
-  }
-}
+// API base and auth handled by analyticsApi
 
 interface UseAnalyticsOptions {
   autoRefresh?: boolean
@@ -30,8 +13,8 @@ interface UseAnalyticsOptions {
 }
 
 interface UseAnalyticsReturn {
-  realTimeMetrics?: RealTimeMetrics
-  kpiMetrics?: KPIMetric[]
+  realTimeMetrics?: RealTimeMetricsUI
+  kpiMetrics?: KPIMetricUI[]
   demandForecast?: DemandForecast
   capacityPrediction?: CapacityPrediction
   churnPrediction?: ChurnPrediction[]
@@ -45,8 +28,8 @@ export function useAnalytics(
   timeRange = '7d',
   options: UseAnalyticsOptions = {}
 ): UseAnalyticsReturn {
-  const [realTimeMetrics, setRealTimeMetrics] = useState<RealTimeMetrics>()
-  const [kpiMetrics, setKpiMetrics] = useState<KPIMetric[]>()
+  const [realTimeMetrics, setRealTimeMetrics] = useState<RealTimeMetricsUI>()
+  const [kpiMetrics, setKpiMetrics] = useState<KPIMetricUI[]>()
   const [demandForecast, setDemandForecast] = useState<DemandForecast>()
   const [capacityPrediction, setCapacityPrediction] = useState<CapacityPrediction>()
   const [churnPrediction, setChurnPrediction] = useState<ChurnPrediction[]>()
@@ -55,60 +38,34 @@ export function useAnalytics(
 
   const { autoRefresh = true, refreshInterval = 30000 } = options
 
-  const getTimeRangeParams = useCallback((range: string) => {
-    const now = new Date()
-    let startDate: Date
-    
-    switch (range) {
-      case '24h':
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-        break
-      case '7d':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        break
-      case '30d':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-        break
-      case '90d':
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-        break
-      default:
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    }
-
-    return {
-      startDate: startDate.toISOString(),
-      endDate: now.toISOString(),
-      granularity: range === '24h' ? 'hour' : range === '7d' ? 'day' : 'day'
-    }
-  }, [])
+  const getTimeRangeParams = useCallback((range: '24h' | '7d' | '30d' | '90d') => analyticsApi.timeParams(range), [])
 
   const fetchAnalyticsData = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
 
-      const timeParams = getTimeRangeParams(timeRange)
+      const range = (['24h','7d','30d','90d'].includes(timeRange) ? timeRange : '7d') as '24h' | '7d' | '30d' | '90d'
 
       // Real-time metrics
-      const realTimeResp = await api.get('/analytics/real-time-metrics', { params: timeParams })
-      setRealTimeMetrics(realTimeResp.data?.data)
+      const realTime = await analyticsApi.getRealTimeMetrics(range)
+      setRealTimeMetrics(realTime)
 
       // KPI metrics
-      const kpiResp = await api.get('/analytics/kpi-metrics', { params: timeParams })
-      setKpiMetrics(Array.isArray(kpiResp.data?.data) ? kpiResp.data.data : [])
+      const kpis = await analyticsApi.getKpiMetrics(range)
+      setKpiMetrics(kpis)
 
       // Demand forecast
-      const forecastResp = await api.get('/analytics/demand-forecast', { params: { period: 'day', duration: 30 } })
-      setDemandForecast(forecastResp.data?.data)
+      const forecast = await analyticsApi.getDemandForecast(30)
+      setDemandForecast(forecast)
 
       // Capacity prediction
-      const capacityResp = await api.get('/analytics/capacity-prediction', { params: timeParams })
-      setCapacityPrediction(capacityResp.data?.data)
+      const capacity = await analyticsApi.getCapacityPrediction(range)
+      setCapacityPrediction(capacity)
 
       // Churn prediction
-      const churnResp = await api.get('/analytics/churn-prediction')
-      setChurnPrediction(Array.isArray(churnResp.data?.data) ? churnResp.data.data : [])
+      const churn = await analyticsApi.getChurnPrediction()
+      setChurnPrediction(Array.isArray(churn) ? churn : [])
 
     } catch (err) {
       console.error('Failed to fetch analytics data:', err)
@@ -150,7 +107,7 @@ export function useAnalytics(
 
 // Hook for specific analytics endpoints
 export function useKPIMetrics(tenantId: string, kpiIds: string[], timeRange?: string) {
-  const [metrics, setMetrics] = useState<KPIMetric[]>([])
+  const [metrics, setMetrics] = useState<KPIMetricUI[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -160,30 +117,9 @@ export function useKPIMetrics(tenantId: string, kpiIds: string[], timeRange?: st
         setIsLoading(true)
         setError(null)
 
-        const params: Record<string, string> = { kpiIds: kpiIds.join(',') }
-
-        if (timeRange) {
-          const now = new Date()
-          let startDate: Date
-          switch (timeRange) {
-            case '24h':
-              startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-              break
-            case '7d':
-              startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-              break
-            case '30d':
-              startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-              break
-            default:
-              startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          }
-          params.startDate = startDate.toISOString()
-          params.endDate = now.toISOString()
-        }
-
-        const { data } = await api.get('/analytics/kpi-metrics', { params })
-        setMetrics(Array.isArray(data?.data) ? data.data : [])
+        const range = (timeRange && ['24h','7d','30d','90d'].includes(timeRange)) ? (timeRange as '24h' | '7d' | '30d' | '90d') : '7d'
+        const result = await analyticsApi.getKpiMetrics(range)
+        setMetrics(Array.isArray(result) ? result : [])
       } catch (err) {
         console.error('Failed to fetch KPI metrics:', err)
         setError(err instanceof Error ? err.message : 'An error occurred')

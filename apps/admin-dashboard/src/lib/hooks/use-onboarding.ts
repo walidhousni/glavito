@@ -1,133 +1,53 @@
-import { useEffect, useState } from 'react';
-import { useOnboardingStore } from '@/lib/store/onboarding-store';
-import { OnboardingStep } from '@glavito/shared-types';
+/**
+ * useOnboarding Hook
+ * Main hook for accessing onboarding functionality
+ */
+
+import { useEffect } from 'react';
+import { useOnboardingStore } from '../store/onboarding-store';
+import { useAuth } from './use-auth';
 
 export function useOnboarding() {
   const store = useOnboardingStore();
-  const [isReady, setIsReady] = useState(false);
-
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  
+  // Initialize only when user is authenticated
   useEffect(() => {
-    if (!store.isInitialized && !store.isLoading) {
-      store.initializeOnboarding().finally(() => {
-        setIsReady(true);
+    if (isAuthenticated && user && !store.session && !store.isLoading && !authLoading) {
+      store.initialize().catch((error) => {
+        console.error('Failed to initialize onboarding:', error);
       });
-    } else {
-      setIsReady(true);
     }
-  }, [store.isInitialized, store.isLoading, store.initializeOnboarding]);
-
-  const completeStep = async (stepId: OnboardingStep, data: any) => {
-    try {
-      await store.updateStep(stepId, data);
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
-  };
-
-  const skipStep = async (stepId: OnboardingStep) => {
-    return completeStep(stepId, { skipped: true });
-  };
-
-  const goToStep = async (stepId: OnboardingStep) => {
-    try {
-      await store.setCurrentStep(stepId);
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
-  };
-
-  const pauseOnboarding = async () => {
-    try {
-      await store.pauseOnboarding();
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
-  };
-
-  const resumeOnboarding = async () => {
-    try {
-      await store.resumeOnboarding();
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
-  };
-
-  const finishOnboarding = async () => {
-    try {
-      const result = await store.completeOnboarding();
-      return { success: true, result };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
-  };
-
-  const getStepProgress = (stepId: OnboardingStep) => {
-    if (!store.session) return { completed: false, current: false, data: null };
-
-    return {
-      completed: store.session.completedSteps.includes(stepId),
-      current: store.session.currentStep === stepId,
-      data: store.session.stepData[stepId] || null,
-    };
-  };
-
-  const canAccessStep = (stepId: OnboardingStep) => {
-    if (!store.currentStepConfig) return true;
-
-    // Check if all dependencies are completed
-    const dependencies = store.currentStepConfig.dependencies || [];
-    return dependencies.every(dep => 
-      store.session?.completedSteps.includes(dep)
-    );
-  };
-
+  }, [store, isAuthenticated, user, authLoading]);
+  
   return {
     // State
     session: store.session,
-    progress: store.progress,
-    currentStepConfig: store.currentStepConfig,
-    isLoading: store.isLoading,
+    currentStepIndex: store.currentStepIndex,
+    currentStep: store.getCurrentStep(),
+    totalSteps: store.totalSteps,
+    steps: store.steps,
+    progress: store.session?.progress || 0,
+    stepData: store.stepData,
+    isLoading: store.isLoading || authLoading,
     error: store.error,
-    isReady,
-
-    // Actions
-    completeStep,
-    skipStep,
-    goToStep,
-    pauseOnboarding,
-    resumeOnboarding,
-    finishOnboarding,
-    clearError: store.clearError,
-    reset: store.reset,
-
-    // Utilities
-    getStepProgress,
-    canAccessStep,
     
-    // Computed values
-    isCompleted: store.session?.status === 'completed',
-    isPaused: store.session?.status === 'paused',
-    isActive: store.session?.status === 'active',
-    progressPercentage: store.progress?.progressPercentage || 0,
-    estimatedTimeRemaining: store.progress?.estimatedTimeRemaining || 0,
+    // Navigation helpers
+    isFirstStep: store.isFirstStep(),
+    isLastStep: store.isLastStep(),
+    canGoNext: store.canGoNext(),
+    canGoPrev: store.canGoPrev(),
+    
+    // Actions
+    startOnboarding: store.startOnboarding,
+    nextStep: store.nextStep,
+    prevStep: store.prevStep,
+    goToStep: store.goToStep,
+    saveStepData: store.saveStepData,
+    skipStep: store.skipStep,
+    completeOnboarding: store.completeOnboarding,
+    pauseOnboarding: store.pauseOnboarding,
+    resumeOnboarding: store.resumeOnboarding,
+    reset: store.reset,
   };
 }

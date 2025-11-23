@@ -19,12 +19,25 @@ function unwrap<T>(payload: unknown, fallback: T): T {
 
 export const knowledgeApi = {
   async search(q: string, limit = 10, opts?: { semantic?: boolean }) {
-    const { data } = await api.get('/knowledge/search', { params: { q, limit, semantic: opts?.semantic } });
-    const res = unwrap<KBSearchResult>(data, { articles: [], faqs: [] });
-    return {
-      articles: Array.isArray(res.articles) ? res.articles : [],
-      faqs: Array.isArray(res.faqs) ? res.faqs : [],
-    };
+    try {
+      const { data } = await api.get('/knowledge/search', { params: { q, limit, semantic: opts?.semantic } });
+      const res = unwrap<KBSearchResult>(data, { articles: [], faqs: [] });
+      return {
+        articles: Array.isArray(res.articles) ? res.articles : [],
+        faqs: Array.isArray(res.faqs) ? res.faqs : [],
+      };
+    } catch {
+      // Fallback: use AI suggestions to surface knowledge items when KB search is unavailable
+      try {
+        const { aiApi } = await import('./ai-client');
+        const suggestions = await aiApi.getResponseSuggestions({ content: q, context: { source: 'kb-fallback' } });
+        const articles = (suggestions?.knowledgeArticles || []).map(a => ({ id: a.id, title: a.title, snippet: a.snippet }));
+        const faqs = (suggestions?.faqs || []).map(f => ({ id: f.id, question: f.question, answer: f.answer }));
+        return { articles, faqs } as KBSearchResult;
+      } catch {
+        return { articles: [], faqs: [] } as KBSearchResult;
+      }
+    }
   },
   async suggest(text: string) {
     const { data } = await api.get('/knowledge/suggest', { params: { text } });

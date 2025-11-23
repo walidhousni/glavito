@@ -1,9 +1,8 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query, Param, UseGuards, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { Roles } from './decorators/roles.decorator';
-import { RolesGuard } from './guards/roles.guard';
+import { Roles, RolesGuard, CurrentUser } from '@glavito/shared-auth';
 import type { 
   LoginRequest, 
   LoginResponse, 
@@ -97,8 +96,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Initiate SSO login' })
   @ApiResponse({ status: 200, description: 'SSO URL generated' })
-  async initiateSSO(@Param('provider') provider: 'google' | 'microsoft' | 'github') {
-    return this.authService.initiateSSO(provider);
+  async initiateSSO(
+    @Param('provider') provider: 'google' | 'microsoft' | 'github',
+    @Query('mode') mode?: 'mobile' | 'web',
+    @Query('redirect') redirect?: string,
+  ) {
+    return this.authService.initiateSSO(provider, mode, redirect);
   }
 
   @Get('sso/callback/:provider')
@@ -109,8 +112,15 @@ export class AuthController {
     @Query('code') code: string,
     @Query('state') state: string,
     @Query('tenantId') tenantId?: string,
+    @Query('redirect') redirect?: string,
+    @Res({ passthrough: true }) res?: import('express').Response,
   ) {
-    return this.authService.handleSSOCallback(provider, code, state, tenantId);
+    const result: any = await this.authService.handleSSOCallback(provider, code, state, tenantId, redirect);
+    if (result && result.redirectUrl && res) {
+      res.redirect(result.redirectUrl);
+      return;
+    }
+    return result;
   }
 
   @Post('invitations')
@@ -122,7 +132,7 @@ export class AuthController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async createInvitation(
     @Body() invitationDto: CreateInvitationRequest,
-    @Req() req: any,
+    @Req() req: { user: { id: string; tenantId: string } },
   ) {
     const user = req.user;
     return this.authService.createInvitation({
@@ -158,8 +168,24 @@ export class AuthController {
   @ApiOperation({ summary: 'Get user profile' })
   @ApiResponse({ status: 200, description: 'User profile retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUserProfile(@Req() req: any): Promise<User> {
+  async getUserProfile(@Req() req: { user: { id: string } }): Promise<User> {
     const user = req.user;
     return this.authService.getUserProfile(user.id);
+  }
+
+  @Get('debug/me')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Debug: Get current user info including tenantId' })
+  @ApiResponse({ status: 200, description: 'User debug info retrieved' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getDebugMe(@CurrentUser() user: any) {
+    return { 
+      user, 
+      tenantId: user?.tenantId,
+      userId: user?.id,
+      role: user?.role,
+      email: user?.email,
+      permissions: user?.permissions,
+    };
   }
 }

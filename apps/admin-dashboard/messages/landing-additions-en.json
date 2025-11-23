@@ -1,0 +1,318 @@
+{
+  "landing": {
+    "hero": {
+      "headline": {
+        "industryAgnostic": "Industry-Agnostic Support Platform",
+        "multiChannel": "Multi-Channel Communication"
+      },
+      "selectIndustry": "Select Your Industry",
+      "chat": {
+        "online": "Online"
+      },
+      "industries": {
+        "ecommerce": {
+          "businessName": "ShopStyle Store",
+          "customer1": "Hi! I placed an order #1234 yesterday. When will it ship?",
+          "agent1": "Hi! Your order #1234 is being packed and will ship today. You'll receive a tracking number within 2 hours.",
+          "customer2": "Great! Can I change the delivery address?",
+          "agent2": "Yes! I've updated your delivery address. The package will arrive at your new location in 2-3 business days."
+        },
+        "automotive": {
+          "businessName": "AutoCare Service Center",
+          "customer1": "I need to schedule a service appointment for my 2020 Honda Accord.",
+          "agent1": "Of course! We have availability tomorrow at 10 AM or Friday at 2 PM. Which works better for you?",
+          "customer2": "Tomorrow at 10 AM works perfect!",
+          "agent2": "Booked! You're all set for tomorrow at 10 AM. We'll send you a reminder. See you then!"
+        },
+        "healthcare": {
+          "businessName": "MediCare Clinic",
+          "customer1": "I'd like to book an appointment with Dr. Smith.",
+          "agent1": "Dr. Smith is available this Thursday at 3 PM or next Monday at 11 AM. Which would you prefer?",
+          "customer2": "Thursday at 3 PM please.",
+          "agent2": "Perfect! Your appointment is confirmed for Thursday, March 14 at 3 PM. You'll receive a reminder 24 hours before."
+        },
+        "realEstate": {
+          "businessName": "DreamHome Realty",
+          "customer1": "I'm interested in the 3-bedroom property on Main Street. Can I schedule a viewing?",
+          "agent1": "Absolutely! That's a beautiful property. I can arrange a viewing tomorrow at 4 PM or Saturday at 11 AM. Which suits you?",
+          "customer2": "Saturday at 11 AM would be perfect!",
+          "agent2": "Excellent! Your viewing is booked for Saturday at 11 AM. I'll meet you there. Looking forward to showing you the property!"
+        },
+        "hospitality": {
+          "businessName": "Grand Hotel & Spa",
+          "customer1": "I have a reservation for tomorrow. Can I request a late checkout?",
+          "agent1": "Of course! I've noted your request for late checkout until 2 PM. There's no additional charge. Enjoy your stay!",
+          "customer2": "Thank you! Also, can I book a spa treatment?",
+          "agent2": "Absolutely! Our spa is available from 9 AM to 8 PM. I'll send you the treatment menu via WhatsApp right now."
+        }
+      },
+      "stats": {
+        "thisMonth": "this month",
+        "rating": "rating"
+      }
+    },
+    "industries": {
+      "ecommerce": "E-commerce",
+      "automotive": "Automotive",
+      "healthcare": "Healthcare",
+      "realEstate": "Real Estate",
+      "hospitality": "Hospitality"
+    },
+    "useCases": {
+      "title": "Built for Your Industry",
+      "subtitle": "Tailored solutions for every business vertical with industry-specific automation",
+      "viewDemo": "View Demo",
+      "ecommerce": {
+        "title": "E-commerce",
+        "case1": {
+          "title": "Order Tracking",
+          "description": "Automate order status updates and shipping notifications",
+          "demo": {
+            "customer1": "Where is my order #5678?",
+            "agent1": "Your order is out for delivery and will arrive today by 5 PM. Track it here: [link]"
+          }
+        },
+        "case2": {
+          "title": "Abandoned Cart Recovery",
+          "description": "Re-engage customers who left items in their cart",
+          "demo": {
+            "agent1": "Hi! You left items in your cart. Complete your purchase now and get 10% off!",
+            "customer1": "Thanks for reminding me! I'll complete it now."
+          }
+        },
+        "case3": {
+          "title": "Product Recommendations",
+          "description": "AI-powered personalized product suggestions",
+          "demo": {
+            "customer1": "Do you have similar items to what I just bought?",
+            "agent1": "Based on your purchase, you might love these matching accessories! [product links]"
+          }
+        }
+      },
+      "automotive": {
+        "title": "Automotive",
+        "case1": {
+          "title": "Service Reminders",
+          "description": "Automated maintenance and service appointment reminders",
+          "demo": {
+            "agent1": "Your vehicle is due for service in 2 weeks. Book now and get 15% off!",
+            "customer1": "Great timing! I'll book for next Friday."
+          }
+        },
+        "case2": {
+          "title": "Appointment Booking",
+          "description": "Seamless service appointment scheduling",
+          "demo": {
+            "customer1": "I need an oil change this week.",
+            "agent1": "Available slots: Wed 2 PM, Thu 10 AM, Fri 3 PM. Which works for you?"
+          }
+        },
+        "case3": {
+          "title": "Test Drive Follow-ups",
+          "description": "Automated follow-up after test drives",
+          "demo": {
+            "agent1": "How was your test drive? Ready to make this beauty yours?"
+          }
+        }
+      },
+      "healthcare": {
+        "title": "Healthcare",
+        "case1": {
+          "title": "Appointment Scheduling",
+          "description": "Easy patient appointment booking and management",
+          "demo": {
+            "agent1": "Dr. Johnson has openings on Tuesday at 9 AM and Thursday at 2 PM. Which works for you?",
+            "customer1": "Tuesday at 9 AM please!"
+          }
+        },
+        "case2": {
+          "title": "Prescription Refills",
+          "description": "Automated prescription refill reminders",
+          "demo": {
+            "customer1": "I need to refill my prescription.",
+            "agent1": "I've processed your refill request. It'll be ready for pickup tomorrow at 3 PM."
+          }
+        },
+        "case3": {
+          "title": "Test Results",
+          "description": "Secure delivery of lab results and follow-up care",
+          "demo": {
+            "agent1": "Your test results are ready. Please log into the patient portal to view them securely."
+          }
+        }
+      },
+      "realEstate": {
+        "title": "Real Estate",
+        "case1": {
+          "title": "Property Inquiries",
+          "description": "Instant responses to property questions",
+          "demo": {
+            "customer1": "What's the price for the downtown condo?",
+            "agent1": "The downtown condo is listed at $450,000. It has 2 bed, 2 bath. Want to schedule a viewing?"
+          }
+        },
+        "case2": {
+          "title": "Viewing Schedules",
+          "description": "Automated property viewing appointments",
+          "demo": {
+            "agent1": "Your viewing is confirmed for Saturday at 10 AM. I'll meet you at the property. See you then!"
+          }
+        },
+        "case3": {
+          "title": "Document Collection",
+          "description": "Streamlined document submission and tracking",
+          "demo": {
+            "customer1": "What documents do I need for the mortgage application?",
+            "agent1": "You'll need: ID, proof of income, bank statements (3 months), and tax returns. Upload them here: [link]"
+          }
+        }
+      },
+      "hospitality": {
+        "title": "Hospitality",
+        "case1": {
+          "title": "Booking Confirmations",
+          "description": "Instant booking confirmations and details",
+          "demo": {
+            "agent1": "Your reservation is confirmed! Room 305, check-in April 15, check-out April 18. Excited to host you!",
+            "customer1": "Perfect! Can't wait!"
+          }
+        },
+        "case2": {
+          "title": "Guest Requests",
+          "description": "Real-time guest service and requests",
+          "demo": {
+            "customer1": "Can I get extra towels in room 203?",
+            "agent1": "Absolutely! I'll have housekeeping bring them up within 10 minutes."
+          }
+        },
+        "case3": {
+          "title": "Special Occasions",
+          "description": "Personalized service for celebrations",
+          "demo": {
+            "agent1": "We noticed it's your anniversary! We've arranged a complimentary champagne and dessert in your room."
+          }
+        }
+      }
+    },
+    "integrations": {
+      "badge": "15+ Integrations",
+      "title": "Seamless Integrations",
+      "subtitle": "Connect with your favorite tools and platforms in minutes, not days",
+      "connected": "Active",
+      "connectsIn": "Connects in {time}",
+      "moreIntegrations": "And 50+ more integrations available",
+      "categories": {
+        "ecommerce": "E-commerce",
+        "crm": "CRM",
+        "payments": "Payments",
+        "channels": "Channels",
+        "support": "Support",
+        "marketing": "Marketing",
+        "automation": "Automation",
+        "cms": "CMS"
+      },
+      "features": {
+        "orderSync": "Order sync",
+        "customerData": "Customer data sync",
+        "inventory": "Inventory tracking",
+        "productCatalog": "Product catalog",
+        "whatsappAPI": "WhatsApp Business API",
+        "instagram": "Instagram DMs",
+        "messaging": "Unified messaging",
+        "paymentTracking": "Payment tracking",
+        "subscriptions": "Subscriptions",
+        "invoicing": "Invoicing",
+        "contactSync": "Contact sync",
+        "dealTracking": "Deal tracking",
+        "reporting": "Reporting",
+        "emailMarketing": "Email marketing",
+        "pipelines": "Sales pipelines",
+        "smsAPI": "SMS API",
+        "voiceAPI": "Voice API",
+        "ticketSync": "Ticket sync",
+        "knowledgeBase": "Knowledge base",
+        "emailCampaigns": "Email campaigns",
+        "audienceSync": "Audience sync",
+        "automation": "Automation",
+        "workflows": "Workflows",
+        "multiApp": "Multi-app connect",
+        "triggers": "Triggers & actions",
+        "forms": "Forms",
+        "userSync": "User sync",
+        "comments": "Comments"
+      }
+    },
+    "roiCalculator": {
+      "title": "Calculate Your ROI",
+      "subtitle": "See how much you can save with Glavito's automation platform",
+      "inputsTitle": "Your Current Metrics",
+      "resultsTitle": "Your Potential Savings",
+      "disclaimer": "*Estimates based on industry averages. Actual results may vary.",
+      "inputs": {
+        "monthlyTickets": "Monthly Support Tickets",
+        "hourlyRate": "Agent Hourly Rate ($)",
+        "avgTime": "Avg Time per Ticket (minutes)",
+        "currentAutomation": "Current Automation (%)"
+      },
+      "results": {
+        "hoursSaved": "Hours Saved",
+        "costSavings": "Annual Cost Savings",
+        "ticketsAutomated": "Tickets Automated",
+        "roi": "ROI"
+      },
+      "cta": "Start Saving {savings}/year"
+    },
+    "interactiveDemo": {
+      "badge": "Interactive Demo",
+      "title": "See It In Action",
+      "subtitle": "Watch how conversations flow through our workflow automation in real-time",
+      "flowBuilder": {
+        "title": "Workflow Builder",
+        "live": "Live",
+        "description": "Visual drag-and-drop builder with powerful automation nodes"
+      },
+      "chatPreview": {
+        "title": "Live Chat Preview",
+        "description": "See how your workflows translate to real customer conversations"
+      },
+      "channels": {
+        "online": "Online",
+        "whatsapp": {
+          "name": "WhatsApp Support"
+        },
+        "instagram": {
+          "name": "Instagram Support"
+        },
+        "email": {
+          "name": "Email Support"
+        }
+      },
+      "demo": {
+        "whatsapp": {
+          "customer1": "Hi, I need help with my order",
+          "agent1": "Hello! I'd be happy to help. Can you provide your order number?",
+          "customer2": "#ORD-5678",
+          "agent2": "Thank you! Your order is being packed and will ship today. You'll receive tracking info within 2 hours."
+        },
+        "instagram": {
+          "customer1": "Do you ship internationally?",
+          "agent1": "Yes! We ship to over 150 countries worldwide. Where would you like us to ship?",
+          "customer2": "To France",
+          "agent2": "Great! Shipping to France typically takes 5-7 business days and costs $15. Would you like to proceed?"
+        },
+        "email": {
+          "customer1": "I'd like to return an item I purchased last week.",
+          "agent1": "I can help with that. Our return policy allows returns within 30 days. I'll send you a prepaid return label.",
+          "customer2": "Perfect, thank you!"
+        }
+      },
+      "cta": {
+        "text": "Ready to build your own automation?",
+        "feature1": "No-code builder",
+        "feature2": "Real-time testing",
+        "feature3": "Unlimited workflows"
+      }
+    }
+  }
+}
+

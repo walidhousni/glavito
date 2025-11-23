@@ -2,423 +2,1660 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import conversation design tokens */
+@import '../styles/conversation-tokens.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 224 71% 4%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
-    --primary: 220 14% 10%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 46%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 9% 15%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 71% 4%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
     --radius: 0.75rem;
-    
-    /* Custom customer variables */
-    --success: 142 71% 45%;
-    --success-foreground: 144 61% 20%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 89%;
-    --info: 199 89% 48%;
-    --info-foreground: 210 20% 98%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 20% 98%;
-    --card: 224 71% 4%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 210 20% 98%;
-    --primary-foreground: 220 14% 10%;
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 28% 17%;
-    --muted-foreground: 217 10% 65%;
-    --accent: 215 28% 17%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
-    --ring: 216 12% 84%;
-    
-    /* Custom customer variables - dark mode */
-    --success: 142 71% 45%;
-    --success-foreground: 144 61% 20%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 89%;
-    --info: 199 89% 48%;
-    --info-foreground: 210 20% 98%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 }
 
-/* ==========================================================================
-   Clean Customer Management Design System
-   ========================================================================== */
+@layer utilities {
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
 
-/* Base Card Components */
-.customer-card {
-  @apply bg-card border border-border rounded-xl shadow-sm hover:shadow-md transition-all duration-200;
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  .animate-collapsible-down {
+    animation: collapsibleDown 0.2s ease-out;
+  }
+
+  .animate-collapsible-up {
+    animation: collapsibleUp 0.2s ease-out;
+  }
+
+  /* Status indicators */
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+
+  .status-success {
+    @apply bg-emerald-500;
+  }
+
+  .status-warning {
+    @apply bg-amber-500;
+  }
+
+  .status-danger {
+    @apply bg-red-500;
+  }
+
+  .status-info {
+    @apply bg-blue-500;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
 }
 
-.customer-card-elevated {
-  @apply bg-card border border-border rounded-xl shadow-md hover:shadow-lg transition-all duration-200;
+/* Autopilot badge and controls */
+.autopilot-badge {
+  @apply inline-flex items-center gap-1 text-[10px] leading-none font-semibold rounded-full px-2 py-0.5 border border-emerald-300 text-emerald-700 bg-white/60 dark:bg-emerald-950/30;
 }
 
-/* Metric Cards with Status Colors */
-.metric-card {
-  @apply bg-card border border-border rounded-lg p-6 hover:shadow-sm transition-shadow duration-200;
+.autopilot-card {
+  @apply p-4 border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl;
 }
 
-.metric-card-success {
-  @apply bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800;
+/* Modern Dashboard Components */
+.dashboard-card {
+  @apply bg-card border border-border/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm;
 }
 
-.metric-card-warning {
-  @apply bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800;
+.dashboard-card-elevated {
+  @apply bg-card/95 border border-border/50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm;
 }
 
-.metric-card-danger {
-  @apply bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800;
+.dashboard-gradient-bg {
+  @apply bg-gradient-to-br from-background via-muted/20 to-background;
 }
 
-.metric-card-info {
-  @apply bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800;
+.dashboard-glass {
+  @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-lg;
 }
 
-/* Status Indicators */
-.status-dot {
-  @apply inline-block w-2 h-2 rounded-full;
+/* Modern utility classes */
+.glass-effect {
+  @apply bg-background/80 backdrop-blur-md border-border/50;
 }
 
-.status-success { @apply bg-emerald-500; }
-.status-warning { @apply bg-amber-500; }
-.status-danger { @apply bg-red-500; }
-.status-info { @apply bg-blue-500; }
-.status-neutral { @apply bg-slate-400; }
-
-/* Badge Variants */
-.badge-success {
-  @apply bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800;
+.modern-card {
+  @apply bg-card border border-border/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-200;
 }
 
-.badge-warning {
-  @apply bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800;
+.modern-btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm hover:shadow-md transition-all duration-200;
 }
 
-.badge-danger {
-  @apply bg-red-100 text-red-800 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800;
+.panel-toggle-btn {
+  @apply h-12 w-8 shadow-lg bg-background/95 backdrop-blur-sm hover:bg-background transition-all duration-200;
 }
 
-.badge-info {
-  @apply bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800;
+/* Performance Cards */
+.performance-card {
+  @apply relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:border-border;
 }
 
-/* Clean Timeline */
-.timeline-item {
-  @apply relative pl-8 pb-6 last:pb-0;
-  @apply before:absolute before:left-0 before:top-2 before:w-2 before:h-2;
-  @apply before:bg-slate-300 before:rounded-full before:ring-4 before:ring-background;
-  @apply after:absolute after:left-0.5 after:top-4 after:w-0.5 after:-bottom-2;
-  @apply after:bg-slate-200 dark:after:bg-slate-700 last:after:hidden;
+.performance-card-gradient {
+  @apply absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100;
 }
 
-.timeline-item-active {
-  @apply before:bg-primary;
+/* Activity Feed */
+.activity-item {
+  @apply relative overflow-hidden rounded-xl border border-border/30 bg-card/40 backdrop-blur-sm transition-all duration-300 hover:bg-card/60 hover:border-border/60 hover:shadow-md;
 }
 
-/* Typography Scales */
-.text-display { @apply text-3xl font-bold tracking-tight; }
-.text-title { @apply text-xl font-semibold; }
-.text-subtitle { @apply text-sm font-medium text-muted-foreground; }
-.text-body { @apply text-sm; }
-.text-caption { @apply text-xs text-muted-foreground; }
-
-/* Health Score Indicators */
-.health-excellent { @apply text-emerald-600 dark:text-emerald-400; }
-.health-good { @apply text-blue-600 dark:text-blue-400; }
-.health-fair { @apply text-amber-600 dark:text-amber-400; }
-.health-poor { @apply text-red-600 dark:text-red-400; }
-
-html {
-  box-sizing: border-box;
-}
-*,
-*::before,
-*::after {
-  box-sizing: inherit;
+.activity-icon {
+  @apply flex h-10 w-10 items-center justify-center rounded-xl shadow-sm transition-all duration-300 group-hover:shadow-md;
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+/* Analytics Chart */
+.chart-container {
+  @apply relative rounded-xl bg-gradient-to-br from-card/50 to-muted/20 backdrop-blur-sm border border-border/30;
 }
 
-/* RTL helpers */
-[dir='rtl'] .text-left { text-align: right; }
-[dir='rtl'] .text-right { text-align: left; }
-[dir='rtl'] .ml-2 { margin-left: 0; margin-right: 0.5rem; }
-[dir='rtl'] .mr-2 { margin-right: 0; margin-left: 0.5rem; }
-[dir='rtl'] .pl-4 { padding-left: 0; padding-right: 1rem; }
-[dir='rtl'] .pr-4 { padding-right: 0; padding-left: 1rem; }
-[dir='rtl'] .space-x-2 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 1; margin-right: calc(0.5rem * var(--tw-space-x-reverse)); margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse))); }
+.chart-bar {
+  @apply relative overflow-hidden rounded-t-lg shadow-sm transition-all duration-300 hover:shadow-md;
+}
 
-/* ==========================================================================
-   Accessibility & Interaction Styles
-   ========================================================================== */
+.chart-tooltip {
+  @apply absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded-lg bg-popover px-3 py-2 text-xs text-popover-foreground shadow-lg backdrop-blur-sm border border-border/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100;
+}
 
-/* Clean scrollbar */
+/* Modern component styles */
+.conversation-panel {
+  @apply h-full flex flex-col bg-background;
+}
+
+.message-bubble {
+  @apply rounded-2xl px-4 py-3 max-w-[80%] shadow-sm;
+}
+
+.message-bubble-agent {
+  @apply bg-primary text-primary-foreground ml-auto;
+}
+
+.message-bubble-customer {
+  @apply bg-muted;
+}
+
+.composer-card {
+  @apply bg-card border border-border rounded-xl p-4 shadow-sm;
+}
+
+/* Status indicators */
+.status-indicator {
+  @apply inline-flex items-center gap-1 text-xs font-medium;
+}
+
+.status-online {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.status-offline {
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+.status-away {
+  @apply text-amber-600 dark:text-amber-400;
+}
+
+/* Priority indicators */
+.priority-low {
+  @apply text-blue-600 dark:text-blue-400;
+}
+
+.priority-medium {
+  @apply text-amber-600 dark:text-amber-400;
+}
+
+.priority-high {
+  @apply text-orange-600 dark:text-orange-400;
+}
+
+.priority-critical {
+  @apply text-red-600 dark:text-red-400;
+}
+
+/* Channel indicators */
+.channel-whatsapp {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.channel-instagram {
+  @apply text-pink-600 dark:text-pink-400;
+}
+
+.channel-email {
+  @apply text-blue-600 dark:text-blue-400;
+}
+
+.channel-sms {
+  @apply text-purple-600 dark:text-purple-400;
+}
+
+/* Marketplace specific styles */
+.marketplace-hero {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.1) 0%,
+    rgba(147, 51, 234, 0.1) 100%
+  );
+}
+
+.marketplace-card {
+  @apply relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] bg-card/50 backdrop-blur-sm;
+}
+
+.marketplace-card:hover {
+  @apply border-primary/50 shadow-2xl;
+}
+
+.marketplace-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.marketplace-card:hover::before {
+  left: 100%;
+}
+
+.marketplace-stats-card {
+  @apply bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-md border border-border/50 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300;
+}
+
+.marketplace-stats-card:hover {
+  @apply transform translate-y-[-2px] shadow-xl;
+}
+
+.marketplace-item-animate {
+  animation: marketplaceSlideIn 0.6s ease-out forwards;
+}
+
+.marketplace-premium-glow {
+  @apply relative;
+}
+
+.marketplace-premium-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(45deg, #f59e0b, #d97706, #f59e0b);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.marketplace-premium-glow:hover::after {
+  opacity: 0.3;
+}
+
+/* Grid pattern background */
+.bg-grid-white\/\[0\.02\] {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.02) 1px,
+    transparent 0
+  );
+}
+
+/* Keyframe animations */
+@keyframes marketplaceSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes collapsibleDown {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapsibleUp {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+  @apply bg-muted;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 4px;
+  @apply bg-muted-foreground/30 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  @apply bg-muted-foreground/50;
+}
+
+/* Workflow specific styles */
+.workflow-template-card {
+  @apply relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] bg-card;
+}
+
+.workflow-template-card:hover {
+  @apply border-blue-300 shadow-xl;
+}
+
+.workflow-template-card.selected {
+  @apply border-blue-500 bg-blue-50 dark:bg-blue-950/20 shadow-lg;
+}
+
+.workflow-gradient-bg {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.05) 0%,
+    rgba(147, 51, 234, 0.05) 100%
+  );
+}
+
+.workflow-icon-glow {
+  @apply transition-all duration-300;
+  box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+}
+
+.workflow-icon-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Enhanced animations */
+@keyframes templateSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.template-animate-in {
+  animation: templateSlideIn 0.3s ease-out forwards;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+}
+
+/* Gradient background */
+.gradient-bg-primary {
+  @apply bg-gradient-to-br from-background via-muted/20 to-background;
+}
+
+/* Gradient button */
+.btn-gradient {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300;
+}
+
+/* Agent Profile & Invitation Styles */
+.agent-profile-card {
+  @apply relative overflow-hidden rounded-2xl border-0 shadow-2xl bg-gradient-to-br from-card via-card to-muted/20 backdrop-blur-sm;
+}
+
+.agent-profile-header {
+  @apply bg-gradient-to-r from-blue-50/80 to-purple-50/80 dark:from-blue-950/30 dark:to-purple-950/30 border-b border-border/50 backdrop-blur-sm;
+}
+
+.agent-invite-dialog {
+  @apply bg-gradient-to-br from-background via-background to-muted/10;
+}
+
+.agent-section-card {
+  @apply relative overflow-hidden rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-primary/40 transition-all duration-300 bg-gradient-to-br from-muted/20 to-muted/5;
+}
+
+.agent-section-card:hover {
+  @apply shadow-lg transform translate-y-[-1px];
+}
+
+.agent-skill-badge {
+  @apply px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 transition-all hover:shadow-md;
+}
+
+.agent-language-badge {
+  @apply px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 transition-all hover:shadow-md;
+}
+
+.agent-email-chip {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium shadow-sm hover:shadow-md transition-all;
+}
+
+.agent-role-option {
+  @apply flex items-center gap-3 p-4 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer;
+}
+
+.agent-role-icon {
+  @apply h-10 w-10 rounded-xl flex items-center justify-center shadow-sm;
+}
+
+.agent-workload-card {
+  @apply p-6 rounded-xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 hover:border-primary/30 transition-all;
+}
+
+.agent-auto-assign-toggle {
+  @apply p-4 rounded-xl bg-background border-2 border-dashed border-muted-foreground/20 hover:border-green-300 dark:hover:border-green-700 transition-all;
+}
+
+.agent-save-button {
+  @apply min-w-[140px] h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-[-1px];
+}
+
+.agent-invite-button {
+  @apply min-w-[120px] h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:translate-y-[-1px];
+}
+
+/* Email input area */
+.agent-email-input-area {
+  @apply min-h-[120px] rounded-xl border-2 border-dashed border-muted-foreground/25 bg-muted/30 p-4 focus-within:border-primary/50 focus-within:bg-background transition-all duration-300;
+}
+
+.agent-email-input-area:hover {
+  @apply border-muted-foreground/40 bg-muted/40;
+}
+
+/* Status indicators */
+.agent-status-success {
+  @apply flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400;
+}
+
+.agent-status-error {
+  @apply flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400;
+}
+
+.agent-status-info {
+  @apply flex items-center gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400;
+}
+
+/* Loading spinner */
+.agent-loading-spinner {
+  @apply h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white;
+}
+
+/* Section headers */
+.agent-section-header {
+  @apply flex items-center gap-2 pb-3 border-b border-border/30;
+}
+
+.agent-section-title {
+  @apply text-lg font-semibold text-foreground;
+}
+
+/* Form field enhancements */
+.agent-form-field {
+  @apply space-y-3;
+}
+
+.agent-form-label {
+  @apply text-sm font-semibold flex items-center gap-2;
+}
+
+.agent-form-input {
+  @apply h-12 text-base rounded-xl border-2 border-muted-foreground/20 focus:border-primary transition-colors;
+}
+
+.agent-form-textarea {
+  @apply min-h-[100px] text-base rounded-xl border-2 border-muted-foreground/20 focus:border-primary transition-colors resize-none;
+}
+
+.agent-form-description {
+  @apply text-xs text-muted-foreground;
+}
+
+/* Card hover effects */
+.agent-hover-card {
+  @apply transition-all duration-300 hover:shadow-lg hover:transform hover:translate-y-[-2px];
+}
+
+/* Integrations Page Styles */
+.integration-card {
+  @apply relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur-sm hover:scale-[1.02];
+}
+
+.integration-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.integration-card:hover::before {
+  left: 100%;
+}
+
+.integration-icon {
+  @apply h-14 w-14 rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300;
+}
+
+.integration-status-connected {
+  @apply h-3 w-3 rounded-full bg-green-500 animate-pulse shadow-lg;
+}
+
+.integration-status-error {
+  @apply h-3 w-3 rounded-full bg-red-500 shadow-lg;
+}
+
+.integration-status-disabled {
+  @apply h-3 w-3 rounded-full bg-gray-400 shadow-lg;
+}
+
+.integration-metrics-card {
+  @apply relative overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:transform hover:translate-y-[-2px];
+}
+
+.integration-search-bar {
+  @apply relative flex-1 max-w-md;
+}
+
+.integration-filter-button {
+  @apply rounded-full transition-all duration-200 hover:scale-105;
+}
+
+.integration-connect-button {
+  @apply flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300;
+}
+
+.integration-setup-button {
+  @apply flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300;
+}
+
+.integration-docs-button {
+  @apply bg-background/80 backdrop-blur-sm hover:bg-background border border-border/50 hover:border-border transition-all duration-200;
+}
+
+.integration-error-card {
+  @apply flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800;
+}
+
+.integration-success-card {
+  @apply flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800;
+}
+
+.integration-mapping-card {
+  @apply hover:shadow-md transition-shadow border border-border/50 hover:border-border;
+}
+
+.integration-json-preview {
+  @apply bg-muted/50 rounded-lg p-3 border font-mono text-xs whitespace-pre-wrap break-all text-muted-foreground;
+}
+
+.integration-header-gradient {
+  @apply relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-border/50;
+}
+
+.integration-grid-pattern {
+  @apply absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px];
+}
+
+/* Animations */
+@keyframes agentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.agent-animate-in {
+  animation: agentSlideIn 0.4s ease-out forwards;
+}
+
+@keyframes agentFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.agent-fade-in {
+  animation: agentFadeIn 0.3s ease-out forwards;
+}
+
+@keyframes integrationSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.integration-animate-in {
+  animation: integrationSlideIn 0.4s ease-out forwards;
+}
+
+@keyframes integrationPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.integration-pulse {
+  animation: integrationPulse 2s ease-in-out infinite;
+}
+
+/* Enhanced button styles */
+.btn-workflow-primary {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300;
+}
+
+.btn-workflow-primary:hover {
+  transform: translateY(-1px);
+}
+
+/* Modern Tickets View Styles */
+.tickets-header {
+  @apply bg-gradient-to-r from-background via-background/95 to-background border-b border-border/50 backdrop-blur-sm;
+}
+
+.ticket-row {
+  @apply hover:bg-gradient-to-r hover:from-muted/30 hover:to-muted/10 transition-all duration-200 border-l-4 border-l-transparent hover:border-l-primary/50;
+}
+
+.ticket-card {
+  @apply bg-card border border-border/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:border-border;
+}
+
+.ticket-card:hover {
+  @apply transform translate-y-[-1px] shadow-lg;
+}
+
+.ticket-status-badge {
+  @apply inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border;
+}
+
+.ticket-priority-badge {
+  @apply inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border;
+}
+
+.ticket-channel-icon {
+  @apply w-8 h-8 rounded-lg flex items-center justify-center shadow-sm;
+}
+
+.ticket-avatar {
+  @apply w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium;
+}
+
+.ticket-search-bar {
+  @apply relative flex-1 max-w-md;
+}
+
+.ticket-filter-chip {
+  @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border cursor-pointer transition-all hover:scale-105;
+}
+
+.ticket-kanban-column {
+  @apply bg-muted/30 rounded-xl p-4 min-h-[400px];
+}
+
+.ticket-kanban-card {
+  @apply bg-card border border-border/50 rounded-lg p-3 shadow-sm hover:shadow-md transition-all cursor-pointer;
+}
+
+.ticket-table-header {
+  @apply bg-muted/30 border-b border-border/50;
+}
+
+/* Status-specific styles */
+.status-open {
+  @apply border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/30 dark:text-green-400;
+}
+
+.status-in-progress {
+  @apply border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400;
+}
+
+.status-waiting {
+  @apply border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400;
+}
+
+.status-resolved {
+  @apply border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-400;
+}
+
+.status-closed {
+  @apply border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950/30 dark:text-gray-400;
+}
+
+/* Priority-specific styles */
+.priority-critical {
+  @apply border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400;
+}
+
+.priority-urgent {
+  @apply border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-400;
+}
+
+.priority-high {
+  @apply border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400;
+}
+
+.priority-medium {
+  @apply border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400;
+}
+
+.priority-low {
+  @apply border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950/30 dark:text-gray-400;
+}
+
+/* Channel-specific styles */
+.channel-whatsapp {
+  @apply bg-green-100 text-green-600 dark:bg-green-950/30 dark:text-green-400;
+}
+
+.channel-instagram {
+  @apply bg-pink-100 text-pink-600 dark:bg-pink-950/30 dark:text-pink-400;
+}
+
+.channel-email {
+  @apply bg-blue-100 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400;
+}
+
+.channel-web {
+  @apply bg-gray-100 text-gray-600 dark:bg-gray-950/30 dark:text-gray-400;
+}
+
+/* Workflow Builder Styles */
+.workflow-canvas {
+  @apply h-full w-full relative;
+  background-color: hsl(var(--muted) / 0.3);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    hsl(var(--border)) 1px,
+    transparent 0
+  );
+  background-size: 20px 20px;
+}
+
+.workflow-node {
+  @apply bg-card border-2 border-border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 min-w-[200px] max-w-[300px];
+}
+
+.workflow-node:hover {
+  @apply border-primary/50 shadow-lg;
+}
+
+.workflow-node.selected {
+  @apply border-primary shadow-lg ring-2 ring-primary/20;
+}
+
+.workflow-node-header {
+  @apply p-4 border-b border-border/50;
+}
+
+.workflow-node-content {
+  @apply p-4;
+}
+
+.workflow-node-icon {
+  @apply p-2 rounded-lg flex items-center justify-center transition-all duration-200;
+}
+
+.workflow-node-icon-input {
+  @apply bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400;
+}
+
+.workflow-node-icon-output {
+  @apply bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400;
+}
+
+.workflow-node-icon-condition {
+  @apply bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400;
+}
+
+.workflow-node-icon-action {
+  @apply bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400;
+}
+
+.workflow-node-icon-default {
+  @apply bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400;
+}
+
+.workflow-pill {
+  @apply px-2 py-1 text-xs bg-muted text-muted-foreground rounded-full border;
+}
+
+.workflow-badge-active {
+  @apply bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800;
+}
+
+.workflow-badge-inactive {
+  @apply bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800;
+}
+
+.workflow-badge-type {
+  @apply bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800;
+}
+
+/* React Flow Customizations */
+.react-flow__node {
+  @apply cursor-pointer;
+}
+
+.react-flow__handle {
+  @apply transition-all duration-200;
+}
+
+.react-flow__handle:hover {
+  @apply scale-125;
+}
+
+.react-flow__edge-path {
+  @apply stroke-2;
+  stroke: hsl(var(--primary));
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 4px;
+  stroke: hsl(var(--primary));
+}
+
+.react-flow__controls {
+  @apply bg-card border border-border rounded-lg shadow-lg;
+}
+
+.react-flow__controls-button {
+  @apply bg-transparent border-0 hover:bg-muted transition-colors;
+}
+
+.react-flow__minimap {
+  @apply bg-card border border-border rounded-lg shadow-lg;
+}
+
+/* Panel Styles */
+.workflow-panel {
+  @apply bg-card border-r border-border h-full flex flex-col;
+}
+
+.workflow-panel-header {
+  @apply p-4 border-b border-border bg-muted/30;
+}
+
+.workflow-panel-content {
+  @apply flex-1 overflow-y-auto p-4;
+}
+
+/* Toolbar Styles */
+.workflow-toolbar {
+  @apply flex items-center justify-between gap-4 p-4 bg-card/50 backdrop-blur-sm border-b border-border;
+}
+
+.workflow-toolbar-group {
+  @apply flex items-center gap-2;
+}
+
+.workflow-toolbar-btn {
+  @apply h-9 px-3 text-sm font-medium transition-all duration-200 hover:bg-muted;
+}
+
+.workflow-toolbar-btn-secondary {
+  @apply h-9 px-3 text-sm font-medium border border-border hover:bg-muted transition-all duration-200;
+}
+
+.workflow-toolbar-btn-primary {
+  @apply h-9 px-3 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200;
+}
+
+/* Header Styles */
+.workflow-header {
+  @apply bg-gradient-to-r from-card via-card/95 to-card border-b border-border/50 backdrop-blur-sm;
+}
+
+/* Node Palette Styles */
+.node-palette-item {
+  @apply w-full p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 text-left cursor-grab active:cursor-grabbing;
+}
+
+.node-palette-item:hover {
+  @apply shadow-md transform translate-y-[-1px];
+}
+
+.node-palette-icon {
+  @apply p-2 rounded-lg text-white transition-transform duration-200;
+}
+
+.node-palette-item:hover .node-palette-icon {
+  @apply scale-110;
+}
+
+/* Properties Panel Styles */
+.properties-panel-empty {
+  @apply flex flex-col items-center justify-center h-full text-center p-8;
+}
+
+/* Animations */
+@keyframes nodeSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.workflow-node-animate-in {
+  animation: nodeSlideIn 0.3s ease-out forwards;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .workflow-toolbar {
+    @apply flex-col gap-2 p-3;
+  }
+
+  .workflow-toolbar-group {
+    @apply w-full justify-center;
+  }
+
+  .workflow-node {
+    @apply min-w-[150px] max-w-[250px];
+  }
 }
 
 /* Selection styles */
 ::selection {
-  background: hsl(var(--primary) / 0.2);
-  color: hsl(var(--foreground));
+  @apply bg-primary/20 text-foreground;
 }
 
 /* Focus styles */
 :focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
+  @apply outline-2 outline-primary outline-offset-2;
 }
 
-/* ==========================================================================
-   Utility Classes
-   ========================================================================== */
+/* ========================================
+   Agent Management Specific Styles
+   ======================================== */
 
-/* Avatar stack */
-.avatar-stack {
-  @apply flex -space-x-2 items-center;
+.agent-detail-card {
+  @apply bg-card/95 backdrop-blur-md border border-border/50 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300;
 }
 
-.avatar-stack .avatar {
-  @apply inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-muted text-xs font-medium;
+.agent-metric-card {
+  @apply relative overflow-hidden rounded-xl border-0 bg-gradient-to-br from-card via-card/95 to-muted/30 p-6 shadow-lg hover:shadow-xl transition-all duration-300;
 }
 
-/* Section layouts */
-.section {
-  @apply rounded-lg border bg-card p-6;
+.agent-status-online {
+  @apply relative inline-flex h-3 w-3 rounded-full bg-green-500;
 }
 
-.section-header {
-  @apply border-b pb-4 mb-4;
+.agent-status-online::before {
+  @apply absolute inline-flex h-full w-full rounded-full bg-green-400 animate-ping;
+  content: '';
 }
 
-.section-title {
-  @apply text-title;
+.agent-status-busy {
+  @apply relative inline-flex h-3 w-3 rounded-full bg-yellow-500;
 }
 
-.section-description {
-  @apply text-subtitle mt-1;
+.agent-status-away {
+  @apply relative inline-flex h-3 w-3 rounded-full bg-orange-500;
 }
 
-/* Simple animations */
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+.agent-status-offline {
+  @apply relative inline-flex h-3 w-3 rounded-full bg-gray-400;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.agent-leaderboard-card {
+  @apply relative bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 dark:from-yellow-950/20 dark:via-orange-950/20 dark:to-red-950/20 rounded-xl p-6 border-2 border-yellow-200 dark:border-yellow-800 shadow-lg;
 }
 
-/* Loading skeleton */
-.skeleton {
-  @apply animate-pulse bg-muted rounded;
+.agent-achievement-badge {
+  @apply relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 shadow-lg hover:scale-110 transition-transform duration-300;
 }
 
-/* Premium card and gradient button helpers */
-.premium-card {
-  @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-xl;
+.agent-goal-progress {
+  @apply relative h-3 bg-muted rounded-full overflow-hidden;
 }
 
-.btn-gradient {
-  @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700;
+.agent-goal-progress-fill {
+  @apply absolute h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-500 ease-out;
 }
 
-/* Workflow UI helpers */
-.template-card {
-  @apply border border-slate-200/60 dark:border-slate-700/60 rounded-xl p-3 bg-white/80 dark:bg-slate-800/60 hover:shadow-md transition-all duration-200 hover:border-blue-300/60 dark:hover:border-blue-600/60;
-}
-.toolbar-sticky {
-  @apply sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-200/60 dark:border-slate-800/60;
+.agent-schedule-cell {
+  @apply relative p-2 border border-border/30 hover:bg-muted/50 transition-colors cursor-pointer;
 }
 
-/* Knowledge Base Components */
-.knowledge-card {
-  @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300;
+.agent-schedule-cell.has-shift {
+  @apply bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800;
 }
 
-.knowledge-header {
-  @apply bg-gradient-to-r from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 rounded-2xl p-8 border border-slate-200/60 dark:border-slate-700/60 shadow-xl;
+.agent-chat-bubble {
+  @apply max-w-[70%] rounded-2xl px-4 py-2 shadow-sm;
 }
 
-.knowledge-section {
-  @apply bg-white/90 dark:bg-slate-900/90 rounded-2xl overflow-hidden border-slate-200/60 dark:border-slate-700/60 shadow-xl;
+.agent-chat-bubble.sent {
+  @apply ml-auto bg-primary text-primary-foreground;
 }
 
-.knowledge-item {
-  @apply p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-300/60 dark:hover:border-blue-600/60 hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800;
+.agent-chat-bubble.received {
+  @apply mr-auto bg-muted;
 }
 
-.knowledge-metric {
-  @apply p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/60 dark:border-blue-800/60;
+.invitation-status-pending {
+  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-300;
 }
 
-.knowledge-trending {
-  @apply flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors;
+.invitation-status-accepted {
+  @apply bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300;
 }
 
-/* Line clamp utilities */
-.line-clamp-1 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+.invitation-status-expired {
+  @apply bg-gray-100 text-gray-800 dark:bg-gray-950/30 dark:text-gray-300;
 }
 
-.line-clamp-2 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+.invitation-status-cancelled {
+  @apply bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-300;
 }
 
-/* Chip components */
-.chip {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+.performance-trend-up {
+  @apply text-green-600 dark:text-green-400;
 }
 
-.chip-primary {
-  @apply bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300;
+.performance-trend-down {
+  @apply text-red-600 dark:text-red-400;
 }
 
-.chip-muted {
-  @apply bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400;
+.performance-trend-neutral {
+  @apply text-gray-600 dark:text-gray-400;
 }
 
-/* Focus ring utility */
-.focus-ring {
-  @apply focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400;
+.agent-card-enhanced {
+  @apply relative overflow-hidden rounded-2xl border-0 bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02];
 }
 
-/* Analytics Components */
+.agent-card-enhanced::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 opacity-0 transition-opacity duration-300;
+}
+
+.agent-card-enhanced:hover::before {
+  @apply opacity-100;
+}
+
+/* Agent Management Animations */
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-count-up {
+  animation: countUp 0.5s ease-out;
+}
+
+@keyframes achievementUnlock {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-achievement-unlock {
+  animation: achievementUnlock 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+}
+
+.animate-progress-fill {
+  animation: progressFill 1s ease-out;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.agent-skeleton {
+  @apply bg-gradient-to-r from-muted via-muted/50 to-muted;
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* ========================================
+   Analytics Dashboard Specific Styles
+   ======================================== */
+
+/* Analytics cards with glassmorphism */
 .analytics-card {
-  @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300;
+  @apply bg-card/95 backdrop-blur-md border border-border/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300;
 }
 
-.analytics-header {
-  @apply bg-gradient-to-r from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 rounded-2xl p-8 border border-slate-200/60 dark:border-slate-700/60 shadow-xl;
+/* Chart container */
+.analytics-chart-container {
+  @apply relative h-full w-full rounded-xl bg-gradient-to-br from-background via-background/95 to-muted/20 p-4;
 }
 
-.analytics-metric {
-  @apply p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/60 dark:border-blue-800/60;
+/* Stat badges for quick insights */
+.stat-badge {
+  @apply backdrop-blur-lg bg-white/10 dark:bg-black/10 border border-white/20 dark:border-white/10 rounded-full px-4 py-2 text-sm font-medium;
 }
 
-.analytics-trend {
-  @apply flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors;
+/* Progress ring for capacity metrics */
+.progress-ring {
+  @apply relative inline-flex items-center justify-center w-24 h-24;
 }
 
-/* Analytics Chart Containers */
-.analytics-chart {
-  @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border border-slate-200/60 dark:border-slate-700/60 shadow-lg;
+.progress-ring-circle {
+  @apply transition-all duration-700 ease-in-out;
 }
 
-.analytics-stat {
-  @apply text-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200/60 dark:border-slate-700/60;
+/* Trend indicators */
+.trend-up {
+  @apply text-green-600 dark:text-green-400;
 }
 
-/* Analytics Progress Bars */
-.analytics-progress {
-  @apply w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden;
+.trend-down {
+  @apply text-red-600 dark:text-red-400;
 }
 
-.analytics-progress-fill {
-  @apply bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500;
+.trend-stable {
+  @apply text-slate-600 dark:text-slate-400;
 }
 
-/* Analytics Badges */
-.analytics-badge {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+/* Analytics skeleton loader */
+.analytics-skeleton {
+  @apply animate-pulse bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50;
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
 }
 
-.analytics-badge-success {
-  @apply bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300;
+/* Time range selector */
+.time-range-btn {
+  @apply px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200;
+  @apply bg-transparent border border-transparent;
+  @apply hover:bg-muted/50 hover:border-border/50;
 }
 
-.analytics-badge-warning {
-  @apply bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300;
+.time-range-btn-active {
+  @apply bg-gradient-to-br from-primary/10 to-primary/5 border-primary/50 text-primary;
+  @apply shadow-sm;
 }
 
-.analytics-badge-error {
-  @apply bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300;
+/* KPI metric display */
+.kpi-value {
+  @apply text-3xl font-bold bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-white dark:via-slate-100 dark:to-white bg-clip-text text-transparent;
 }
 
-.analytics-badge-info {
-  @apply bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300;
+/* Chart tooltip */
+.chart-tooltip {
+  @apply bg-popover/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg p-3;
 }
 
-/* Integrations */
-.connector-card {
-  @apply hover:shadow-lg transition-all duration-200;
+/* Metric comparison indicator */
+.metric-change-positive {
+  @apply flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400;
 }
 
+.metric-change-negative {
+  @apply flex items-center gap-1 text-sm font-medium text-red-600 dark:text-red-400;
+}
 
-/* Accessibility support */
-@media (prefers-reduced-motion: reduce) {
-  .animate-fade-in {
-    animation: none;
+.metric-change-neutral {
+  @apply flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-400;
+}
+
+/* Analytics grid layouts */
+.analytics-grid-2 {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.analytics-grid-3 {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+.analytics-grid-4 {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+/* Data table for analytics */
+.analytics-table {
+  @apply w-full border-collapse;
+}
+
+.analytics-table thead {
+  @apply bg-muted/50 border-b border-border;
+}
+
+.analytics-table th {
+  @apply px-4 py-3 text-left text-sm font-semibold text-muted-foreground;
+}
+
+.analytics-table td {
+  @apply px-4 py-3 text-sm border-b border-border/30;
+}
+
+.analytics-table tbody tr {
+  @apply hover:bg-muted/30 transition-colors duration-150;
+}
+
+/* Empty state for analytics */
+.analytics-empty-state {
+  @apply flex flex-col items-center justify-center py-12 px-4 text-center;
+}
+
+.analytics-empty-icon {
+  @apply w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg;
+}
+
+/* Loading state for charts */
+.chart-loading {
+  @apply flex items-center justify-center h-64;
+}
+
+.chart-loading-spinner {
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-primary;
+}
+
+/* Analytics animations */
+@keyframes metricPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
   }
-  
-  .skeleton {
-    animation: none;
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
   }
-  
-  .analytics-card {
-    transition: none;
+}
+
+.animate-metric-pulse {
+  animation: metricPulse 2s ease-in-out infinite;
+}
+
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  .analytics-progress-fill {
-    transition: none;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
+
+.animate-chart-fade-in {
+  animation: chartFadeIn 0.6s ease-out;
+}
+
+/* Quality indicator colors */
+.quality-excellent {
+  @apply text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/30;
+}
+
+.quality-good {
+  @apply text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/30;
+}
+
+.quality-fair {
+  @apply text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/30;
+}
+
+.quality-poor {
+  @apply text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30;
+}
+
+/* Call status indicators */
+.call-status-active {
+  @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30;
+}
+
+.call-status-ended {
+  @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/30;
+}
+
+.call-status-missed {
+  @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30;
+}
+
+/* ==================== CONVERSATION SYSTEM STYLES ==================== */
+
+/* Message Bubbles */
+.conversation-message-bubble {
+  @apply rounded-2xl shadow-sm transition-all duration-200;
+  padding: var(--message-bubble-padding);
+  font-size: var(--message-font-size);
+  line-height: var(--message-line-height);
+  max-width: var(--message-bubble-max-width);
+}
+
+.conversation-message-bubble-agent {
+  background-color: var(--message-bubble-agent-bg);
+  color: var(--message-bubble-agent-text);
+  border-radius: var(--message-bubble-agent-radius);
+  border-top-right-radius: var(--message-bubble-agent-radius-corner);
+}
+
+.conversation-message-bubble-customer {
+  background-color: var(--message-bubble-customer-bg);
+  color: var(--message-bubble-customer-text);
+  border-radius: var(--message-bubble-customer-radius);
+  border-top-left-radius: var(--message-bubble-customer-radius-corner);
+}
+
+.conversation-message-bubble-system {
+  background-color: var(--message-bubble-system-bg);
+  color: var(--message-bubble-system-text);
+  @apply rounded-full px-4 py-2 text-xs;
+}
+
+.conversation-message-bubble-note {
+  background-color: var(--message-bubble-note-bg);
+  border: 1px solid var(--message-bubble-note-border);
+  color: var(--message-bubble-note-text);
+  @apply rounded-lg;
+}
+
+/* Hover Actions */
+.conversation-hover-actions {
+  @apply opacity-0 group-hover:opacity-100;
+  transition: opacity var(--transition-smooth);
+}
+
+/* Message Reactions */
+.conversation-reaction {
+  background-color: var(--reaction-bg);
+  border: 1px solid var(--reaction-border);
+  border-radius: var(--reaction-radius);
+  padding: var(--reaction-padding);
+  @apply inline-flex items-center gap-1 text-xs transition-colors;
+}
+
+.conversation-reaction:hover {
+  background-color: var(--reaction-bg-hover);
+}
+
+/* Conversation Tab Active State */
+.conversation-tab-active {
+  @apply border-b-2 border-primary text-primary;
+}
+
+/* Conversation List Item */
+.conversation-list-item {
+  @apply transition-all duration-200 hover:bg-muted/50 cursor-pointer;
+}
+
+.conversation-list-item-selected {
+  @apply bg-primary/5 border-l-4 border-l-primary;
+}
+
+/* Status Badges */
+.conversation-status-open {
+  background-color: var(--status-open-bg);
+  color: var(--status-open-text);
+  border: 1px solid var(--status-open-border);
+}
+
+.conversation-status-waiting {
+  background-color: var(--status-waiting-bg);
+  color: var(--status-waiting-text);
+  border: 1px solid var(--status-waiting-border);
+}
+
+.conversation-status-resolved {
+  background-color: var(--status-resolved-bg);
+  color: var(--status-resolved-text);
+  border: 1px solid var(--status-resolved-border);
+}
+
+.conversation-status-overdue {
+  background-color: var(--status-overdue-bg);
+  color: var(--status-overdue-text);
+  border: 1px solid var(--status-overdue-border);
+}
+
+/* Channel Indicators */
+.conversation-channel-whatsapp {
+  color: var(--channel-whatsapp);
+}
+
+.conversation-channel-messenger {
+  color: var(--channel-messenger);
+}
+
+.conversation-channel-instagram {
+  color: var(--channel-instagram);
+}
+
+.conversation-channel-email {
+  color: var(--channel-email);
+}
+
+.conversation-channel-sms {
+  color: var(--channel-sms);
+}
+
+/* Message Composer */
+.conversation-composer {
+  background-color: var(--composer-bg);
+  border-top: 1px solid var(--composer-border);
+  padding: var(--composer-padding);
+}
+
+.conversation-composer-textarea {
+  min-height: var(--composer-min-height);
+  max-height: var(--composer-max-height);
+  @apply resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0;
+}
+
+/* Typing Indicator */
+.conversation-typing-indicator {
+  @apply flex items-center gap-1 text-sm text-muted-foreground;
+}
+
+.conversation-typing-dot {
+  @apply w-2 h-2 rounded-full bg-muted-foreground animate-pulse;
+  animation-delay: 0s;
+}
+
+.conversation-typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.conversation-typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Avatar Sizes */
+.conversation-avatar-sm {
+  width: var(--avatar-size-sm);
+  height: var(--avatar-size-sm);
+}
+
+.conversation-avatar-md {
+  width: var(--avatar-size-md);
+  height: var(--avatar-size-md);
+}
+
+.conversation-avatar-lg {
+  width: var(--avatar-size-lg);
+  height: var(--avatar-size-lg);
+}
+
+/* Smooth Scrolling */
+.conversation-scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Internal Note Highlight */
+.conversation-internal-note-highlight {
+  @apply bg-amber-50 dark:bg-amber-950/20 border-l-4 border-l-amber-500;
+}
+
+/* AI Writing Assistant */
+.conversation-ai-assistant {
+  @apply bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border border-purple-200 dark:border-purple-800 rounded-lg;
+}
+
+/* Empty State */
+.conversation-empty-state {
+  @apply flex flex-col items-center justify-center text-center py-12;
+}
+
+/* Message Group */
+.conversation-message-group {
+  margin-bottom: var(--message-group-gap);
+}
+
+/* Conversation Header */
+.conversation-header {
+  @apply sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b;
 }

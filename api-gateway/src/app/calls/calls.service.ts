@@ -149,10 +149,17 @@ export class CallsService {
     return call;
   }
 
-  async listCalls(params: { tenantId: string; conversationId?: string; status?: string }) {
+  async listCalls(params: { tenantId: string; conversationId?: string; status?: string; customerId?: string }) {
     const where: Record<string, unknown> = { tenantId: params.tenantId };
     if (params.conversationId) where.conversationId = params.conversationId;
     if (params.status) where.status = params.status;
+    if (params.customerId) {
+      // Resolve calls by customer via conversation link
+      const convs = await this.db.conversation.findMany({ where: { tenantId: params.tenantId, customerId: params.customerId }, select: { id: true } });
+      const convIds = convs.map((c) => c.id);
+      if (convIds.length) where.conversationId = { in: convIds } as any;
+      else where.conversationId = null as any; // no convs => return empty set
+    }
     return this.db.call.findMany({
       where,
       orderBy: { startedAt: 'desc' },

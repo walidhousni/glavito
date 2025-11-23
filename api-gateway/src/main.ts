@@ -14,6 +14,11 @@ import compression from 'compression';
 import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { TerminusModule } from '@nestjs/terminus';
+import { HealthCheckService, HealthIndicator, HttpHealthIndicator, MemoryHealthIndicator, TypeOrmHealthIndicator } from '@nestjs/terminus';
+import { DatabaseService } from '@glavito/shared-database';
+import { RedisService } from '@glavito/shared-redis'; // From shared
+import { AdvancedEventBusService } from '@glavito/shared-kafka'; // For Kafka health
 
 async function bootstrap() {
   // Initialize OpenTelemetry (do not crash app if it fails)
@@ -165,6 +170,38 @@ async function bootstrap() {
     await app.close();
     process.exit(0);
   });
+
+  const health = app.get(HealthCheckService);
+  const db = app.get(DatabaseService);
+  const redis = app.get(RedisService);
+  const eventBus = app.get(AdvancedEventBusService);
+
+  app.use('/health', async (_, response, healthCheckService) => {
+    const health = await healthCheckService.check([
+      // Ping
+      new HttpHealthIndicator().pingCheck('ping', { url: `http://localhost:${port}/health` }),
+      // DB
+      new TypeOrmHealthIndicator(db).pingCheck('database'),
+      // Redis
+      new RedisHealthIndicator(redis).checkHealth('redis'),
+      // Kafka - custom check
+      new KafkaHealthIndicator(eventBus).isHealthy('kafka'),
+    ]);
+    // Send response
+    response.status(health ? 200 : 500);
+    response.send(health);
+  });
 }
 
 bootstrap();
+
+// Custom indicator
+class RedisHealthIndicator extends HealthIndicator {
+  constructor(private redis: RedisService) { super(); }
+  async checkHealth(key: string) {
+    const isHealthy = await this.redis.healthCheck();
+    return this.getStatus(key, isHealthy, { message: 'Redis down' });
+  }
+}
+
+// Similar for Kafka if needed, or use ping to broker.

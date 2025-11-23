@@ -5,6 +5,7 @@ import { AdvancedEventBusService } from './advanced-event-bus.service';
 import { EventStoreService } from './event-store.service';
 import { AnalyticsStreamProcessor } from './stream-processors/analytics-stream-processor';
 import { AIStreamProcessor } from './stream-processors/ai-stream-processor';
+import { OutboundStreamProcessor } from './stream-processors/outbound-stream-processor';
 import { DatabaseModule } from '@glavito/shared-database';
 
 @Global()
@@ -16,6 +17,7 @@ import { DatabaseModule } from '@glavito/shared-database';
     EventStoreService,
     AnalyticsStreamProcessor,
     AIStreamProcessor,
+    OutboundStreamProcessor,
   ],
   exports: [
     EventPublisherService,
@@ -23,6 +25,7 @@ import { DatabaseModule } from '@glavito/shared-database';
     EventStoreService,
     AnalyticsStreamProcessor,
     AIStreamProcessor,
+    OutboundStreamProcessor,
   ],
 })
 export class KafkaModule {}

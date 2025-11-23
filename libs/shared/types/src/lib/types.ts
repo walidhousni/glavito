@@ -1698,8 +1698,10 @@ export enum ChannelType {
   WHATSAPP = 'whatsapp',
   INSTAGRAM = 'instagram',
   FACEBOOK = 'facebook',
+  MESSENGER = 'messenger',
   CHAT = 'chat',
-  PHONE = 'phone'
+  PHONE = 'phone',
+  SMS = 'sms'
 }
 
 export interface ChannelConnectionStatus {

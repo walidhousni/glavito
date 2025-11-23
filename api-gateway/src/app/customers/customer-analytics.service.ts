@@ -1,5 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import { PrismaService } from '@glavito/shared-database';
+import { AdvancedChurnPreventionService } from '../ai/advanced-churn-prevention.service';
+import { AISalesOptimizationService } from '../ai/ai-sales-optimization.service';
+import { IntelligentCustomerJourneyService } from '../ai/intelligent-customer-journey.service';
 
 export interface CustomerHealthScore {
   score: number;
@@ -65,7 +68,10 @@ export class CustomerAnalyticsService {
   private readonly logger = new Logger(CustomerAnalyticsService.name);
 
   constructor(
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    @Optional() private readonly churnPreventionService?: AdvancedChurnPreventionService,
+    @Optional() private readonly salesOptimizationService?: AISalesOptimizationService,
+    @Optional() private readonly journeyService?: IntelligentCustomerJourneyService
   ) {}
 
   async getSegmentsOverview(tenantId: string): Promise<{ totalCustomers: number; segments: Array<{ id: string; name: string; customerCount: number; averageValue: number; }> }> {
@@ -107,17 +113,18 @@ export class CustomerAnalyticsService {
     return { totalCustomers, segments: segmentsWithAvg };
   }
 
-  async getAnalyticsDashboard(tenantId: string) {
+  async getAnalyticsDashboard(tenantId: string, timeframe: '7d' | '30d' | '90d' | '1y' = '30d') {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const last30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const days = timeframe === '7d' ? 7 : timeframe === '90d' ? 90 : timeframe === '1y' ? 365 : 30;
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const [totalCustomers, newCustomersThisMonth, activeCustomers, payments] = await Promise.all([
       this.prisma.customer.count({ where: { tenantId } }),
       this.prisma.customer.count({ where: { tenantId, createdAt: { gte: startOfMonth } } }),
       this.prisma.conversation.groupBy({
         by: ['customerId'],
-        where: { tenantId, createdAt: { gte: last30 } },
+        where: { tenantId, createdAt: { gte: since } },
         _count: { customerId: true },
       }).then((rows) => rows.length),
       this.prisma.paymentIntent.aggregate({
@@ -135,6 +142,161 @@ export class CustomerAnalyticsService {
     ]);
     const churnRate = totalCustomers > 0 ? Number(((high + critical) / totalCustomers * 100).toFixed(1)) : 0;
 
+    // ---------------- Engagement Metrics (derived) ----------------
+    let avgSessionDuration = 0; // minutes
+    let pagesPerSession = 0; // proxy: messages per conversation
+    let bounceRate = 0; // % convs with <= 2 messages
+    let returnVisitorRate = 0; // % recent customers with any prior interaction
+    let emailOpenRate = 0; // % opens per sent
+    let clickThroughRate = 0; // % clicks per sent
+
+    try {
+      // Messages grouped by conversation (last 30 days)
+      type GroupRow = { conversationId: string; _count: { _all: number }; _min: { createdAt: Date | null }; _max: { createdAt: Date | null } };
+      const groups: GroupRow[] = await (this.prisma as unknown as { message: { groupBy: (args: { by: string[]; where: Record<string, unknown>; _count: Record<string, unknown>; _min: Record<string, unknown>; _max: Record<string, unknown> }) => Promise<GroupRow[]> } }).message?.groupBy?.({
+        by: ['conversationId'],
+        where: { conversation: { tenantId, createdAt: { gte: since } } },
+        _count: { _all: true },
+        _min: { createdAt: true },
+        _max: { createdAt: true },
+      }).catch(() => []);
+
+      if (Array.isArray(groups) && groups.length) {
+        const totalMsgs = groups.reduce((s, g) => s + (g._count?._all || 0), 0);
+        pagesPerSession = Math.round((totalMsgs / groups.length) * 10) / 10;
+        const durations = groups.map((g) => {
+          const start = g._min?.createdAt ? new Date(g._min.createdAt).getTime() : 0;
+          const end = g._max?.createdAt ? new Date(g._max.createdAt).getTime() : 0;
+          return Math.max(0, end - start);
+        });
+        avgSessionDuration = durations.length ? Math.round((durations.reduce((s, d) => s + d, 0) / durations.length) / (60 * 1000)) : 0;
+        const bounces = groups.filter((g) => (g._count?._all || 0) <= 2).length;
+        bounceRate = Math.round((bounces / groups.length) * 1000) / 10;
+      }
+
+      // Return visitor rate (customers with conv in last30 that also had earlier conv)
+      type CustRow = { customerId: string };
+      const recentCustomerRows: CustRow[] = await (this.prisma as unknown as { conversation: { groupBy: (args: { by: string[]; where: Record<string, unknown>; _count: Record<string, unknown> }) => Promise<CustRow[]> } }).conversation?.groupBy?.({
+        by: ['customerId'],
+        where: { tenantId, createdAt: { gte: since } },
+        _count: { customerId: true },
+      }).then((rows: Array<CustRow & { _count?: { customerId?: number } }>) => rows.map((r) => ({ customerId: r.customerId }))).catch((): CustRow[] => []);
+      const recentCustomerIds = Array.from(new Set(recentCustomerRows.map((r) => r.customerId).filter(Boolean)));
+      if (recentCustomerIds.length) {
+        const prevRows: CustRow[] = await (this.prisma as unknown as { conversation: { findMany: (args: { where: Record<string, unknown>; select: { customerId: boolean }; distinct: string[] }) => Promise<CustRow[]> } }).conversation?.findMany?.({
+          where: { tenantId, customerId: { in: recentCustomerIds }, createdAt: { lt: since } },
+          select: { customerId: true },
+          distinct: ['customerId'],
+        }).catch(() => []);
+        const prevCount = Array.isArray(prevRows) ? prevRows.length : 0;
+        returnVisitorRate = Math.round(((prevCount / recentCustomerIds.length) * 1000)) / 10;
+      }
+
+      // Email open and click rates (last 30 days)
+      const [sentCount, openedCount, clickedCount] = await Promise.all([
+        this.prisma.emailDelivery.count({ where: { tenantId, createdAt: { gte: since } } }).catch(() => 0),
+        this.prisma.emailEvent.count({ where: { tenantId, type: 'open', createdAt: { gte: since } } }).catch(() => 0),
+        this.prisma.emailEvent.count({ where: { tenantId, type: 'click', createdAt: { gte: since } } }).catch(() => 0),
+      ]);
+      if (sentCount > 0) {
+        emailOpenRate = Math.round(((openedCount / sentCount) * 1000)) / 10;
+        clickThroughRate = Math.round(((clickedCount / sentCount) * 1000)) / 10;
+      }
+    } catch {
+      // keep defaults
+    }
+
+    // ---------------- Conversion Funnel (last 30d) ----------------
+    let funnel: Array<{ stage: string; count: number; percentage: number }> = [];
+    try {
+      const [awarenessConvs, interestLeads, considerationDeals, purchases] = await Promise.all<number>([
+        this.prisma.conversation.count({ where: { tenantId, createdAt: { gte: since } } }).catch(() => 0),
+        this.prisma.lead.count({ where: { tenantId, createdAt: { gte: since } } }).catch(() => 0),
+        this.prisma.deal.count({ where: { tenantId, createdAt: { gte: since } } }).catch(() => 0),
+        this.prisma.paymentIntent.count({ where: { tenantId, status: { in: ['succeeded'] }, createdAt: { gte: since } } }).catch(() => 0),
+      ]);
+      const awareness = Math.max(awarenessConvs, interestLeads, considerationDeals, purchases, 1);
+      funnel = [
+        { stage: 'Awareness', count: awarenessConvs, percentage: Math.round((awarenessConvs / awareness) * 100) },
+        { stage: 'Interest', count: interestLeads, percentage: Math.round((interestLeads / awareness) * 100) },
+        { stage: 'Consideration', count: considerationDeals, percentage: Math.round((considerationDeals / awareness) * 100) },
+        { stage: 'Purchase', count: purchases, percentage: Math.round((purchases / awareness) * 100) },
+        // Retention approximated from repeat purchasers in last 180d
+      ];
+    } catch {
+      funnel = [];
+    }
+
+    // ---------------- Cohort Analysis (aligned to timeframe) ----------------
+    const cohorts: Array<{ cohort: string; retention: number[]; color: string }> = [];
+    try {
+      type Window = { start: Date; end: Date; label: string };
+      const windows: Window[] = [];
+      if (timeframe === '1y') {
+        const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        for (let i = 11; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const start = new Date(d.getFullYear(), d.getMonth(), 1);
+          const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+          windows.push({ start, end, label: monthLabels[start.getMonth()] });
+        }
+      } else if (timeframe === '90d') {
+        const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        for (let i = 2; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const start = new Date(d.getFullYear(), d.getMonth(), 1);
+          const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+          windows.push({ start, end, label: monthLabels[start.getMonth()] });
+        }
+      } else if (timeframe === '30d') {
+        // last 4 weeks
+        for (let i = 3; i >= 0; i--) {
+          const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 7);
+          const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 7);
+          windows.push({ start, end, label: `W${4 - i}` });
+        }
+      } else {
+        // 7d -> daily
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+          const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+          windows.push({ start, end, label: `${start.getMonth() + 1}/${start.getDate()}` });
+        }
+      }
+
+      for (let cIdx = 0; cIdx < windows.length; cIdx++) {
+        const cohortWin = windows[cIdx];
+        const baseCustomers = await this.prisma.customer.findMany({
+          where: { tenantId, createdAt: { gte: cohortWin.start, lt: cohortWin.end } },
+          select: { id: true },
+        });
+        const baseCount = baseCustomers.length;
+        if (!baseCount) {
+          // ensure consistent retention vector length = min(6, windows.length)
+          const len = Math.min(6, windows.length);
+          cohorts.push({ cohort: cohortWin.label, retention: new Array(len).fill(0), color: 'bg-blue-500' });
+          continue;
+        }
+        const baseIds = baseCustomers.map((c) => c.id);
+        const retention: number[] = [];
+        const maxPeriods = Math.min(6, windows.length - cIdx);
+        for (let r = 0; r < maxPeriods; r++) {
+          const w = windows[cIdx + r];
+          const activeRows = await this.prisma.conversation.groupBy({
+            by: ['customerId'],
+            where: { tenantId, customerId: { in: baseIds }, createdAt: { gte: w.start, lt: w.end } },
+            _count: { customerId: true },
+          }).catch(() => [] as Array<{ customerId: string; _count: { customerId: number } }>);
+          const activeCount = Array.isArray(activeRows) ? activeRows.length : 0;
+          retention.push(Math.round((activeCount / baseCount) * 100));
+        }
+        cohorts.push({ cohort: cohortWin.label, retention, color: ['bg-blue-500','bg-green-500','bg-yellow-500','bg-orange-500','bg-purple-500','bg-pink-500'][cIdx % 6] });
+      }
+    } catch {
+      // keep empty
+    }
+
     return {
       overview: {
         totalCustomers,
@@ -142,7 +304,18 @@ export class CustomerAnalyticsService {
         newCustomersThisMonth,
         churnRate,
         averageLifetimeValue,
-        customerSatisfactionScore: 0, // optional; compute when CSAT model is ready
+        customerSatisfactionScore: 0,
+        // Engagement metrics added
+        avgSessionDuration,
+        pagesPerSession,
+        bounceRate,
+        returnVisitorRate,
+        emailOpenRate,
+        clickThroughRate,
+      },
+      trends: {
+        funnel,
+        cohorts,
       },
     };
   }
@@ -157,23 +330,23 @@ export class CustomerAnalyticsService {
       customerIds = members.map(m => m.customerId);
     }
 
-    const whereBase: any = { tenantId, createdAt: { gte: since } };
+    const whereBase: Record<string, unknown> = { tenantId, createdAt: { gte: since } };
     const whereConv = customerIds && customerIds.length ? { ...whereBase, customerId: { in: customerIds } } : whereBase;
 
     const conversations = await this.prisma.conversation.findMany({ where: whereConv, include: { channel: true } });
 
     // Channel preferences
     const channelCounts = new Map<string, number>();
-    conversations.forEach((c) => {
-      const type = (c.channel as any)?.type || 'unknown';
+    conversations.forEach((c: { channel?: { type?: string }, createdAt: Date }) => {
+      const type = c.channel?.type || 'unknown';
       channelCounts.set(type, (channelCounts.get(type) || 0) + 1);
     });
     const total = Array.from(channelCounts.values()).reduce((s, v) => s + v, 0) || 1;
     const channelPreference = Array.from(channelCounts.entries()).map(([channel, count]) => ({ channel, percentage: Math.round(count / total * 100) }));
 
     // Peak hours
-    const byHour = new Array(24).fill(0);
-    conversations.forEach((c) => { const h = new Date(c.createdAt).getHours(); byHour[h] += 1; });
+    const byHour: number[] = new Array(24).fill(0);
+    conversations.forEach((c: { createdAt: Date }) => { const h = new Date(c.createdAt).getHours(); byHour[h] += 1; });
     const peakHours = byHour.map((interactions, hour) => ({ hour, interactions })).filter(h => h.interactions > 0).sort((a,b)=>b.interactions-a.interactions).slice(0, 6);
 
     return {
@@ -194,29 +367,220 @@ export class CustomerAnalyticsService {
   }
 
   async getPredictiveInsights(tenantId: string) {
-    const last90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    const [conv, tickets, customers] = await Promise.all([
-      this.prisma.conversation.count({ where: { tenantId, createdAt: { gte: last90 } } }),
-      this.prisma.ticket.count({ where: { tenantId, createdAt: { gte: last90 } } }),
-      this.prisma.customer.count({ where: { tenantId } }),
+    try {
+      // Calculate time range (last 90 days)
+      const to = new Date();
+      const from = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      const timeRange = { from, to };
+
+      // Get insights from predictive analytics services
+      const [churnInsights, salesInsights, journeyAnalytics] = await Promise.all([
+        this.churnPreventionService?.getChurnPreventionInsights(tenantId, timeRange).catch((err) => {
+          this.logger.warn('Failed to get churn prevention insights:', err);
+          return null;
+        }),
+        this.salesOptimizationService?.getSalesOptimizationInsights(tenantId, timeRange).catch((err) => {
+          this.logger.warn('Failed to get sales optimization insights:', err);
+          return null;
+        }),
+        this.journeyService?.getJourneyAnalytics(tenantId, timeRange).catch((err) => {
+          this.logger.warn('Failed to get journey analytics:', err);
+          return null;
+        }),
     ]);
 
-    const churnPrediction = {
-      highRiskCustomers: Math.round(customers * 0.08),
-      mediumRiskCustomers: Math.round(customers * 0.12),
-      lowRiskCustomers: Math.max(0, customers - Math.round(customers * 0.2)),
-      predictedChurnRate: Number(((tickets / Math.max(1, conv + tickets)) * 10).toFixed(1)),
-      preventableChurn: Math.round(customers * 0.05),
-    };
+      // Map churn prediction data
+      const churnPrediction = churnInsights
+        ? {
+            highRisk: churnInsights.riskDistribution.high + churnInsights.riskDistribution.critical,
+            mediumRisk: churnInsights.riskDistribution.medium,
+            lowRisk: churnInsights.riskDistribution.low,
+            predictedRate: churnInsights.totalAtRisk > 0
+              ? Number(((churnInsights.totalAtRisk / (churnInsights.totalAtRisk + churnInsights.riskDistribution.low)) * 100).toFixed(1))
+              : 0,
+          }
+        : {
+            // Fallback to simple calculation if services are not available
+            highRisk: 0,
+            mediumRisk: 0,
+            lowRisk: 0,
+            predictedRate: 0,
+          };
+
+      // Calculate lifetime value forecast from sales insights
+      const totalCustomers = await this.prisma.customer.count({ where: { tenantId } }).catch(() => 0);
+      const avgDealValue = salesInsights?.overallPerformance?.avgDealSize || 0;
+      const winRate = salesInsights?.overallPerformance?.winRate || 0;
+      
+      // Estimate next quarter and next year revenue
+      const dealsPerQuarter = Math.round(totalCustomers * 0.1); // Assume 10% of customers make deals per quarter
+      const dealsPerYear = dealsPerQuarter * 4;
+      
+      const nextQuarter = Math.round(dealsPerQuarter * avgDealValue * winRate);
+      const nextYear = Math.round(dealsPerYear * avgDealValue * winRate);
+      const currentYear = nextQuarter * 4; // Rough estimate
+      const growth = currentYear > 0 ? Number((((nextYear - currentYear) / currentYear) * 100).toFixed(1)) : 0;
 
     const lifetimeValueForecast = {
+        nextQuarter,
+        nextYear,
+        growth: Math.max(0, growth),
+      };
+
+      // Map upsell opportunities from sales optimization insights
+      // Try to get customer segments for better upsell opportunities
+      let upsellOpportunities: Array<{ segment: string; potential: number; probability: number; customers: number }> = [];
+      
+      if (salesInsights?.improvementOpportunities && salesInsights.improvementOpportunities.length > 0) {
+        // Map improvement opportunities to upsell opportunities
+        upsellOpportunities = salesInsights.improvementOpportunities.slice(0, 5).map((opp: any) => {
+          // Estimate customer count based on opportunity area
+          const estimatedCustomers = Math.round(totalCustomers * 0.1); // Rough estimate
+          const potential = opp.potentialValue || opp.improvement || 0;
+          // Calculate probability based on improvement percentage
+          const improvementPercent = opp.currentValue > 0 
+            ? ((opp.potentialValue - opp.currentValue) / opp.currentValue) * 100 
+            : 50;
+          const probability = Math.min(100, Math.max(50, Math.round(improvementPercent)));
+          
+          return {
+            segment: opp.area || 'Upsell Opportunity',
+            potential: Math.round(potential),
+            probability,
+            customers: estimatedCustomers,
+          };
+        });
+      }
+      
+      // If no opportunities from sales insights, try to create from customer segments
+      if (upsellOpportunities.length === 0) {
+        try {
+          const segments = await this.prisma.customerSegment.findMany({
+            where: { tenantId },
+            take: 3,
+          });
+          
+          if (segments.length > 0) {
+            upsellOpportunities = await Promise.all(
+              segments.map(async (segment) => {
+                const customerCount = await this.prisma.customerSegmentMember.count({
+                  where: { segmentId: segment.id },
+                }).catch(() => 0);
+                
+                // Estimate potential based on segment average value
+                const avgValue = segment.averageValue || 0;
+                const potential = Math.round(customerCount * avgValue * 0.2); // 20% upsell potential
+                
+                return {
+                  segment: segment.name,
+                  potential,
+                  probability: 65, // Default probability
+                  customers: customerCount,
+                };
+              })
+            );
+          }
+        } catch (err) {
+          this.logger.warn('Failed to get customer segments for upsell opportunities:', err);
+        }
+      }
+
+      return {
+        churnPrediction,
+        lifetimeValueForecast,
+        demandForecasting: {
+          expectedTicketVolume: [],
+          seasonalTrends: { q1: 1, q2: 1, q3: 1, q4: 1 },
+        },
+        upsellOpportunities,
+      };
+    } catch (error) {
+      this.logger.error('Failed to get predictive insights:', error);
+      // Return fallback data
+      const totalCustomers = await this.prisma.customer.count({ where: { tenantId } }).catch(() => 0);
+      return {
+        churnPrediction: {
+          highRisk: 0,
+          mediumRisk: 0,
+          lowRisk: totalCustomers,
+          predictedRate: 0,
+        },
+        lifetimeValueForecast: {
       nextQuarter: 0,
       nextYear: 0,
-      topCustomersPotential: 0,
-      growthOpportunities: 0,
-    };
+          growth: 0,
+        },
+        demandForecasting: {
+          expectedTicketVolume: [],
+          seasonalTrends: { q1: 1, q2: 1, q3: 1, q4: 1 },
+        },
+        upsellOpportunities: [],
+      };
+    }
+  }
 
-    return { churnPrediction, lifetimeValueForecast, demandForecasting: { expectedTicketVolume: [], seasonalTrends: { q1: 1, q2: 1, q3: 1, q4: 1 } }, upsellOpportunities: [] };
+  async getTrends(tenantId: string, timeframe: '7d' | '30d' | '90d' | '1y' = '30d') {
+    const now = new Date();
+    type Window = { start: Date; end: Date; label: string };
+    const windows: Window[] = [];
+    if (timeframe === '1y') {
+      const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const start = new Date(d.getFullYear(), d.getMonth(), 1);
+        const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+        windows.push({ start, end, label: monthLabels[start.getMonth()] });
+      }
+    } else if (timeframe === '90d') {
+      const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      for (let i = 2; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const start = new Date(d.getFullYear(), d.getMonth(), 1);
+        const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+        windows.push({ start, end, label: monthLabels[start.getMonth()] });
+      }
+    } else if ( timeframe === '30d') {
+      for (let i = 3; i >= 0; i--) {
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 7);
+        const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 7);
+        windows.push({ start, end, label: `W${4 - i}` });
+      }
+    } else {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+        windows.push({ start, end, label: `${start.getMonth() + 1}/${start.getDate()}` });
+      }
+    }
+
+    const csatTrend: Array<{ label: string; value: number }> = [];
+    const clvTrend: Array<{ label: string; value: number }> = [];
+
+    for (const w of windows) {
+      // CSAT: average survey rating 1..5 -> 0..100
+      try {
+        const agg = await (this.prisma as unknown as { customerSatisfactionSurvey?: { aggregate: (args: { where: Record<string, unknown>; _avg: { rating: boolean } }) => Promise<{ _avg: { rating: number | null } }> } }).customerSatisfactionSurvey?.aggregate?.({
+          where: { tenantId, createdAt: { gte: w.start, lt: w.end } },
+          _avg: { rating: true },
+        }).catch((): { _avg: { rating: number | null } } => ({ _avg: { rating: null } }));
+        const rating = Number(agg?._avg?.rating || 0);
+        const score = rating > 0 ? Math.round(((rating - 1) / 4) * 100) : 0;
+        csatTrend.push({ label: w.label, value: score });
+      } catch { csatTrend.push({ label: w.label, value: 0 }); }
+
+      // CLV: total revenue in window (sum paymentIntent.amount) in currency units
+      try {
+        const payAgg = await this.prisma.paymentIntent.aggregate({
+          where: { tenantId, createdAt: { gte: w.start, lt: w.end }, status: { in: ['succeeded','processing','requires_capture'] } },
+          _sum: { amount: true },
+        });
+        const amount = (payAgg._sum.amount || 0) / 100;
+        clvTrend.push({ label: w.label, value: Math.round(amount) });
+      } catch { clvTrend.push({ label: w.label, value: 0 }); }
+    }
+
+    return { csatTrend, clvTrend };
   }
 
   async getCustomer360Profile(customerId: string, tenantId: string) {
@@ -283,7 +647,7 @@ export class CustomerAnalyticsService {
             resolutionTime: true
           }
         }),
-        (this.prisma as any).customerSatisfactionSurvey.aggregate({
+      (this.prisma as unknown as { customerSatisfactionSurvey: { aggregate: (args: { where: Record<string, unknown>; _avg: { rating: boolean } }) => Promise<{ _avg: { rating: number | null } }> } }).customerSatisfactionSurvey.aggregate({
           where: {
             customerId,
             tenantId,
@@ -412,7 +776,7 @@ export class CustomerAnalyticsService {
   async getCustomerJourney(customerId: string, tenantId: string): Promise<CustomerJourney> {
     try {
       // Get all customer touchpoints
-      const [conversations, tickets] = await Promise.all([
+      const [conversations, tickets, orders, surveys] = await Promise.all([
         this.prisma.conversation.findMany({
           where: { customerId, tenantId },
           include: { channel: true, messages: true },
@@ -422,7 +786,18 @@ export class CustomerAnalyticsService {
           where: { customerId, tenantId },
           include: { channel: true, aiAnalysis: true },
           orderBy: { createdAt: 'asc' }
-        })
+        }),
+        // Treat succeeded payments as purchases; include processing/requires_capture as attempts
+        this.prisma.paymentIntent.findMany({
+          where: { customerId, tenantId, status: { in: ['succeeded', 'processing', 'requires_capture'] } },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, createdAt: true, amount: true, status: true }
+        }),
+        (this.prisma as any).customerSatisfactionSurvey?.findMany?.({
+          where: { tenantId, customerId },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, createdAt: true, respondedAt: true, channel: true, status: true, rating: true }
+        }).catch(() => [] as Array<{ id: string; createdAt: Date; respondedAt?: Date | null; channel?: string | null; status?: string | null; rating?: number | null }>)
       ]);
 
       // Build touchpoints timeline
@@ -459,18 +834,106 @@ export class CustomerAnalyticsService {
           channel: ticket.channel.name,
           interaction: 'support_ticket',
           outcome: ticket.status,
-          sentiment: ticket.aiAnalysis?.sentiment ? String((ticket.aiAnalysis.sentiment as any).label || ticket.aiAnalysis.sentiment) : undefined
+          sentiment: (() => {
+            const s = ticket.aiAnalysis?.sentiment as unknown;
+            if (!s) return undefined;
+            if (typeof s === 'string') return s;
+            if (typeof s === 'object' && s && 'label' in (s as Record<string, unknown>)) return String((s as Record<string, unknown>).label);
+            return undefined;
+          })()
+          
         });
       });
+
+      // Add SLA breach touchpoints (if any) for tickets
+      try {
+        const ticketIds = (tickets as TicketLite[]).map((t) => t.id);
+        if (ticketIds.length) {
+          const slaItems = await (this.prisma as any).sLAInstance?.findMany?.({
+            where: { ticketId: { in: ticketIds } },
+            select: { ticketId: true, status: true, resolutionDue: true, lastEscalatedAt: true }
+          }).catch(() => [] as Array<{ ticketId: string; status: string; resolutionDue: Date | null; lastEscalatedAt: Date | null }>);
+          for (const s of slaItems) {
+            if (!s) continue;
+            if (String(s.status || '').toLowerCase() === 'breached') {
+              const timestamp = s.lastEscalatedAt || s.resolutionDue || new Date();
+              touchpoints.push({
+                id: `${s.ticketId}:sla_breach`,
+                type: 'web',
+                timestamp,
+                channel: 'SLA',
+                interaction: 'sla_breach',
+                outcome: 'breached'
+              } as unknown as Touchpoint);
+            }
+          }
+        }
+      } catch {
+        // ignore SLA enrich failures
+      }
 
       // Sort touchpoints by timestamp
       touchpoints.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
-      // Identify customer journey stages
-      const stages = this.identifyJourneyStages(touchpoints, []);
+      // Add survey touchpoints (after sorting base items to keep order stable)
+      try {
+        const surveyRows = (surveys || []) as Array<{ id: string; createdAt: Date; respondedAt?: Date | null; channel?: string | null; status?: string | null; rating?: number | null }>;
+        for (const s of surveyRows) {
+          const ch = (s.channel || 'web').toString().toLowerCase();
+          const channelLabel = ch === 'email' || ch === 'whatsapp' || ch === 'sms' ? ch : 'web';
+          // sent
+          touchpoints.push({
+            id: `${s.id}:survey_sent`,
+            type: channelLabel as any,
+            timestamp: s.createdAt,
+            channel: (channelLabel as string).toUpperCase(),
+            interaction: 'survey_sent',
+            outcome: String(s.status || 'sent')
+          } as any);
+          // responded
+          if (s.respondedAt) {
+            touchpoints.push({
+              id: `${s.id}:survey_response`,
+              type: channelLabel as any,
+              timestamp: s.respondedAt,
+              channel: (channelLabel as string).toUpperCase(),
+              interaction: 'survey_response',
+              outcome: s.rating != null ? `rating_${Math.round(Number(s.rating))}` : 'responded'
+            } as any);
+          }
+        }
+        // Re-sort including surveys
+        touchpoints.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      } catch {
+        // ignore survey enrich failures
+      }
 
-      // Identify conversion events
-      const conversionEvents: Array<{ event: string; timestamp: Date; value: number; attribution: string[] }> = [];
+      // Identify customer journey stages (use orders for purchase signal)
+      const stages = this.identifyJourneyStages(
+        touchpoints,
+        (orders as Array<{ createdAt: Date }>).map((o) => ({ createdAt: o.createdAt }))
+      );
+
+      // Enrich touchpoints with stage information
+      touchpoints.forEach((tp) => {
+        const stage = this.determineStageForTouchpoint(tp.timestamp, stages);
+        (tp as any).metadata = { ...(tp as any).metadata, stage };
+      });
+
+      // Identify conversion events from successful orders
+      const conversionEvents: Array<{ event: string; timestamp: Date; value: number; attribution: string[] }> = (orders || [])
+        .filter((o: { status: string }) => o.status === 'succeeded')
+        .map((o: { id: string; createdAt: Date; amount: number }) => ({
+          event: 'purchase',
+          timestamp: o.createdAt,
+          value: Math.round((Number(o.amount || 0) / 100) * 100) / 100,
+          // Simple last-touch attribution using latest prior touchpoint channel
+          attribution: (() => {
+            const prior = [...touchpoints].filter(tp => tp.timestamp <= o.createdAt).slice(-3);
+            const channels = Array.from(new Set(prior.map((p) => p.type))).slice(-3);
+            return channels.length ? channels : ['unknown'];
+          })()
+        }));
 
       return {
         touchpoints,
@@ -596,10 +1059,10 @@ export class CustomerAnalyticsService {
     const openTicketsRisk = Math.min(100, openTickets * 12); // 0=>0, 5=>60, 8+=>~96
 
     // 3) Satisfaction (last 180d avg rating 1..5)
-    const csatAgg: any = await (this.prisma as any).customerSatisfactionSurvey?.aggregate?.({
+    const csatAgg = await (this.prisma as unknown as { customerSatisfactionSurvey?: { aggregate: (args: { where: Record<string, unknown>; _avg: { rating: boolean } }) => Promise<{ _avg: { rating: number | null } }> } }).customerSatisfactionSurvey?.aggregate?.({
       where: { customerId, tenantId, createdAt: { gte: last180 } },
       _avg: { rating: true },
-    }).catch(() => ({ _avg: { rating: null } }));
+    }).catch((): { _avg: { rating: number | null } } => ({ _avg: { rating: null } }));
     const rating = Number(csatAgg?._avg?.rating || 0);
     const satisfactionRisk = rating > 0 ? Math.max(0, Math.min(100, Math.round(100 - ((rating - 1) / 4) * 100))) : 55; // 5★->0 risk, 1★->100, unknown ~55
 
@@ -651,42 +1114,62 @@ export class CustomerAnalyticsService {
   }
 
   private identifyJourneyStages(
-    touchpoints: Array<{ timestamp: Date; interaction: string }>,
+    touchpoints: Array<{ timestamp: Date; interaction: string; type?: string }>,
     orders: Array<{ createdAt: Date }>
   ) {
-    const stages: Array<{ stage: 'awareness' | 'consideration' | 'purchase' | 'retention' | 'advocacy'; entryDate: Date; duration: number; touchpointCount: number }> = [];
-    let currentStage = 'awareness';
-    let stageStartDate = touchpoints[0]?.timestamp || new Date();
+    type StageKey = 'awareness' | 'consideration' | 'purchase' | 'retention' | 'advocacy'
+    const stageKeys: StageKey[] = ['awareness', 'consideration', 'purchase', 'retention', 'advocacy']
 
-    // Simple stage identification logic
-    touchpoints.forEach((touchpoint, index) => {
-      if (touchpoint.interaction === 'purchase' && currentStage !== 'purchase') {
-        // Close previous stage
-        if (currentStage) {
-          stages.push({
-            stage: currentStage as 'awareness' | 'consideration' | 'purchase' | 'retention' | 'advocacy',
-            entryDate: stageStartDate,
-            duration: touchpoint.timestamp.getTime() - stageStartDate.getTime(),
-            touchpointCount: index
-          });
-        }
-        
-        currentStage = 'purchase';
-        stageStartDate = touchpoint.timestamp;
+    const firstPurchaseAt: Date | undefined = orders && orders.length ? new Date(orders[0].createdAt) : undefined
+
+    // Map a touchpoint to a stage using simple heuristics and purchase boundary
+    function mapToStage(tp: { timestamp: Date; interaction: string; type?: string }): StageKey {
+      const kind = String(tp.type || '').toLowerCase()
+      const isPrePurchase = !firstPurchaseAt || tp.timestamp < firstPurchaseAt
+      if (kind === 'email' || kind === 'web' || kind === 'marketing' || kind === 'social' || kind === 'instagram' || kind === 'whatsapp') {
+        return isPrePurchase ? 'awareness' : 'retention'
       }
-    });
-
-    // Add final stage
-    if (Array.isArray(orders) && orders.length > 0) {
-      stages.push({
-        stage: 'retention',
-        entryDate: orders[orders.length - 1].createdAt,
-        duration: Date.now() - orders[orders.length - 1].createdAt.getTime(),
-        touchpointCount: touchpoints.length - stages.reduce((sum, s) => sum + s.touchpointCount, 0)
-      });
+      if (kind === 'phone' || tp.interaction === 'conversation' || kind === 'call' || kind === 'meeting') {
+        return isPrePurchase ? 'consideration' : 'retention'
+      }
+      if (tp.interaction === 'support_ticket' || kind === 'support') {
+        return 'retention'
+      }
+      return isPrePurchase ? 'awareness' : 'retention'
     }
 
-    return stages;
+    const stageBuckets = new Map<StageKey, { first?: Date; last?: Date; count: number }>()
+    for (const key of stageKeys) stageBuckets.set(key, { count: 0 })
+
+    for (const tp of touchpoints) {
+      const stage = mapToStage(tp)
+      const bucket = stageBuckets.get(stage)!
+      bucket.count += 1
+      if (!bucket.first || tp.timestamp < bucket.first) bucket.first = tp.timestamp
+      if (!bucket.last || tp.timestamp > bucket.last) bucket.last = tp.timestamp
+    }
+
+    // Purchase stage is taken from first succeeded order if present
+    if (firstPurchaseAt) {
+      const purchaseBucket = stageBuckets.get('purchase')!
+      purchaseBucket.count = (orders || []).length
+      purchaseBucket.first = firstPurchaseAt
+      purchaseBucket.last = firstPurchaseAt
+    }
+
+    const result = stageKeys
+      .map<{
+        stage: StageKey; entryDate: Date; duration: number; touchpointCount: number
+      }>((key) => {
+        const b = stageBuckets.get(key)!
+        const entry = b.first || (touchpoints[0]?.timestamp || new Date())
+        const duration = b.first && b.last ? Math.max(0, b.last.getTime() - b.first.getTime()) : 0
+        return { stage: key, entryDate: entry, duration, touchpointCount: b.count }
+      })
+      // Keep stable order but only include stages that have either activity or are purchase when there is an order
+      .filter((row) => row.touchpointCount > 0 || row.stage === 'purchase')
+
+    return result
   }
 
   // Attribution helper omitted (unused)
@@ -855,5 +1338,20 @@ export class CustomerAnalyticsService {
       explanation,
       confidence: Number(confidence.toFixed(2)),
     };
+  }
+
+  private determineStageForTouchpoint(
+    timestamp: Date,
+    stages: Array<{ stage: string; entryDate: Date; duration: number; touchpointCount: number }>
+  ): string {
+    // Find the stage that this touchpoint belongs to based on timestamp
+    for (let i = stages.length - 1; i >= 0; i--) {
+      const stage = stages[i];
+      if (timestamp >= stage.entryDate) {
+        return stage.stage;
+      }
+    }
+    // If no stage found, default to the first stage or 'awareness'
+    return stages.length > 0 ? stages[0].stage : 'awareness';
   }
 }

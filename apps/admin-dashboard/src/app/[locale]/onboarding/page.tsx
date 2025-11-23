@@ -1,133 +1,430 @@
+/**
+ * Onboarding Page
+ * Multi-step wizard for tenant admin and agent onboarding
+ */
+
 'use client';
 
-import React, { useEffect } from 'react';
-import { useTranslations } from 'next-intl';
-import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
-import { DashboardPreview } from '@/components/onboarding/dashboard-preview';
-import { useOnboardingStore } from '@/lib/store/onboarding-store';
-import { useAuthStore } from '@/lib/store/auth-store';
-import { OnboardingStep } from '@glavito/shared-types';
+import React, { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from '@/i18n.config';
+import { useTranslations } from 'next-intl';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { X, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { useOnboarding } from '@/lib/hooks/use-onboarding';
+import { useOnboardingWebSocket } from '@/lib/hooks/use-onboarding-websocket';
+import { ProgressBar } from '@/components/onboarding/progress-bar';
+import { StepNavigation } from '@/components/onboarding/step-navigation';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { useAuthStore } from '@/lib/store/auth-store';
+import type { OnboardingStep } from '@glavito/shared-types';
+
+// Import step components (we'll create these next)
+import { WelcomeStep } from '@/components/onboarding/steps/welcome-step';
+import { StripeStep } from '@/components/onboarding/steps/stripe-step';
+import { ChannelsStep } from '@/components/onboarding/steps/channels-step';
+import { TeamStep } from '@/components/onboarding/steps/team-step';
+import { KnowledgeBaseStep } from '@/components/onboarding/steps/knowledge-base-step';
+import { AIFeaturesStep } from '@/components/onboarding/steps/ai-features-step';
+import { WorkflowsStep } from '@/components/onboarding/steps/workflows-step';
+import { CompleteStep } from '@/components/onboarding/steps/complete-step';
+import { AgentProfileStep } from '@/components/onboarding/steps/agent-profile-step';
+import { AgentTourStep } from '@/components/onboarding/steps/agent-tour-step';
+import { AgentSampleTicketStep } from '@/components/onboarding/steps/agent-sample-ticket-step';
+import { AgentKBIntroStep } from '@/components/onboarding/steps/agent-kb-intro-step';
+import { AgentNotificationsStep } from '@/components/onboarding/steps/agent-notifications-step';
+
+// Step configuration with Icons8 icons
+const TENANT_STEPS_CONFIG = [
+  {
+    id: 'welcome',
+    label: 'Welcome',
+    icon: 'https://img.icons8.com/?size=32&id=3723',
+    component: WelcomeStep,
+  },
+  {
+    id: 'stripe',
+    label: 'Payment',
+    icon: 'https://img.icons8.com/?size=32&id=19951',
+    component: StripeStep,
+  },
+  {
+    id: 'channels',
+    label: 'Channels',
+    icon: 'https://img.icons8.com/?size=32&id=16466',
+    component: ChannelsStep,
+  },
+  {
+    id: 'team',
+    label: 'Team',
+    icon: 'https://img.icons8.com/?size=32&id=34287',
+    component: TeamStep,
+  },
+  {
+    id: 'knowledge-base',
+    label: 'Knowledge',
+    icon: 'https://img.icons8.com/?size=32&id=36389',
+    component: KnowledgeBaseStep,
+  },
+  {
+    id: 'ai-features',
+    label: 'AI Features',
+    icon: 'https://img.icons8.com/?size=32&id=FQrA6ic36VQu',
+    component: AIFeaturesStep,
+  },
+  {
+    id: 'workflows',
+    label: 'Workflows',
+    icon: 'https://img.icons8.com/?size=32&id=43738',
+    component: WorkflowsStep,
+  },
+  {
+    id: 'complete',
+    label: 'Done',
+    icon: 'https://img.icons8.com/?size=32&id=82751',
+    component: CompleteStep,
+  },
+];
+
+const AGENT_STEPS_CONFIG = [
+  {
+    id: 'profile',
+    label: 'Profile',
+    icon: 'https://img.icons8.com/?size=32&id=23264',
+    component: AgentProfileStep,
+  },
+  {
+    id: 'tour',
+    label: 'Tour',
+    icon: 'https://img.icons8.com/?size=32&id=31906',
+    component: AgentTourStep,
+  },
+  {
+    id: 'sample-ticket',
+    label: 'Practice',
+    icon: 'https://img.icons8.com/?size=32&id=85057',
+    component: AgentSampleTicketStep,
+  },
+  {
+    id: 'knowledge-base-intro',
+    label: 'Knowledge',
+    icon: 'https://img.icons8.com/?size=32&id=36389',
+    component: AgentKBIntroStep,
+  },
+  {
+    id: 'notifications',
+    label: 'Settings',
+    icon: 'https://img.icons8.com/?size=32&id=9730',
+    component: AgentNotificationsStep,
+  },
+];
 
 export default function OnboardingPage() {
-  const t = useTranslations('onboarding');
-  const tc = useTranslations('common');
   const router = useRouter();
-  const {
-    session,
-    progress,
-    isLoading,
-    error,
-    isInitialized,
-    initializeOnboarding,
-    updateStep,
-    completeOnboarding,
-    clearError,
-  } = useOnboardingStore();
-
+  const t = useTranslations('onboarding');
+  const { user } = useAuth();
+  const onboarding = useOnboarding();
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  
+  // Connect to WebSocket for real-time updates
+  useOnboardingWebSocket(user?.id);
+  
+  // Determine step configuration based on onboarding type
+  const stepsConfig = onboarding.session?.type === 'tenant_setup'
+    ? TENANT_STEPS_CONFIG
+    : AGENT_STEPS_CONFIG;
+  
+  const currentStepConfig = stepsConfig[onboarding.currentStepIndex];
+  const CurrentStepComponent = currentStepConfig?.component;
+  const autoCompleteTriggered = useRef(false);
+  
+  // Initialize onboarding ONCE when component mounts
+  const initializationAttempted = useRef(false);
+  
   useEffect(() => {
-    // Initialize when first loading, or if persisted state says initialized but critical data is missing
-    if (!isInitialized || !session || !progress) {
-      initializeOnboarding();
+    // Prevent multiple initialization attempts
+    if (initializationAttempted.current) {
+      return;
     }
-  }, [isInitialized, session, progress, initializeOnboarding]);
-
-  const handleStepComplete = async (stepId: OnboardingStep, data: Record<string, unknown>) => {
-    try {
-      await updateStep(stepId, data);
-    } catch (err) {
-      console.error('Error completing step:', err);
-      throw err;
+    
+    // If already has a session (loaded by useOnboarding hook), we're ready
+    if (onboarding.session) {
+      setIsReady(true);
+      return;
     }
-  };
-
-  const handleComplete = async () => {
-    try {
-      const result = await completeOnboarding();
-      console.log('Onboarding completed!', result);
-      
-      // Update user's onboarding status in auth store
-      const { updateUser } = useAuthStore.getState();
-      if (updateUser) {
-        updateUser({ onboardingCompleted: true });
+    
+    // Wait for user and initial load to complete
+    if (!user || onboarding.isLoading) {
+      return;
+    }
+    
+    // Only attempt once
+    initializationAttempted.current = true;
+    
+    // Start a new session since none exists
+    const startSession = async () => {
+      try {
+        console.log('[Onboarding] No existing session, starting new one for user:', user.id);
+        
+        await onboarding.startOnboarding(
+          user.role === 'admin' || user.role === 'tenant_admin' ? 'tenant_setup' : 'agent_welcome',
+          user.role === 'admin' || user.role === 'tenant_admin' ? 'tenant_admin' : 'agent'
+        );
+        
+        setIsReady(true);
+      } catch (error) {
+        console.error('[Onboarding] Failed to start session:', error);
+        setIsReady(true); // Show error state but don't block
       }
+    };
+    
+    startSession();
+  }, [user, onboarding.session, onboarding.isLoading, onboarding]);
+
+  // Auto-complete when entering the final "complete" step to avoid getting stuck
+  useEffect(() => {
+    if (currentStepConfig?.id !== 'complete') {
+      autoCompleteTriggered.current = false;
+      return;
+    }
+
+    if (autoCompleteTriggered.current) {
+      return;
+    }
+
+    autoCompleteTriggered.current = true;
+    (async () => {
+      try {
+        console.log('[Onboarding] Auto-completing on final step...');
+        await onboarding.completeOnboarding();
+      } catch (err) {
+        console.warn('[Onboarding] Auto-complete failed or already completed:', err);
+      } finally {
+        const target = (user?.role === 'admin' || user?.role === 'tenant_admin') ? '/dashboard' : '/agent';
+        console.log('[Onboarding] Auto navigation to:', target);
+        router.replace(target);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStepConfig?.id]);
+  
+  const handleNext = async () => {
+    try {
+      // Check if we're on the last step BEFORE calling nextStep
+      const wasLastStep = onboarding.isLastStep;
       
-      // Redirect to dashboard (locale-aware)
-      router.push('/dashboard');
-    } catch (err) {
-      console.error('Error completing onboarding:', err);
-      throw err;
+      console.log('[Onboarding] handleNext called, wasLastStep:', wasLastStep);
+      console.log('[Onboarding] Current session status:', onboarding.session?.status);
+      console.log('[Onboarding] isLoading:', onboarding.isLoading);
+      
+      if (wasLastStep) {
+        // Complete the onboarding
+        console.log('[Onboarding] Completing onboarding...');
+        
+        // Add timeout to prevent hanging
+        const completionPromise = onboarding.completeOnboarding();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Completion timeout')), 10000)
+        );
+        
+        try {
+          await Promise.race([completionPromise, timeoutPromise]);
+          console.log('[Onboarding] Onboarding completed successfully');
+        } catch (timeoutError) {
+          console.warn('[Onboarding] Completion timed out or failed:', timeoutError);
+          // Continue anyway - we'll navigate regardless
+        }
+        
+        // Navigate to appropriate dashboard
+        const target = (user?.role === 'admin' || user?.role === 'tenant_admin') ? '/dashboard' : '/agent';
+        console.log('[Onboarding] Navigating to:', target);
+        router.push(target);
+      } else {
+        // Move to next step
+        console.log('[Onboarding] Moving to next step...');
+        await onboarding.nextStep();
+        console.log('[Onboarding] Moved to next step');
+      }
+    } catch (error) {
+      console.error('[Onboarding] Failed to proceed:', error);
+      // Try to navigate anyway if we're on the last step
+      if (onboarding.isLastStep) {
+        const target = (user?.role === 'admin' || user?.role === 'tenant_admin') ? '/dashboard' : '/agent';
+        console.log('[Onboarding] Error recovery: forcing navigation to', target);
+        router.push(target);
+      }
+    }
+  };
+  
+  const handlePrev = () => {
+    onboarding.prevStep();
+  };
+  
+  const handleSkip = async () => {
+    if (currentStepConfig) {
+      try {
+        await onboarding.skipStep(currentStepConfig.id as OnboardingStep);
+      } catch (error) {
+        console.error('Failed to skip step:', error);
+        // You could add a toast notification here
+      }
+    }
+  };
+  
+  const handleExit = () => {
+    setExitDialogOpen(true);
+  };
+  
+  const confirmExit = async () => {
+    try {
+      await onboarding.pauseOnboarding();
+      const target = (user?.role === 'admin' || user?.role === 'tenant_admin') ? '/dashboard' : '/agent';
+      router.push(target);
+    } catch (error) {
+      console.error('Failed to pause onboarding:', error);
+      // Still navigate to dashboard even if pause fails
+      const target = (user?.role === 'admin' || user?.role === 'tenant_admin') ? '/dashboard' : '/agent';
+      router.push(target);
     }
   };
 
-  const Loading = (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary mx-auto mb-4"></div>
-        <p className="text-sm text-gray-600">{t('loading.initializing')}</p>
-      </div>
-    </div>
-  );
-
-  // Show error first to avoid masking failures behind a spinner
-  if (error) {
+  // Safety net: if backend marks onboarding completed, navigate automatically (one-shot)
+  const safetyRedirectedRef = useRef(false);
+  useEffect(() => {
+    if (safetyRedirectedRef.current) return;
+    if (onboarding.session?.status === 'completed') {
+      try {
+        useAuthStore.getState().updateUser({ onboardingCompleted: true });
+      } catch (err) {
+        console.warn('[Onboarding] Failed to mark user onboardingCompleted in store', err);
+      }
+      safetyRedirectedRef.current = true;
+      const target = (user?.role === 'admin' || user?.role === 'tenant_admin') ? '/dashboard' : '/agent';
+      router.replace(target);
+    }
+  }, [onboarding.session?.status, user?.role, router]);
+  
+  // Loading state
+  if (!isReady || !currentStepConfig) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="relative mb-6">
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">{t('errors.loadingFailed')}</h2>
-          <p className="text-gray-600 mb-6 leading-relaxed">{error}</p>
-          <button
-            onClick={() => {
-              clearError();
-              initializeOnboarding();
-            }}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
-          >
-            {tc('tryAgain', { default: 'Try Again' })}
-          </button>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-pink-950">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
+          <p className="text-lg font-medium text-gray-600 dark:text-gray-400">
+            {t('loading', { default: 'Preparing your onboarding...' })}
+          </p>
         </div>
       </div>
     );
   }
-
-  if (isLoading || !isInitialized || !session || !progress) {
-    return Loading;
-  }
-
+  
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b">
-        <div className="mx-auto max-w-7xl px-6 py-4 flex items-center gap-3">
-          <div className="h-7 w-7 rounded-md bg-black"></div>
-          <span className="text-lg font-semibold tracking-tight">Glavito</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-950 dark:to-pink-950">
+      {/* Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Image
+              src="https://img.icons8.com/?size=40&id=xuvGCOXi8Wyg"
+              alt="Logo"
+              width={36}
+              height={36}
+            />
+            <div>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                {t('title', { default: 'Welcome to Glavito' })}
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('subtitle', { default: 'Let\'s get you set up' })}
+              </p>
+            </div>
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleExit}
+            className="hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <X className="w-5 h-5" />
+          </Button>
         </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <section className="lg:col-span-7 xl:col-span-6">
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold tracking-tight">{t('title', { defaultValue: 'Tell us about your company' })}</h1>
-            <p className="text-sm text-muted-foreground mt-2 max-w-prose">{t('subtitle')}</p>
-          </div>
-          <OnboardingWizard
-            session={session}
-            progress={progress}
-            onStepComplete={handleStepComplete}
-            onComplete={handleComplete}
+      </div>
+      
+      {/* Main Content */}
+      <div className="container mx-auto px-4 pt-24 pb-8">
+        <Card className="max-w-5xl mx-auto border-0 shadow-2xl overflow-hidden">
+          {/* Progress Bar */}
+          <ProgressBar
+            steps={stepsConfig.map(s => ({ id: s.id, label: s.label, icon: s.icon }))}
+            currentStepIndex={onboarding.currentStepIndex}
+            completedSteps={onboarding.stepData ? Object.keys(onboarding.stepData) : []}
           />
-        </section>
-        <aside className="hidden lg:block lg:col-span-5 xl:col-span-6">
-          <div className="sticky top-8 rounded-xl border bg-muted/30 p-6 h-[calc(100vh-6rem)]">
-            <DashboardPreview variant="onboarding" />
+          
+          {/* Step Content */}
+          <div className="p-8 min-h-[500px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStepConfig.id}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.3 }}
+              >
+                <CurrentStepComponent
+                  data={(onboarding.stepData[currentStepConfig.id] as Record<string, unknown>) || {}}
+                  onDataChange={(data: Record<string, unknown>) => {
+                    onboarding.saveStepData(currentStepConfig.id as OnboardingStep, data);
+                  }}
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </aside>
-      </main>
+          
+          {/* Navigation */}
+          <StepNavigation
+            canGoPrev={onboarding.canGoPrev}
+            canGoNext={onboarding.canGoNext}
+            isFirstStep={onboarding.isFirstStep}
+            isLastStep={onboarding.isLastStep}
+            isLoading={onboarding.isLoading}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            onSkip={handleSkip}
+          />
+        </Card>
+      </div>
+      
+      {/* Exit Confirmation Dialog */}
+      <Dialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('exitDialog.title', { default: 'Exit Onboarding?' })}</DialogTitle>
+            <DialogDescription>
+              {t('exitDialog.description', { default: 'Your progress will be saved. You can resume anytime from where you left off.' })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExitDialogOpen(false)}>
+              {t('exitDialog.cancel', { default: 'Continue Onboarding' })}
+            </Button>
+            <Button onClick={confirmExit}>
+              {t('exitDialog.confirm', { default: 'Exit for Now' })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

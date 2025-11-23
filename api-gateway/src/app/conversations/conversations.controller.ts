@@ -50,7 +50,7 @@ export class ConversationsController {
   @Permissions('conversations.read')
   async findOne(@Param('id') id: string, @Req() req: any) {
     const tenantId = req?.user?.tenantId;
-    const item = await this.conversationsService.findOne(id);
+    const item = await this.conversationsService.findOne(id, tenantId);
     if (!item || (tenantId && item.tenantId !== tenantId)) {
       throw new NotFoundException('Conversation not found');
     }
@@ -63,7 +63,7 @@ export class ConversationsController {
   @Header('Cache-Control', 'private, max-age=30')
   async findMessages(@Param('id') id: string, @Req() req: any) {
     const tenantId = req?.user?.tenantId;
-    const item = await this.conversationsService.findOne(id);
+    const item = await this.conversationsService.findOne(id, tenantId);
     if (!item || (tenantId && item.tenantId !== tenantId)) {
       throw new NotFoundException('Conversation not found');
     }
@@ -82,5 +82,13 @@ export class ConversationsController {
   @Permissions('conversations.delete')
   remove(@Param('id') id: string) {
     return this.conversationsService.remove(id);
+  }
+
+  @Post(':id/escalate')
+  @Roles('admin', 'agent')
+  @Permissions('tickets.create')
+  escalate(@Param('id') id: string, @Body() body: { reason?: string; priority?: string; assignAgentId?: string; tags?: string[] }, @Req() req: any) {
+    const tenantId = req?.user?.tenantId;
+    return this.conversationsService.escalateToTicket(id, { ...(body || {}), tenantId });
   }
 }

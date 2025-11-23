@@ -198,6 +198,32 @@ export interface TicketEscalatedEvent extends TicketEvent {
   };
 }
 
+export interface TicketTriagedEvent extends TicketEvent {
+  eventType: 'ticket.triaged';
+  eventData: {
+    ticketId: string;
+    intent: string;
+    category: string;
+    priority: string;
+    urgencyLevel: string;
+    language: string;
+    confidence: number;
+    entities: Array<{ type: string; value: string; confidence: number }>;
+  };
+}
+
+export interface TicketAutoAssignedEvent extends TicketEvent {
+  eventType: 'ticket.auto_assigned';
+  eventData: {
+    ticketId: string;
+    assignedAgentId: string;
+    confidence: number;
+    intent: string;
+    category: string;
+    reasoning?: string;
+  };
+}
+
 // Customer Events
 export interface CustomerEvent extends DomainEvent {
   aggregateType: 'customer';

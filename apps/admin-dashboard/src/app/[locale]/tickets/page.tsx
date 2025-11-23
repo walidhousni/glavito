@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import {
   Plus,
-  Filter,
-  Search,
   MoreHorizontal,
   Download,
   RefreshCw,
@@ -20,20 +18,15 @@ import {
   AlertTriangle,
   CheckCircle,
   Eye,
-  MessageSquare,
-  Tag,
   User,
   Building,
-  Mail,
-  Phone
+  Sparkles
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -45,8 +38,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -56,86 +47,24 @@ import { TicketDetailsDialog } from '@/components/tickets/ticket-details-dialog'
 import { BulkActionsBar } from '@/components/tickets/bulk-actions-bar';
 import { ModernTicketFilters } from '@/components/tickets/modern-ticket-filters';
 import { TicketCard } from '@/components/tickets/ticket-card';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { useTickets } from '@/lib/hooks/use-tickets';
+import { io, Socket } from 'socket.io-client';
 
-// Mock data
-const mockTickets = [
-  {
-    id: '#665',
-    subject: 'Login Issue',
-    description: 'Unable to access premium features after subscription upgrade',
-    status: 'open',
-    priority: 'high',
-    customer: {
-      firstName: 'Floratina',
-      lastName: 'Wong',
-      email: 'floratina@acme.com',
-      company: 'Acme Corp',
-      avatar: null
-    },
-    assignedAgent: null,
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-15T14:20:00Z',
-    tags: ['billing', 'premium'],
-    _count: { conversations: 3 }
-  },
-  {
-    id: '#662',
-    subject: 'Customer complaint',
-    description: 'Product quality issues reported by customer',
-    status: 'pending',
-    priority: 'low',
-    customer: {
-      firstName: 'Melorinshop',
-      lastName: 'Taylor',
-      email: 'melo@techstart.com',
-      company: 'TechStart Inc',
-      avatar: null
-    },
-    assignedAgent: {
-      firstName: 'Alice',
-      lastName: 'Wilson',
-      avatar: null
-    },
-    createdAt: '2024-01-14T15:20:00Z',
-    updatedAt: '2024-01-15T09:10:00Z',
-    tags: ['quality', 'complaint'],
-    _count: { conversations: 1 }
-  },
-  {
-    id: '#670',
-    subject: 'More information required',
-    description: 'Need additional details for account verification',
-    status: 'pending',
-    priority: 'high',
-    customer: {
-      firstName: 'Shoppine',
-      lastName: 'Melen',
-      email: 'shop@global.com',
-      company: 'Global Solutions',
-      avatar: null
-    },
-    assignedAgent: {
-      firstName: 'Bob',
-      lastName: 'Brown',
-      avatar: null
-    },
-    createdAt: '2024-01-13T11:45:00Z',
-    updatedAt: '2024-01-15T08:30:00Z',
-    tags: ['verification', 'account'],
-    _count: { conversations: 5 }
-  }
-];
-
-const statusCounts = {
-  all: 137,
-  open: 85,
-  pending: 6,
-  on_hold: 17,
-  closed: 29
-};
+// Live agent tickets (no mocks)
 
 export default function TicketsPage() {
   const t = useTranslations('tickets');
+  const { user } = useAuth();
+  const agentId = (user && typeof user === 'object' && 'id' in (user as object))
+    ? (user as { id?: string }).id
+    : undefined;
+  const baseFilters = useMemo(() => ({
+    status: [],
+    priority: [],
+    assignedAgentId: agentId,
+    unassigned: false,
+  }), [agentId]);
   const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [sortBy, setSortBy] = useState('created');
@@ -145,6 +74,38 @@ export default function TicketsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeAgentsLive, setActiveAgentsLive] = useState<number | null>(null);
+  const wsRef = useRef<Socket | null>(null);
+
+  const sortField = useMemo(() => {
+    switch (sortBy) {
+      case 'created': return 'createdAt';
+      case 'updated': return 'updatedAt';
+      case 'priority': return 'priority';
+      case 'status': return 'status';
+      default: return 'createdAt';
+    }
+  }, [sortBy]);
+
+  const statusForApi = useMemo(() => {
+    if (filterStatus === 'all') return [] as string[];
+    if (filterStatus === 'closed') return ['closed', 'resolved'];
+    if (filterStatus === 'on_hold') return ['waiting'];
+    return [filterStatus];
+  }, [filterStatus]);
+
+  const memoFilters = useMemo(() => ({
+    ...baseFilters,
+    status: statusForApi,
+    search: searchQuery || undefined,
+  }), [baseFilters, statusForApi, searchQuery]);
+
+  const { tickets, stats, refetch } = useTickets({
+    filters: memoFilters,
+    pagination: { page: 1, limit: 20, sortBy: sortField, sortOrder },
+    autoRefresh: true,
+    refreshInterval: 30000,
+  });
 
   const handleSelectTicket = (ticketId: string, selected: boolean) => {
     if (selected) {
@@ -155,17 +116,13 @@ export default function TicketsPage() {
   };
 
   const handleSelectAll = (selected: boolean) => {
-    if (selected) {
-      setSelectedTickets(mockTickets.map(ticket => ticket.id));
-    } else {
-      setSelectedTickets([]);
-    }
+    const data = tickets?.data || []
+    setSelectedTickets(selected ? data.map(t => t.id) : [])
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await refetch();
     setRefreshing(false);
   };
 
@@ -219,6 +176,19 @@ export default function TicketsPage() {
     return created.toLocaleDateString();
   };
 
+  // Live presence: update Active Agents via WS
+  useEffect(() => {
+    const authStorage = typeof window !== 'undefined' ? window.localStorage.getItem('auth-storage') : null;
+    const token = authStorage ? (JSON.parse(authStorage)?.state?.tokens?.accessToken as string | undefined) : undefined;
+    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
+    const socket = io(`${base}/tickets`, { auth: { token }, transports: ['websocket', 'polling'], timeout: 10000 });
+    wsRef.current = socket;
+    socket.on('presence.agents', (payload: { tenantId: string; activeAgents: number }) => {
+      setActiveAgentsLive(Number(payload?.activeAgents || 0));
+    });
+    return () => { try { socket.disconnect(); } catch { /* noop */ } };
+  }, []);
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -252,8 +222,14 @@ export default function TicketsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {Object.entries(statusCounts).map(([status, count]) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-4">
+        {Object.entries({
+          all: Number(stats?.total || 0),
+          open: Number(stats?.open || 0),
+          pending: Number(stats?.waiting || 0),
+          on_hold: Number(stats?.waiting || 0),
+          closed: Number((stats?.closed || 0) + (stats?.resolved || 0)),
+        }).map(([status, count]) => (
           <motion.div
             key={status}
             whileHover={{ scale: 1.02 }}
@@ -297,6 +273,86 @@ export default function TicketsPage() {
             </Card>
           </motion.div>
         ))}
+        {/* Overdue mini-card */}
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Card className="border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all duration-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {t('overdue')}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {Number(stats?.overdue || 0)}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
+                  <Clock className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+        {/* SLA at risk mini-card */}
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Card className="border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all duration-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {t('slaAtRisk')}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {Number(stats?.slaAtRisk || 0)}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/20">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+        {/* Active agents mini-card */}
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Card className="border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all duration-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {t('activeAgents')}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {Number((activeAgentsLive ?? (stats?.activeAgents ?? 0)) || 0)}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/20">
+                  <Users className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+        {/* Week trend mini-card */}
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Card className="border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all duration-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {t('weekTrend')}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {(Number(stats?.weekTrendPct ?? 0)).toFixed(1)}%
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/20">
+                  <Clock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Modern Filters */}
@@ -313,7 +369,7 @@ export default function TicketsPage() {
           tags: [],
           special: []
         }}
-        onFiltersChange={(newFilters) => {
+        onFiltersChange={(newFilters: { search: string; status: string[] }) => {
           setSearchQuery(newFilters.search);
           setFilterStatus(newFilters.status.length > 0 ? newFilters.status[0] : 'all');
         }}
@@ -403,7 +459,7 @@ export default function TicketsPage() {
             </CardTitle>
             <div className="flex items-center space-x-2">
               <Checkbox
-                checked={selectedTickets.length === mockTickets.length}
+                checked={selectedTickets.length > 0 && selectedTickets.length === (tickets?.data?.length || 0)}
                 onCheckedChange={handleSelectAll}
               />
               <span className="text-sm text-gray-500">
@@ -418,7 +474,7 @@ export default function TicketsPage() {
         <CardContent className="p-0">
           {viewMode === 'list' ? (
             <div className="space-y-0">
-              {mockTickets.map((ticket, index) => (
+              {(tickets?.data || []).map((ticket, index) => (
                 <motion.div
                   key={ticket.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -440,16 +496,13 @@ export default function TicketsPage() {
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       {/* Ticket ID */}
                       <div className="flex-shrink-0">
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {ticket.id}
-                        </Badge>
+                        <Badge variant="outline" className="font-mono text-xs">{ticket.id}</Badge>
                       </div>
 
-                      {/* Customer Avatar */}
+                      {/* Customer Avatar (initials only) */}
                       <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarImage src={ticket.customer.avatar} />
                         <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                          {ticket.customer.firstName[0]}{ticket.customer.lastName[0]}
+                          {(ticket.customer?.firstName?.[0] || '')}{(ticket.customer?.lastName?.[0] || '')}
                         </AvatarFallback>
                       </Avatar>
 
@@ -470,23 +523,18 @@ export default function TicketsPage() {
                           <div className="flex items-center space-x-1">
                             <User className="h-3 w-3" />
                             <span className="truncate">
-                              {ticket.customer.firstName} {ticket.customer.lastName}
+                              {ticket.customer?.firstName} {ticket.customer?.lastName}
                             </span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Building className="h-3 w-3" />
-                            <span className="truncate">{ticket.customer.company}</span>
+                            <span className="truncate">{ticket.customer?.company}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-3 w-3" />
-                            <span>{getTimeAgo(ticket.createdAt)}</span>
+                            <span>{getTimeAgo(String(ticket.createdAt))}</span>
                           </div>
-                          {ticket._count.conversations > 0 && (
-                            <div className="flex items-center space-x-1">
-                              <MessageSquare className="h-3 w-3" />
-                              <span>{ticket._count.conversations}</span>
-                            </div>
-                          )}
+                          
                         </div>
                       </div>
 
@@ -498,15 +546,15 @@ export default function TicketsPage() {
                         
                         {ticket.assignedAgent ? (
                           <div className="flex items-center space-x-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={ticket.assignedAgent.avatar} />
-                              <AvatarFallback className="text-xs">
-                                {ticket.assignedAgent.firstName[0]}{ticket.assignedAgent.lastName[0]}
-                              </AvatarFallback>
-                            </Avatar>
                             <span className="text-sm text-gray-600 dark:text-gray-400">
-                              {ticket.assignedAgent.firstName}
+                              {ticket.assignedAgent?.firstName}
                             </span>
+                            {(ticket as unknown as { assignedByAI?: boolean })?.assignedByAI && (
+                              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                <Sparkles className="h-3 w-3" />
+                                {t('tickets.autoAssigned') || 'AI'}
+                              </Badge>
+                            )}
                           </div>
                         ) : (
                           <Badge variant="outline" className="text-xs">
@@ -526,12 +574,12 @@ export default function TicketsPage() {
           ) : (
             <div className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {mockTickets.map((ticket, index) => (
+                {(tickets?.data || []).map((ticket, index) => (
                   <TicketCard
                     key={ticket.id}
                     ticket={ticket}
                     selected={selectedTickets.includes(ticket.id)}
-                    onSelect={(selected) => handleSelectTicket(ticket.id, selected)}
+                    onSelect={(selected: boolean) => handleSelectTicket(ticket.id, selected)}
                     onClick={() => setSelectedTicketId(ticket.id)}
                   />
                 ))}
@@ -566,7 +614,7 @@ export default function TicketsPage() {
         <TicketDetailsDialog
           ticketId={selectedTicketId}
           open={!!selectedTicketId}
-          onOpenChange={(open) => !open && setSelectedTicketId(null)}
+          onOpenChange={(open: boolean) => !open && setSelectedTicketId(null)}
         />
       )}
     </div>

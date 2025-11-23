@@ -7,6 +7,7 @@ export interface UnifiedInboxQuery {
   priority?: string;
   channel?: string;
   assignedTo?: string;
+  teamId?: string;
   search?: string;
 }
 
@@ -58,10 +59,27 @@ export class ConversationsApiClient {
     return data;
   }
 
+  async escalate(conversationId: string, payload: { reason?: string; priority?: string; assignAgentId?: string; tags?: string[] } = {}) {
+    try {
+      const { data } = await api.post(`/v1/conversations/advanced/${conversationId}/escalate`, payload)
+      const wrapped = data as any
+      return (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped
+    } catch {
+      const { data } = await api.post(`/conversations/${conversationId}/escalate`, payload)
+      const wrapped = data as any
+      return (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped
+    }
+  }
+
   async getUnifiedInbox(params: UnifiedInboxQuery = {}) {
     try {
       const { data } = await api.get(`/v1/conversations/advanced/unified-inbox`, { params });
-      return data;
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
     } catch (error) {
       console.error('Failed to fetch unified inbox:', error);
       return {
@@ -72,19 +90,96 @@ export class ConversationsApiClient {
     }
   }
 
-  async sendMessage(conversationId: string, payload: { content: string; messageType: string; templateId?: string; templateParams?: Record<string, string>; attachments?: any[] }) {
+  async assign(conversationId: string, payload: { agentId?: string; teamId?: string; reason?: string }) {
+    try {
+      const { data } = await api.post(`/v1/conversations/advanced/${conversationId}/assign`, payload);
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    } catch {
+      const { data } = await api.post(`${this.basePath}/${conversationId}/assign`, payload);
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    }
+  }
+
+  async listTeams(includeMembers = false) {
+    try {
+      const { data } = await api.get('/teams', { params: { includeMembers } });
+      const wrapped = data as any
+      return (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped
+    } catch (e) {
+      return [] as any[]
+    }
+  }
+
+  async getTeamMembers(teamId: string) {
+    try {
+      const { data } = await api.get(`/teams/${teamId}/members`)
+      const wrapped = data as any
+      return (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped
+    } catch {
+      return []
+    }
+  }
+
+  async sendMessage(
+    conversationId: string,
+    payload: {
+      content: string;
+      messageType: string;
+      templateId?: string;
+      templateParams?: Record<string, string>;
+      attachments?: any[];
+      metadata?: Record<string, any>;
+      replyToMessageId?: string;
+      isInternalNote?: boolean;
+    }
+  ) {
     // Prefer advanced endpoint if present; fallback to generic messages
     try {
       const { data } = await api.post(`/v1/conversations/advanced/${conversationId}/messages`, payload);
-      return data;
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
     } catch {
       const { data } = await api.post(`/messages`, { conversationId, ...payload });
-      return data;
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
     }
   }
 
   async getRealtimeAnalytics(timeRange: '1h' | '24h' | '7d' = '24h') {
     const { data } = await api.get('/v1/conversations/advanced/analytics/real-time', { params: { timeRange } })
+    return (data as any)?.data ?? data
+  }
+
+  async markRead(conversationId: string, read = true) {
+    const { data } = await api.post(`/v1/conversations/advanced/${conversationId}/read`, { read })
+    return (data as any)?.data ?? data
+  }
+
+  async markBulk(ids: string[], read = true) {
+    const { data } = await api.post(`/v1/conversations/advanced/mark-bulk`, { ids, read })
+    return (data as any)?.data ?? data
+  }
+
+  async updateStatus(conversationId: string, status: 'active' | 'waiting' | 'closed' | 'archived', reason?: string) {
+    const { data } = await api.post(`/v1/conversations/advanced/${conversationId}/status`, { status, reason })
     return (data as any)?.data ?? data
   }
 
@@ -97,6 +192,141 @@ export class ConversationsApiClient {
     });
     return data as { url: string; key: string; size: number; mimeType: string };
   }
+
+  async getConversation(conversationId: string) {
+    try {
+      const { data } = await api.get(`/v1/conversations/advanced/${conversationId}`);
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    } catch (error) {
+      console.error('Failed to fetch conversation:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to load conversation',
+        data: null
+      };
+    }
+  }
+
+  async updateConversation(conversationId: string, payload: { status?: string; priority?: string; tags?: string[] }) {
+    try {
+      const { data } = await api.patch(`/v1/conversations/advanced/${conversationId}`, payload);
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    } catch (error) {
+      console.error('Failed to update conversation:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update conversation',
+        data: null
+      };
+    }
+  }
+
+  async addReaction(messageId: string, emoji: string) {
+    try {
+      const { data } = await api.post(`/v1/messages/${messageId}/reactions`, { emoji });
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    } catch (error) {
+      console.error('Failed to add reaction:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to add reaction',
+        data: null
+      };
+    }
+  }
+
+  async removeReaction(messageId: string, emoji: string) {
+    try {
+      const { data } = await api.delete(`/v1/messages/${messageId}/reactions`, { data: { emoji } });
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    } catch (error) {
+      console.error('Failed to remove reaction:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to remove reaction',
+        data: null
+      };
+    }
+  }
+
+  async createInternalNote(conversationId: string, payload: { content: string; mentions?: string[]; isPinned?: boolean }) {
+    try {
+      const { data } = await api.post(`/v1/conversations/${conversationId}/notes`, payload);
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    } catch (error) {
+      console.error('Failed to create internal note:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create internal note',
+        data: null
+      };
+    }
+  }
+
+  async getInternalNotes(conversationId: string, pinnedOnly = false) {
+    try {
+      const { data } = await api.get(`/v1/conversations/${conversationId}/notes`, { params: { pinnedOnly } });
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    } catch (error) {
+      console.error('Failed to fetch internal notes:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch internal notes',
+        data: null
+      };
+    }
+  }
+
+  async initiateCall(conversationId: string, payload: { recipientId: string; callType: 'audio' | 'video' }) {
+    try {
+      const { data } = await api.post(`/v1/conversations/${conversationId}/calls`, payload);
+      const wrapped = data as any;
+      const inner = (wrapped && typeof wrapped === 'object') ? (wrapped.data ?? wrapped) : wrapped;
+      if (inner && typeof inner.success === 'boolean' && 'data' in inner) {
+        return inner;
+      }
+      return { success: true, data: inner } as { success: boolean; data: any };
+    } catch (error) {
+      console.error('Failed to initiate call:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to initiate call',
+        data: null
+      };
+    }
+  }
+
+
 }
 
 export const conversationsApi = new ConversationsApiClient('/conversations');

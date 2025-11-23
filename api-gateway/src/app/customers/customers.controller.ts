@@ -122,4 +122,98 @@ export class CustomersController {
   getInsights(@Param('id') id: string, @CurrentTenant() tenantId: string): any {
     return this.customerAnalytics.getCustomerInsights(id, tenantId);
   }
+
+  // --- Preferences & Consent ---
+  @Get(':id/preferences')
+  @Roles('admin', 'agent')
+  @Permissions('customers.read')
+  async getPreferences(@Param('id') id: string, @Req() req: any) {
+    return this.customersService.getPreferences(id, req?.user?.tenantId);
+  }
+
+  @Post(':id/preferences')
+  @Roles('admin', 'agent')
+  @Permissions('customers.update')
+  async updatePreferences(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() body: { marketingPreferences?: { whatsappOptOut?: boolean; emailOptOut?: boolean; smsOptOut?: boolean }; quietHours?: { start?: string; end?: string; timezone?: string }; language?: string }
+  ) {
+    return this.customersService.updatePreferences(id, req?.user?.tenantId, body || {});
+  }
+
+  @Get(':id/consent/logs')
+  @Roles('admin', 'agent')
+  @Permissions('customers.read')
+  async getConsentLogs(@Param('id') id: string, @Req() req: any) {
+    return this.customersService.listConsentLogs(id, req?.user?.tenantId);
+  }
+
+  @Post(':id/consent')
+  @Roles('admin', 'agent')
+  @Permissions('customers.update')
+  async appendConsent(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() body: { channel?: 'whatsapp'|'email'|'sms'|'web'; consent: boolean; reason?: string }
+  ) {
+    return this.customersService.appendConsent(id, req?.user?.tenantId, body);
+  }
+
+  // Recent orders (for 360 UI enrichment)
+  @Get(':id/orders/recent')
+  @Roles('admin', 'agent')
+  @Permissions('customers.read')
+  getRecentOrders(@Param('id') id: string, @CurrentTenant() tenantId: string, @Query('limit') limit?: number) {
+    return this.customersService.getRecentOrders(id, tenantId, Number(limit) || 10)
+  }
+
+  @Post(':id/orders')
+  @Roles('admin', 'agent')
+  @Permissions('customers.update')
+  createOrder(@Param('id') id: string, @CurrentTenant() tenantId: string, @Body() body: { items: Array<{ sku: string; quantity: number; unitPrice: number; currency?: string }>; notes?: string }) {
+    return this.customersService.createOrderForCustomer(id, tenantId, body)
+  }
+
+  // --- Activities feed (360) ---
+  @Get(':id/activities')
+  @Roles('admin', 'agent')
+  @Permissions('customers.read')
+  async getActivities(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Query('limit') limit?: number,
+    @Query('since') since?: string,
+    @Query('types') types?: string | string[]
+  ) {
+    const parsedTypes = Array.isArray(types)
+      ? types
+      : (typeof types === 'string' && types.length ? types.split(',') : undefined);
+    return this.customersService.getActivitiesForCustomer(id, req?.user?.tenantId, {
+      limit: Number(limit) || 50,
+      since,
+      types: parsedTypes as any
+    });
+  }
+
+  // --- Marketing Preferences (Opt-in/Opt-out WhatsApp) ---
+  @Post(':id/preferences/whatsapp/opt-out')
+  @Roles('admin', 'agent')
+  async whatsappOptOut(@Param('id') id: string, @Req() req: any) {
+    const exists = await this.customersService.findOne(id, req?.user?.tenantId);
+    if (!exists) throw new NotFoundException('Customer not found');
+    const cf = ((exists as any).customFields || {}) as Record<string, any>
+    const marketing = { ...(cf.marketingPreferences || {}), whatsappOptOut: true }
+    return this.customersService.update(id, { customFields: { ...cf, marketingPreferences: marketing } })
+  }
+
+  @Post(':id/preferences/whatsapp/opt-in')
+  @Roles('admin', 'agent')
+  async whatsappOptIn(@Param('id') id: string, @Req() req: any) {
+    const exists = await this.customersService.findOne(id, req?.user?.tenantId);
+    if (!exists) throw new NotFoundException('Customer not found');
+    const cf = ((exists as any).customFields || {}) as Record<string, any>
+    const mp = { ...(cf.marketingPreferences || {}), whatsappOptOut: false }
+    return this.customersService.update(id, { customFields: { ...cf, marketingPreferences: mp } })
+  }
 }

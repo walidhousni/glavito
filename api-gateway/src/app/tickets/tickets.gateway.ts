@@ -4,6 +4,8 @@ import {
   SubscribeMessage,
   ConnectedSocket,
   MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
@@ -17,10 +19,11 @@ import * as jwt from 'jsonwebtoken';
     credentials: true,
   },
 })
-export class TicketsGateway {
+export class TicketsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
   private readonly logger = new Logger(TicketsGateway.name);
+  private readonly tenantAgentPresence: Map<string, Set<string>> = new Map();
 
   afterInit(server: Server) {
     server.use((socket, next) => {
@@ -45,11 +48,52 @@ export class TicketsGateway {
   }
 
   broadcast(event: string, payload: any, tenantId?: string) {
+    if (tenantId && event === 'ticket.updated' && payload.changes?.slaStatus === 'breached') {
+      this.broadcastSlaBreach(payload.ticketId, { breaches: ['resolution'], level: 1 }, tenantId);
+    }
     if (tenantId) {
       this.server.to(`tenant:${tenantId}`).emit(event, payload);
     } else {
       this.server.emit(event, payload);
     }
+  }
+
+  broadcastSlaBreach(ticketId: string, details: { breaches: string[]; level: number }, tenantId: string) {
+    const payload = { event: 'sla.breach', ticketId, details, timestamp: new Date().toISOString() };
+    this.server.to(`ticket:${ticketId}`).emit('sla.breach', payload);
+    this.server.to(`tenant:${tenantId}`).emit('sla.breach', payload); // Also tenant-wide
+  }
+
+  // Lifecycle hooks for presence tracking
+  handleConnection(client: any) {
+    try {
+      const user = (client as any).user || (client?.data?.user as { id: string; tenantId: string; role?: 'admin' | 'agent' } | undefined);
+      if (!user?.tenantId) return;
+      if (user.role === 'agent') {
+        const set = this.tenantAgentPresence.get(user.tenantId) || new Set<string>();
+        set.add(user.id);
+        this.tenantAgentPresence.set(user.tenantId, set);
+        this.broadcast('presence.agents', { tenantId: user.tenantId, activeAgents: set.size }, user.tenantId);
+      }
+    } catch { /* noop */ }
+  }
+
+  handleDisconnect(client: any) {
+    try {
+      const user = (client as any).user || (client?.data?.user as { id: string; tenantId: string; role?: 'admin' | 'agent' } | undefined);
+      if (!user?.tenantId) return;
+      if (user.role === 'agent') {
+        const set = this.tenantAgentPresence.get(user.tenantId) || new Set<string>();
+        set.delete(user.id);
+        this.tenantAgentPresence.set(user.tenantId, set);
+        this.broadcast('presence.agents', { tenantId: user.tenantId, activeAgents: set.size }, user.tenantId);
+      }
+    } catch { /* noop */ }
+  }
+
+  getActiveAgents(tenantId: string | undefined): number {
+    if (!tenantId) return 0;
+    return this.tenantAgentPresence.get(tenantId)?.size || 0;
   }
 
   @SubscribeMessage('join')

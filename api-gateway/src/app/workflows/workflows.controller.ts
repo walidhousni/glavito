@@ -8,601 +8,461 @@ import {
   Param,
   Query,
   UseGuards,
+  Req,
   HttpStatus,
-  HttpCode,
-  Logger
-} from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { RolesGuard } from '../auth/guards/roles.guard'
-import { Roles } from '../auth/decorators/roles.decorator'
-import { CurrentUser } from '@glavito/shared-auth'
-import { CurrentTenant } from '@glavito/shared-auth'
-import { WorkflowService, WorkflowExecutionService, N8NSyncService } from '@glavito/shared-workflow'
-import { WorkflowTemplates } from '@glavito/shared-workflow'
+  HttpCode
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard, PermissionsGuard } from '@glavito/shared-auth';
+import { Roles, Permissions } from '@glavito/shared-auth';
+import { FlowService, FlowExecutionService } from '@glavito/shared-workflow';
 import {
   CreateWorkflowDto,
   UpdateWorkflowDto,
   ExecuteWorkflowDto,
   WorkflowFiltersDto,
-  CreateIntegrationDto
-} from './dto/workflow.dto'
+  BulkWorkflowActionDto,
+  WorkflowExecutionFiltersDto,
+  WorkflowStatsDto
+} from './dto/workflow.dto';
 
 @ApiTags('Workflows')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('workflows')
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@ApiBearerAuth()
 export class WorkflowsController {
-  private readonly logger = new Logger(WorkflowsController.name)
-
   constructor(
-    private readonly workflowService: WorkflowService,
-    private readonly workflowExecutionService: WorkflowExecutionService,
-    private readonly n8nSyncService: N8NSyncService
+    private readonly flowService: FlowService,
+    private readonly flowExecutionService: FlowExecutionService
   ) {}
 
   @Post()
-  @Roles('admin', 'supervisor')
+  @Roles('admin')
+  @Permissions('workflows.create')
   @ApiOperation({ summary: 'Create a new workflow' })
   @ApiResponse({ status: 201, description: 'Workflow created successfully' })
-  async createWorkflow(
-    @Body() createWorkflowDto: CreateWorkflowDto,
-    @CurrentTenant() tenantId: string,
-    @CurrentUser() user: any
-  ) {
-    try {
-      // Handle both old and new workflow structures
-      const workflowData = {
-        name: createWorkflowDto.name,
-        description: createWorkflowDto.description,
-        type: createWorkflowDto.type ?? 'n8n',
-        priority: createWorkflowDto.priority ?? 0,
-        triggers: createWorkflowDto.triggers ?? [],
-        // Support both old structure (conditions/actions) and new structure (nodes/connections)
-        conditions: createWorkflowDto.conditions ?? {},
-        actions: createWorkflowDto.actions ?? {},
-        nodes: createWorkflowDto.nodes ?? [],
-        connections: createWorkflowDto.connections ?? [],
-        isActive: createWorkflowDto.isActive ?? true,
-        metadata: {
-          // Start with existing metadata
-          ...createWorkflowDto.metadata,
-          // Include new structure in metadata if provided
-          ...(createWorkflowDto.nodes && { nodes: createWorkflowDto.nodes }),
-          ...(createWorkflowDto.connections && { connections: createWorkflowDto.connections }),
-          ...(createWorkflowDto.settings && { settings: createWorkflowDto.settings }),
-          ...(createWorkflowDto.variables && { variables: createWorkflowDto.variables }),
-          // Set default values for new fields
-          category: createWorkflowDto.metadata?.category || 'general',
-          tags: createWorkflowDto.metadata?.tags || [],
-          version: createWorkflowDto.metadata?.version || '1.0',
-          createdBy: createWorkflowDto.metadata?.createdBy || user?.id || 'system',
-          status: createWorkflowDto.metadata?.status || (createWorkflowDto.isActive ? 'active' : 'inactive')
-        }
-      }
+  @ApiResponse({ status: 400, description: 'Invalid workflow data' })
+  @ApiResponse({ status: 409, description: 'Workflow with same name already exists' })
+  async create(@Body() createWorkflowDto: CreateWorkflowDto, @Req() req: any) {
+    const tenantId = req.user?.tenantId;
+    
+    const flow = await this.flowService.createFlow({
+      tenantId,
+      name: createWorkflowDto.name,
+      description: createWorkflowDto.description,
+      nodes: (createWorkflowDto.nodes || []).map(node => ({
+        key: node.id,
+        kind: node.type,
+        label: node.name,
+        position: node.position,
+        config: node.configuration,
+      })),
+      edges: (createWorkflowDto.connections || []).map(conn => ({
+        sourceKey: conn.sourceNodeId,
+        sourcePort: conn.sourceOutput,
+        targetKey: conn.targetNodeId,
+        targetPort: conn.targetInput,
+        label: conn.id,
+        condition: undefined,
+      })),
+    });
 
-      const workflow = await this.workflowService.createWorkflow(tenantId, workflowData)
-      
-      return {
-        success: true,
-        data: workflow,
-        message: 'Workflow created successfully'
-      }
-    } catch (error) {
-      this.logger.error('Failed to create workflow:', error)
-      throw error
-    }
+    return {
+      success: true,
+      data: flow
+    };
   }
 
   @Get()
-  @Roles('admin', 'supervisor', 'agent')
-  @ApiOperation({ summary: 'Get all workflows' })
-  @ApiResponse({ status: 200, description: 'Workflows retrieved successfully' })
-  async getWorkflows(
-    @CurrentTenant() tenantId: string,
-    @Query() filters: WorkflowFiltersDto
-  ) {
-    try {
-      const workflows = await this.workflowService.getWorkflows(tenantId)
-      
-      // Apply filters if provided
-      let filteredWorkflows = workflows
-      
-      if (filters.status) {
-        if (filters.status === 'active') {
-          filteredWorkflows = filteredWorkflows.filter((w: any) => !!w.isActive)
-        } else if (filters.status === 'inactive') {
-          filteredWorkflows = filteredWorkflows.filter((w: any) => !w.isActive)
-        } else if (filters.status === 'draft') {
-          filteredWorkflows = filteredWorkflows.filter((w: any) => (w.metadata as any)?.status === 'draft')
-        }
-      }
-      
-      if (filters.category) {
-        filteredWorkflows = filteredWorkflows.filter((w: any) => (w.metadata as any)?.category === filters.category)
-      }
-      
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase()
-        filteredWorkflows = filteredWorkflows.filter((w: any) => 
-          (w.name || '').toLowerCase().includes(searchLower) ||
-          (w.description || '').toLowerCase().includes(searchLower)
-        )
-      }
+  @Roles('admin', 'agent')
+  @Permissions('workflows.read')
+  @ApiOperation({ summary: 'List workflows' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'type', required: false, type: String })
+  @ApiQuery({ name: 'isActive', required: false, type: Boolean })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiResponse({ status: 200, description: 'List of workflows' })
+  async findAll(@Query() query: WorkflowFiltersDto, @Req() req: any) {
+    const tenantId = req.user?.tenantId;
+    const page = parseInt(query.page?.toString() || '1', 10);
+    const limit = Math.min(parseInt(query.limit?.toString() || '20', 10), 100);
 
-      return {
-        success: true,
-        data: filteredWorkflows,
-        total: filteredWorkflows.length
+    const result = await this.flowService.listFlows(
+      tenantId,
+      {
+        status: query.status,
+        search: query.search,
+      },
+      page,
+      limit
+    );
+
+    return {
+      success: true,
+      data: result.data,
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / result.limit)
       }
-    } catch (error) {
-      this.logger.error('Failed to get workflows:', error)
-      throw error
-    }
+    };
+  }
+
+  @Get('stats')
+  @Roles('admin')
+  @Permissions('workflows.read')
+  @ApiOperation({ summary: 'Get workflow statistics' })
+  @ApiResponse({ status: 200, description: 'Workflow statistics' })
+  async getStats(@Req() req: any): Promise<{ success: boolean; data: WorkflowStatsDto }> {
+    const tenantId = req.user?.tenantId;
+    
+    const stats = await this.flowService.getFlowStatistics(tenantId);
+
+    const statsDto: WorkflowStatsDto = {
+      totalWorkflows: stats.totalFlows,
+      activeWorkflows: stats.publishedFlows,
+      totalExecutions: stats.totalRuns,
+      successfulExecutions: stats.successfulRuns,
+      failedExecutions: stats.failedRuns,
+      averageExecutionTime: 0, // Would need average calculation
+      executionsToday: 0, // Would need date filtering
+      executionsThisWeek: 0, // Would need date filtering
+      executionsThisMonth: 0, // Would need date filtering
+      topWorkflows: [],
+      recentExecutions: stats.recentRuns || []
+    };
+
+    return {
+      success: true,
+      data: statsDto
+    };
   }
 
   @Get('templates')
-  @Roles('admin', 'supervisor')
+  @Roles('admin', 'agent')
+  @Permissions('workflows.read')
   @ApiOperation({ summary: 'Get workflow templates' })
-  @ApiResponse({ status: 200, description: 'Templates retrieved successfully' })
-  async getWorkflowTemplates(@CurrentTenant() tenantId: string) {
-    try {
-      const templates = WorkflowTemplates.getAllTemplates(tenantId)
-      
-      return {
-        success: true,
-        data: templates.map(template => ({
-          // stable slug inferred from name used by frontend to create from template
-          slug: (template.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-          name: template.name,
-          description: template.description,
-          category: template.category,
-          tags: template.tags,
-          nodeCount: (template.nodes || []).length,
-          triggerTypes: (template.triggers || []).map(t => t.type)
-        }))
-      }
-    } catch (error) {
-      this.logger.error('Failed to get workflow templates:', error)
-      throw error
-    }
+  @ApiResponse({ status: 200, description: 'List of workflow templates' })
+  async getTemplates(@Req() req: any) {
+    const tenantId = req.user?.tenantId;
+    const templates = await this.flowService.listFlowTemplates(tenantId);
+    return { success: true, data: templates };
   }
 
-  @Post('templates/:templateName')
-  @Roles('admin', 'supervisor')
+  @Post('templates/:templateId')
+  @Roles('admin')
+  @Permissions('workflows.create')
   @ApiOperation({ summary: 'Create workflow from template' })
-  @ApiResponse({ status: 201, description: 'Workflow created from template successfully' })
+  @ApiResponse({ status: 201, description: 'Workflow created from template' })
   async createFromTemplate(
-    @Param('templateName') templateName: string,
-    @CurrentTenant() tenantId: string,
-    @CurrentUser() user: any,
-    @Body() customizations?: any
+    @Param('templateId') templateId: string,
+    @Body() customizations: { name?: string; description?: string },
+    @Req() req: any
   ) {
-    try {
-      const template = WorkflowTemplates.getTemplate(templateName, tenantId)
-      
-      if (!template) {
-        return {
-          success: false,
-          message: 'Template not found'
-        }
-      }
-
-      // Apply customizations if provided
-      const merged = { ...template, ...(customizations || {}) }
-      const workflowData = {
-        name: merged.name,
-        description: merged.description,
-        type: 'n8n',
-        priority: 0,
-        triggers: merged.triggers ?? [],
-        conditions: {},
-        actions: {},
-        isActive: merged.status === ('active' as any),
-        nodes: merged.nodes,
-        connections: merged.connections,
-        metadata: {
-          category: merged.category,
-          tags: merged.tags,
-          version: merged.version,
-          createdBy: user?.id || 'system',
-          status: merged.status || 'active',
-          nodes: merged.nodes,
-          connections: merged.connections,
-          settings: merged.settings,
-          variables: merged.variables
-        }
-      }
-
-      const workflow = await this.workflowService.createWorkflow(tenantId, workflowData)
-      
-      return {
-        success: true,
-        data: workflow,
-        message: 'Workflow created from template successfully'
-      }
-    } catch (error) {
-      this.logger.error('Failed to create workflow from template:', error)
-      throw error
-    }
+    const tenantId = req.user?.tenantId;
+    const userId = req.user?.id;
+    
+    const flow = await this.flowService.createFlowFromTemplate(
+      templateId,
+      tenantId,
+      userId,
+      customizations.name,
+      customizations.description
+    );
+    
+    return { success: true, data: flow };
   }
 
   @Get(':id')
-  @Roles('admin', 'supervisor', 'agent')
+  @Roles('admin', 'agent')
+  @Permissions('workflows.read')
   @ApiOperation({ summary: 'Get workflow by ID' })
-  @ApiResponse({ status: 200, description: 'Workflow retrieved successfully' })
-  async getWorkflow(@Param('id') id: string) {
-    try {
-      const workflow = await this.workflowService.getWorkflow(id)
-      
+  @ApiResponse({ status: 200, description: 'Workflow found' })
+  @ApiResponse({ status: 404, description: 'Workflow not found' })
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    const tenantId = req.user?.tenantId;
+    
+    const flow = await this.flowService.getFlow(id, tenantId);
+    
+    if (!flow) {
       return {
-        success: true,
-        data: workflow
-      }
-    } catch (error) {
-      this.logger.error(`Failed to get workflow ${id}:`, error)
-      throw error
+        success: false,
+        error: 'Workflow not found'
+      };
     }
+
+    return {
+      success: true,
+      data: flow
+    };
   }
 
   @Put(':id')
-  @Roles('admin', 'supervisor')
+  @Roles('admin')
+  @Permissions('workflows.update')
   @ApiOperation({ summary: 'Update workflow' })
   @ApiResponse({ status: 200, description: 'Workflow updated successfully' })
-  async updateWorkflow(
+  @ApiResponse({ status: 404, description: 'Workflow not found' })
+  async update(
     @Param('id') id: string,
     @Body() updateWorkflowDto: UpdateWorkflowDto,
-    @CurrentTenant() tenantId: string
+    @Req() req: any
   ) {
-    try {
-      const updateData = {
-        name: updateWorkflowDto.name,
-        description: updateWorkflowDto.description,
-        type: updateWorkflowDto.type,
-        priority: updateWorkflowDto.priority,
-        triggers: updateWorkflowDto.triggers,
-        // Support both old and new structures
-        conditions: updateWorkflowDto.conditions,
-        actions: updateWorkflowDto.actions,
-        nodes: updateWorkflowDto.nodes,
-        connections: updateWorkflowDto.connections,
-        isActive: updateWorkflowDto.isActive,
-        metadata: {
-          ...updateWorkflowDto.metadata,
-          // Include new structure in metadata if provided
-          ...(updateWorkflowDto.nodes && { nodes: updateWorkflowDto.nodes }),
-          ...(updateWorkflowDto.connections && { connections: updateWorkflowDto.connections }),
-          ...(updateWorkflowDto.settings && { settings: updateWorkflowDto.settings }),
-          ...(updateWorkflowDto.variables && { variables: updateWorkflowDto.variables })
-        }
+    const tenantId = req.user?.tenantId;
+    
+    // Helper function to convert frontend node type to backend kind
+    const toBackendKind = (frontendType: string): string => {
+      // Map common frontend types to backend kinds
+      const mapping: Record<string, string> = {
+        'input': 'start',
+        'output': 'end',
+        'send-notification': 'send_message',
+        'template-message': 'template_message',
+        'send_email': 'send_email',
+        'send-whatsapp': 'send_whatsapp',
+        'send-instagram': 'send_instagram',
+        'ticket-create': 'ticket_create',
+        'ticket-update': 'ticket_update',
+        'ticket-assign': 'ticket_assign',
+        'ticket-close': 'ticket_close',
+        'condition': 'condition',
+        'delay': 'delay',
+        'ai_decision': 'ai_decision',
+        'ai-analysis': 'ai_analysis',
+        'ai_agent': 'ai_agent',
+        'ai_route': 'ai_route',
+        'ai_tool_call': 'ai_tool_call',
+        'ai_guardrail': 'ai_guardrail',
+        'churn_risk_check': 'churn_risk_check',
+        'segment_check': 'segment_check',
+        'track_event': 'track_event',
+        'journey_checkpoint': 'journey_checkpoint',
+        'api_call': 'http_request',
+        'log-event': 'log_event',
+        'default': 'send_message',
+      };
+      
+      // Check if we have a direct mapping
+      if (mapping[frontendType]) {
+        return mapping[frontendType];
       }
-
-      const workflow = await this.workflowService.updateWorkflow(id, updateData)
+      
+      // If node has backendKind stored, use it
+      // Otherwise, try to infer from type
+      if (frontendType.includes('ticket')) {
+        if (frontendType.includes('create')) return 'ticket_create';
+        if (frontendType.includes('update')) return 'ticket_update';
+        if (frontendType.includes('assign')) return 'ticket_assign';
+        if (frontendType.includes('close')) return 'ticket_close';
+      }
+      
+      // Default fallback
+      return frontendType.replace(/-/g, '_') || 'send_message';
+    };
+    
+    // Convert DTO nodes to FlowService format
+    const flowNodes = updateWorkflowDto.nodes?.map(node => {
+      // The DTO has node.type which might be frontend type or backend kind
+      // Check configuration for backendKind first, then try to convert from type
+      const config = node.configuration || {};
+      let backendKind = (config as any)?.backendKind;
+      
+      if (!backendKind) {
+        // Try to convert from node.type (could be frontend type like 'ticket-create' or backend kind like 'ticket_create')
+        backendKind = toBackendKind(node.type);
+      }
+      
+      // Clean config - remove frontend-only fields
+      const cleanConfig = { ...config };
+      delete (cleanConfig as any).backendKind;
+      delete (cleanConfig as any).label;
+      delete (cleanConfig as any).type;
+      delete (cleanConfig as any).status;
+      delete (cleanConfig as any).outputs;
       
       return {
-        success: true,
-        data: workflow,
-        message: 'Workflow updated successfully'
-      }
-    } catch (error) {
-      this.logger.error(`Failed to update workflow ${id}:`, error)
-      throw error
-    }
+        key: node.id,
+        kind: backendKind,
+        label: node.name || node.id,
+        position: node.position || { x: 0, y: 0 },
+        config: cleanConfig,
+      };
+    });
+    
+    // Convert DTO connections to FlowService edges format
+    const flowEdges = updateWorkflowDto.connections?.map(conn => ({
+      sourceKey: conn.sourceNodeId,
+      sourcePort: conn.sourceOutput || 'default',
+      targetKey: conn.targetNodeId,
+      targetPort: conn.targetInput || 'default',
+      label: conn.id || undefined,
+      condition: conn.condition || undefined,
+    }));
+    
+    const flow = await this.flowService.updateFlow(id, {
+      name: updateWorkflowDto.name,
+      description: updateWorkflowDto.description,
+      nodes: flowNodes,
+      edges: flowEdges,
+      status: updateWorkflowDto.isActive ? 'published' : 'draft',
+    }, tenantId);
+
+    return {
+      success: true,
+      data: flow
+    };
   }
 
   @Delete(':id')
   @Roles('admin')
+  @Permissions('workflows.delete')
   @ApiOperation({ summary: 'Delete workflow' })
   @ApiResponse({ status: 204, description: 'Workflow deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Workflow not found' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteWorkflow(@Param('id') id: string) {
-    try {
-      await this.workflowService.deleteWorkflow(id)
-      
-      return {
-        success: true,
-        message: 'Workflow deleted successfully'
-      }
-    } catch (error) {
-      this.logger.error(`Failed to delete workflow ${id}:`, error)
-      throw error
-    }
+  async remove(@Param('id') id: string, @Req() req: any) {
+    const tenantId = req.user?.tenantId;
+    
+    await this.flowService.deleteFlow(id, tenantId);
+    
+    return {
+      success: true
+    };
   }
 
   @Post(':id/execute')
-  @Roles('admin', 'supervisor', 'agent')
+  @Roles('admin', 'agent')
+  @Permissions('workflows.execute')
   @ApiOperation({ summary: 'Execute workflow manually' })
   @ApiResponse({ status: 200, description: 'Workflow execution started' })
-  async executeWorkflow(
+  @ApiResponse({ status: 404, description: 'Workflow not found' })
+  async execute(
     @Param('id') id: string,
     @Body() executeWorkflowDto: ExecuteWorkflowDto,
-    @CurrentUser() user: any
+    @Req() req: any
   ) {
-    try {
-      const execution = await this.workflowService.executeWorkflow(
-        id,
-        { data: (executeWorkflowDto as any)?.input || {} } as any,
-        user?.id || 'system'
-      )
-      
-      return {
-        success: true,
-        data: execution,
-        message: 'Workflow execution started'
+    const tenantId = req.user?.tenantId;
+    const userId = req.user?.id;
+    
+    const result = await this.flowExecutionService.executeFlow(
+      id,
+      executeWorkflowDto.input || {},
+      {
+        tenantId,
+        userId,
+        ...executeWorkflowDto.context
       }
-    } catch (error) {
-      this.logger.error(`Failed to execute workflow ${id}:`, error)
-      throw error
-    }
+    );
+
+    return {
+      success: true,
+      data: result
+    };
   }
 
   @Get(':id/executions')
-  @Roles('admin', 'supervisor', 'agent')
-  @ApiOperation({ summary: 'Get workflow execution history' })
-  @ApiResponse({ status: 200, description: 'Execution history retrieved successfully' })
-  async getWorkflowExecutions(
+  @Roles('admin', 'agent')
+  @Permissions('workflows.read')
+  @ApiOperation({ summary: 'Get workflow executions' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'List of workflow executions' })
+  async getExecutions(
     @Param('id') id: string,
-    @Query('limit') limit?: number
+    @Query() query: WorkflowExecutionFiltersDto,
   ) {
-    try {
-      const executions = await this.workflowService.getWorkflowExecutionHistory(id, limit)
-      
-      return {
-        success: true,
-        data: executions,
-        total: executions.length
+    const limit = Math.min(parseInt(query.limit?.toString() || '20', 10), 100);
+
+    const runs = await this.flowExecutionService.listFlowRuns(id, limit);
+
+    return {
+      success: true,
+      data: runs,
+      pagination: {
+        page: 1,
+        limit,
+        total: runs.length,
+        totalPages: 1
       }
-    } catch (error) {
-      this.logger.error(`Failed to get executions for workflow ${id}:`, error)
-      throw error
-    }
+    };
   }
 
   @Get(':id/analytics')
-  @Roles('admin', 'supervisor')
+  @Roles('admin')
+  @Permissions('workflows.read')
   @ApiOperation({ summary: 'Get workflow analytics' })
-  @ApiResponse({ status: 200, description: 'Analytics retrieved successfully' })
-  async getWorkflowAnalytics(
-    @Param('id') id: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
-  ) {
-    try {
-      const dateRange = startDate && endDate ? {
-        startDate: new Date(startDate),
-        endDate: new Date(endDate)
-      } : undefined
-
-      const analytics = await this.workflowService.getWorkflowAnalytics(id, dateRange as any)
-      
-      return {
-        success: true,
-        data: analytics
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
+  @ApiResponse({ status: 200, description: 'Workflow analytics data' })
+  async getAnalytics() {
+    // Mock analytics data - would implement actual analytics
+    const analytics = {
+      executionCount: 0,
+      successRate: 0,
+      averageExecutionTime: 0,
+      errorRate: 0,
+      executionTrend: [],
+      performanceMetrics: {
+        avgCpuUsage: 0,
+        avgMemoryUsage: 0,
+        avgNetworkLatency: 0
       }
-    } catch (error) {
-      this.logger.error(`Failed to get analytics for workflow ${id}:`, error)
-      throw error
-    }
+    };
+
+    return {
+      success: true,
+      data: analytics
+    };
   }
 
-  @Post(':id/activate')
-  @Roles('admin', 'supervisor')
-  @ApiOperation({ summary: 'Activate workflow' })
-  @ApiResponse({ status: 200, description: 'Workflow activated successfully' })
-  async activateWorkflow(@Param('id') id: string, @CurrentTenant() tenantId: string) {
-    try {
-      const updatedWorkflow = await this.workflowService.updateWorkflow(id, { isActive: true })
-      
-      return {
-        success: true,
-        data: updatedWorkflow,
-        message: 'Workflow activated successfully'
-      }
-    } catch (error) {
-      this.logger.error(`Failed to activate workflow ${id}:`, error)
-      throw error
-    }
-  }
+  // N8N removed: sync endpoints deleted
 
-  @Post(':id/deactivate')
-  @Roles('admin', 'supervisor')
-  @ApiOperation({ summary: 'Deactivate workflow' })
-  @ApiResponse({ status: 200, description: 'Workflow deactivated successfully' })
-  async deactivateWorkflow(@Param('id') id: string, @CurrentTenant() tenantId: string) {
-    try {
-      const updatedWorkflow = await this.workflowService.updateWorkflow(id, { isActive: false })
-      
-      return {
-        success: true,
-        data: updatedWorkflow,
-        message: 'Workflow deactivated successfully'
-      }
-    } catch (error) {
-      this.logger.error(`Failed to deactivate workflow ${id}:`, error)
-      throw error
-    }
-  }
-
-  // Execution Management Endpoints
-  @Get('executions/:executionId')
-  @Roles('admin', 'supervisor', 'agent')
-  @ApiOperation({ summary: 'Get execution details' })
-  @ApiResponse({ status: 200, description: 'Execution details retrieved successfully' })
-  async getExecution(@Param('executionId') executionId: string) {
-    try {
-      // This would need to be implemented in the execution service
-      return {
-        success: true,
-        message: 'Execution details endpoint - to be implemented'
-      }
-    } catch (error) {
-      this.logger.error(`Failed to get execution ${executionId}:`, error)
-      throw error
-    }
-  }
-
-  @Post('executions/:executionId/retry')
-  @Roles('admin', 'supervisor')
-  @ApiOperation({ summary: 'Retry failed execution' })
-  @ApiResponse({ status: 200, description: 'Execution retry started' })
-  async retryExecution(@Param('executionId') executionId: string) {
-    try {
-      const execution = await this.workflowExecutionService.retryExecution(executionId)
-      
-      return {
-        success: true,
-        data: execution,
-        message: 'Execution retry started'
-      }
-    } catch (error) {
-      this.logger.error(`Failed to retry execution ${executionId}:`, error)
-      throw error
-    }
-  }
-
-  @Post('executions/:executionId/cancel')
-  @Roles('admin', 'supervisor')
-  @ApiOperation({ summary: 'Cancel running execution' })
-  @ApiResponse({ status: 200, description: 'Execution cancelled successfully' })
-  async cancelExecution(@Param('executionId') executionId: string) {
-    try {
-      await this.workflowExecutionService.cancelExecution(executionId)
-      
-      return {
-        success: true,
-        message: 'Execution cancelled successfully'
-      }
-    } catch (error) {
-      this.logger.error(`Failed to cancel execution ${executionId}:`, error)
-      throw error
-    }
-  }
-
-  @Get('executions/:executionId/logs')
-  @Roles('admin', 'supervisor', 'agent')
-  @ApiOperation({ summary: 'Get execution logs' })
-  @ApiResponse({ status: 200, description: 'Execution logs retrieved successfully' })
-  async getExecutionLogs(@Param('executionId') executionId: string) {
-    try {
-      const logs = await this.workflowExecutionService.getExecutionLogs(executionId)
-      
-      return {
-        success: true,
-        data: logs
-      }
-    } catch (error) {
-      this.logger.error(`Failed to get logs for execution ${executionId}:`, error)
-      throw error
-    }
-  }
-
-  // Integration Management Endpoints
-  @Post('integrations')
+  @Post('bulk-action')
   @Roles('admin')
-  @ApiOperation({ summary: 'Create integration' })
-  @ApiResponse({ status: 201, description: 'Integration created successfully' })
-  async createIntegration(@Body() createIntegrationDto: CreateIntegrationDto) {
-    try {
-      const integration = await this.workflowService.createIntegration(createIntegrationDto)
-      
-      return {
-        success: true,
-        data: integration,
-        message: 'Integration created successfully'
-      }
-    } catch (error) {
-      this.logger.error('Failed to create integration:', error)
-      throw error
-    }
-  }
+  @Permissions('workflows.update')
+  @ApiOperation({ summary: 'Perform bulk action on workflows' })
+  @ApiResponse({ status: 200, description: 'Bulk action completed' })
+  async bulkAction(@Body() bulkActionDto: BulkWorkflowActionDto, @Req() req: any) {
+    const tenantId = req.user?.tenantId;
+    const results = [];
 
-  @Post('integrations/:integrationId/test')
-  @Roles('admin')
-  @ApiOperation({ summary: 'Test integration' })
-  @ApiResponse({ status: 200, description: 'Integration test completed' })
-  async testIntegration(@Param('integrationId') integrationId: string) {
-    try {
-      const testResult = await this.workflowService.testIntegration(integrationId)
-      
-      return {
-        success: true,
-        data: testResult
-      }
-    } catch (error) {
-      this.logger.error(`Failed to test integration ${integrationId}:`, error)
-      throw error
-    }
-  }
-
-  // N8N Sync Endpoints
-  @Post(':id/sync')
-  @Roles('admin', 'supervisor')
-  @ApiOperation({ summary: 'Sync workflow to N8N' })
-  @ApiResponse({ status: 200, description: 'Workflow synced to N8N successfully' })
-  async syncWorkflowToN8N(@Param('id') id: string) {
-    try {
-      const n8nWorkflowId = await this.n8nSyncService.syncWorkflowToN8N(id)
-      
-      return {
-        success: true,
-        data: { n8nWorkflowId },
-        message: 'Workflow synced to N8N successfully'
-      }
-    } catch (error) {
-      this.logger.error(`Failed to sync workflow ${id} to N8N:`, error)
-      throw error
-    }
-  }
-
-  @Post('sync-all')
-  @Roles('admin')
-  @ApiOperation({ summary: 'Sync all workflows to N8N' })
-  @ApiResponse({ status: 200, description: 'All workflows synced to N8N successfully' })
-  async syncAllWorkflowsToN8N(@CurrentTenant() tenantId: string) {
-    try {
-      const workflows = await this.workflowService.getWorkflows(tenantId)
-      const results = []
-
-      for (const workflow of workflows) {
-        try {
-          const n8nWorkflowId = await this.n8nSyncService.syncWorkflowToN8N(workflow.id)
-          results.push({ workflowId: workflow.id, n8nWorkflowId, status: 'success' })
-        } catch (error) {
-          results.push({ 
-            workflowId: workflow.id, 
-            n8nWorkflowId: null, 
-            status: 'error', 
-            error: error instanceof Error ? error.message : 'Unknown error' 
-          })
+    for (const workflowId of bulkActionDto.workflowIds) {
+      try {
+        switch (bulkActionDto.action) {
+          case 'activate':
+            await this.flowService.updateFlow(workflowId, { status: 'published' }, tenantId);
+            results.push({ workflowId, success: true });
+            break;
+          case 'deactivate':
+            await this.flowService.updateFlow(workflowId, { status: 'draft' }, tenantId);
+            results.push({ workflowId, success: true });
+            break;
+          case 'delete':
+            await this.flowService.deleteFlow(workflowId, tenantId);
+            results.push({ workflowId, success: true });
+            break;
+          case 'duplicate':
+            await this.flowService.duplicateFlow(workflowId, tenantId);
+            results.push({ workflowId, success: true });
+            break;
+          default:
+            results.push({ workflowId, success: false, error: 'Unknown action' });
         }
+      } catch (error) {
+        results.push({ 
+          workflowId, 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
       }
-      
-      return {
-        success: true,
-        data: results,
-        message: 'Workflow sync completed'
-      }
-    } catch (error) {
-      this.logger.error('Failed to sync all workflows to N8N:', error)
-      throw error
     }
-  }
 
-  @Post('sync-from-n8n')
-  @Roles('admin')
-  @ApiOperation({ summary: 'Sync workflows from N8N to database' })
-  @ApiResponse({ status: 200, description: 'Workflows synced from N8N successfully' })
-  async syncWorkflowsFromN8N() {
-    try {
-      await this.n8nSyncService.syncN8NToDatabase()
-      
-      return {
-        success: true,
-        message: 'Workflows synced from N8N successfully'
-      }
-    } catch (error) {
-      this.logger.error('Failed to sync workflows from N8N:', error)
-      throw error
-    }
+    return {
+      success: true,
+      data: results
+    };
   }
 }

@@ -213,6 +213,12 @@ export const teamApi = {
   removeTeamMember: async (teamId: string, memberId: string): Promise<void> => {
     await api.delete(`/teams/${teamId}/members/${memberId}`);
   },
+
+  // Available users for assignment (not yet members)
+  getAvailableUsers: async (teamId?: string): Promise<Array<{ id: string; email: string; firstName: string; lastName: string; avatar?: string; role: string; status: string; isTeamMember: boolean }>> => {
+    const response = await api.get('/teams/available-users', { params: { teamId } });
+    return unwrap<typeof response.data>(response.data) as any ?? [];
+  },
 };
 
 // Agent API
@@ -265,5 +271,45 @@ export const agentApi = {
   getTopAgents: async (params?: { limit?: number; from?: string; to?: string }): Promise<Array<{ userId: string; name: string; avatar?: string; ticketsResolved: number; ticketsAssigned: number; resolutionRate: number; averageFirstResponseMinutes: number }>> => {
     const response = await api.get('/agent-profiles/top/performers', { params });
     return unwrap<typeof response.data>(response.data) as any ?? [];
+  },
+};
+
+// Team Rooms / Collaboration API (separate export)
+export const teamRoomsApi = {
+  // Get all rooms for a team
+  getTeamRooms: async (teamId: string): Promise<any[]> => {
+    const response = await api.get(`/teams/${teamId}/rooms`);
+    return response.data;
+  },
+
+  // Create a new room
+  createRoom: async (teamId: string, data: { name: string; description?: string; participantIds: string[] }): Promise<any> => {
+    const response = await api.post(`/teams/${teamId}/rooms`, data);
+    return response.data;
+  },
+
+  // Get messages for a room
+  getRoomMessages: async (teamId: string, roomId: string, cursor?: string, limit?: number): Promise<{ items: any[]; nextCursor: string | null; hasMore: boolean }> => {
+    const response = await api.get(`/teams/${teamId}/rooms/${roomId}/messages`, {
+      params: { cursor, limit },
+    });
+    return response.data;
+  },
+
+  // Create a message in a room
+  createRoomMessage: async (teamId: string, roomId: string, data: { content: string; mentions?: string[] }): Promise<any> => {
+    const response = await api.post(`/teams/${teamId}/rooms/${roomId}/messages`, data);
+    return response.data;
+  },
+
+  // Add/remove reaction to a message
+  toggleMessageReaction: async (teamId: string, roomId: string, messageId: string, emoji: string): Promise<any> => {
+    const response = await api.post(`/teams/${teamId}/rooms/${roomId}/messages/${messageId}/reactions`, { emoji });
+    return response.data;
+  },
+
+  // Delete a message
+  deleteRoomMessage: async (teamId: string, roomId: string, messageId: string): Promise<void> => {
+    await api.delete(`/teams/${teamId}/rooms/${roomId}/messages/${messageId}`);
   },
 };

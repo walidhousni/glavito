@@ -4,8 +4,13 @@ import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { HelpCircle, Edit, Eye, EyeOff, Link, MoreHorizontal } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { 
+  FaQuestionCircle, 
+  FaEdit, 
+  FaEye, 
+  FaEyeSlash, 
+  FaLink 
+} from 'react-icons/fa'
 import { knowledgeApi } from '@/lib/api/knowledge-client'
 
 interface FAQ {
@@ -65,52 +70,51 @@ export function FAQsSection({
   }
 
   return (
-    <Card className="shadow-xl bg-white/90 dark:bg-slate-900/90 rounded-2xl overflow-hidden border-slate-200/60 dark:border-slate-700/60">
-      <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 border-b border-slate-200/60 dark:border-slate-700/60">
-        <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-800 dark:text-slate-200">
-          <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-xl">
-            <HelpCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <div className="p-1.5 rounded-lg bg-green-50 dark:bg-green-950/50">
+            <FaQuestionCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
           </div>
           {t('faqs', { fallback: 'FAQs' })}
-          <Badge variant="secondary" className="ml-auto bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+          <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1.5 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-0 shadow-sm">
             {faqs.length}
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-4 pt-0">
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-full mb-2"></div>
-                <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
+                <div className="h-3 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-2.5 bg-muted rounded w-full mb-2"></div>
+                <div className="h-6 bg-muted rounded w-1/3"></div>
               </div>
             ))}
           </div>
         ) : faqs.length === 0 ? (
-          <div className="text-center py-12">
-            <HelpCircle className="h-12 w-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+          <div className="text-center py-8">
+            <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/50 w-fit mx-auto mb-3">
+              <FaQuestionCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <p className="text-xs text-muted-foreground">
               {t('noFaqs', { fallback: 'No FAQs found' })}
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <motion.div
+          <div className="space-y-3">
+            {faqs.map((faq) => (
+              <div
                 key={faq.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="group p-5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 hover:border-emerald-300/60 dark:hover:border-emerald-600/60 hover:shadow-lg transition-all duration-300 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800"
+                className="group p-3 rounded-lg border-0 shadow-sm bg-muted/30 hover:bg-muted/50 transition-all"
               >
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors mb-2">
+                    <h3 className="text-xs font-semibold text-foreground group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors mb-1">
                       {faq.title}
                     </h3>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                       <span>{formatDate(faq.updatedAt)}</span>
                       {faq.tags && faq.tags.length > 0 && (
                         <div className="flex items-center gap-1">
@@ -118,7 +122,7 @@ export function FAQsSection({
                             <Badge
                               key={tag}
                               variant="outline"
-                              className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                              className="text-[10px] h-4 px-1.5 border-0 shadow-sm"
                             >
                               {tag}
                             </Badge>
@@ -127,13 +131,13 @@ export function FAQsSection({
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="ml-2">
                     <Badge
                       variant={faq.isPublished ? 'default' : 'secondary'}
-                      className={`${
+                      className={`text-[10px] h-4 px-1.5 border-0 shadow-sm ${
                         faq.isPublished
-                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {faq.isPublished ? 'Published' : 'Draft'}
@@ -142,12 +146,12 @@ export function FAQsSection({
                 </div>
 
                 {expandedRelated[faq.id] && expandedRelated[faq.id]!.length > 0 && (
-                  <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
-                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Related Articles:</h4>
-                    <div className="space-y-2">
+                  <div className="mt-2 p-2 rounded-lg bg-muted/50 border-0 shadow-sm">
+                    <h4 className="text-[10px] font-medium text-foreground mb-1.5">Related Articles:</h4>
+                    <div className="space-y-1">
                       {expandedRelated[faq.id]!.map((related) => (
-                        <div key={related.id} className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                          <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                        <div key={related.id} className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+                          <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
                           <span className="line-clamp-1">{related.title}</span>
                         </div>
                       ))}
@@ -155,36 +159,36 @@ export function FAQsSection({
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 mt-4">
+                <div className="flex items-center gap-1.5 mt-3">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => onPublishToggle(faq.id, !faq.isPublished)}
-                    className="h-8 text-xs border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className="h-7 text-[10px] border-0 shadow-sm"
                   >
-                    {faq.isPublished ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
+                    {faq.isPublished ? <FaEyeSlash className="h-2.5 w-2.5 mr-1" /> : <FaEye className="h-2.5 w-2.5 mr-1" />}
                     {faq.isPublished ? 'Unpublish' : 'Publish'}
                   </Button>
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={() => handleEdit(faq)}
-                    className="h-8 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+                    className="h-7 text-[10px] border-0 shadow-sm"
                   >
-                    <Edit className="h-3 w-3 mr-1" />
+                    <FaEdit className="h-2.5 w-2.5 mr-1" />
                     Edit
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => onToggleRelated(faq.id)}
-                    className="h-8 text-xs hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="h-7 text-[10px] border-0 shadow-sm"
                   >
-                    <Link className="h-3 w-3 mr-1" />
+                    <FaLink className="h-2.5 w-2.5 mr-1" />
                     Related
                   </Button>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         )}

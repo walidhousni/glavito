@@ -29,6 +29,38 @@ export class WorkflowTriggerDto {
   enabled!: boolean
 }
 
+export class WorkflowActionDto {
+  @ApiProperty()
+  @IsString()
+  id!: string
+
+  @ApiProperty()
+  @IsString()
+  type!: string
+
+  @ApiProperty()
+  @IsString()
+  name!: string
+
+  @ApiProperty()
+  @IsObject()
+  configuration!: Record<string, any>
+
+  @ApiPropertyOptional()
+  @IsObject()
+  @IsOptional()
+  onError?: {
+    action: 'continue' | 'stop' | 'retry'
+    retryCount?: number
+    retryDelay?: number
+  }
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  enabled?: boolean
+}
+
 export class WorkflowNodeDto {
   @ApiProperty()
   @IsString()
@@ -50,13 +82,15 @@ export class WorkflowNodeDto {
   @IsObject()
   configuration!: Record<string, any>
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsArray()
-  inputs!: any[]
+  @IsOptional()
+  inputs?: any[]
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsArray()
-  outputs!: any[]
+  @IsOptional()
+  outputs?: any[]
 
   @ApiPropertyOptional()
   @IsObject()
@@ -194,15 +228,17 @@ export class CreateWorkflowDto {
   connections?: WorkflowConnectionDto[]
 
   // Legacy fields for backward compatibility
-  @ApiPropertyOptional()
-  @IsObject()
+  @ApiPropertyOptional({ type: Array })
+  @IsArray()
   @IsOptional()
-  conditions?: Record<string, any>
+  conditions?: any[]
 
-  @ApiPropertyOptional()
-  @IsObject()
+  @ApiPropertyOptional({ type: [WorkflowActionDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WorkflowActionDto)
   @IsOptional()
-  actions?: Record<string, any>
+  actions?: WorkflowActionDto[]
 
   @ApiPropertyOptional({ type: WorkflowSettingsDto })
   @IsObject()
@@ -272,15 +308,17 @@ export class UpdateWorkflowDto {
   connections?: WorkflowConnectionDto[]
 
   // Legacy fields for backward compatibility
-  @ApiPropertyOptional()
-  @IsObject()
+  @ApiPropertyOptional({ type: Array })
+  @IsArray()
   @IsOptional()
-  conditions?: Record<string, any>
+  conditions?: any[]
 
-  @ApiPropertyOptional()
-  @IsObject()
+  @ApiPropertyOptional({ type: [WorkflowActionDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WorkflowActionDto)
   @IsOptional()
-  actions?: Record<string, any>
+  actions?: WorkflowActionDto[]
 
   @ApiPropertyOptional({ type: WorkflowSettingsDto })
   @IsObject()

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prod-green
+resources:
+  - ../../base
+  - ingress.yaml
+  - ../shared-namespace.yaml
+  - ../../shared/secretstore.yaml
+  - ../../shared/clusterissuer.yaml
+  - secrets.yaml
+images:
+  - name: registry.me-east-1.aliyuncs.com/glavito/admin
+    newTag: latest
+  - name: registry.me-east-1.aliyuncs.com/glavito/api
+    newTag: latest
+

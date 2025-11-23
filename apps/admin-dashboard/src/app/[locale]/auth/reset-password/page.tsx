@@ -3,15 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Alert } from '@/components/ui/alert';
-import { AuthLayout } from '@/components/auth/auth-layout';
+import { ModernAuthLayout } from '@/components/auth/modern-auth-layout';
+import { ModernAuthCard } from '@/components/auth/modern-auth-card';
+import { ModernInput } from '@/components/auth/modern-input';
+import { ModernButton } from '@/components/auth/modern-button';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { Eye, EyeOff, Lock, CheckCircle } from 'lucide-react';
+import { Lock, CheckCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function ResetPasswordPage() {
   const t = useTranslations('auth.resetPassword');
@@ -23,8 +23,6 @@ export default function ResetPasswordPage() {
     password: '',
     confirmPassword: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -83,127 +81,115 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <AuthLayout>
-        <Card className="w-full max-w-md backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-          <CardHeader className="space-y-1 text-center">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+      <ModernAuthLayout
+        title="Password reset successful"
+        subtitle="You can now sign in with your new password"
+      >
+        <ModernAuthCard>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="text-center space-y-6"
+          >
+            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
               <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-              Password Reset Successfully
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">
-              {t('success')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Redirecting you to login page...
-            </p>
-            <Link href="/auth/login">
-              <Button className="w-full">
-                Continue to Login
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </AuthLayout>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                All set!
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Your password has been successfully reset. Redirecting you to login...
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <Link href="/auth/login">
+                <ModernButton className="w-full">
+                  Continue to Login
+                </ModernButton>
+              </Link>
+            </div>
+          </motion.div>
+        </ModernAuthCard>
+      </ModernAuthLayout>
     );
   }
 
   return (
-    <AuthLayout>
-      <Card className="w-full max-w-md backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            {t('title')}
-          </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-400">
-            {t('subtitle')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <ModernAuthLayout
+      title={t('title')}
+      subtitle={t('subtitle')}
+    >
+      <ModernAuthCard>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <AnimatePresence>
             {error && (
-              <Alert variant="destructive">
-                {error}
-              </Alert>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  {error}
+                </Alert>
+              </motion.div>
             )}
+          </AnimatePresence>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">{t('password')}</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
+          <div className="space-y-4">
+            <ModernInput
+              id="password"
+              name="password"
+              label={t('password')}
+              type="password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || !token}
-            >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                  <span>Resetting...</span>
-                </div>
-              ) : (
-                t('submit')
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link
-              href="/auth/login"
-              className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400"
-            >
-              Back to Login
-            </Link>
+            <ModernInput
+              id="confirmPassword"
+              name="confirmPassword"
+              label={t('confirmPassword')}
+              type="password"
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+              className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:ring-blue-500"
+              success={Boolean(formData.confirmPassword) && formData.password === formData.confirmPassword}
+              error={formData.confirmPassword && formData.password !== formData.confirmPassword ? "Passwords don't match" : undefined}
+            />
           </div>
-        </CardContent>
-      </Card>
-    </AuthLayout>
+
+          <ModernButton
+            type="submit"
+            className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200"
+            loading={isLoading}
+            loadingText="Resetting..."
+            disabled={!token}
+          >
+            {t('submit')}
+          </ModernButton>
+        </form>
+
+        <div className="mt-8 text-center">
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center space-x-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors group"
+          >
+            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            <span>Back to login</span>
+          </Link>
+        </div>
+      </ModernAuthCard>
+    </ModernAuthLayout>
   );
 }

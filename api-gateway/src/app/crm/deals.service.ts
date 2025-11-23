@@ -99,8 +99,14 @@ export class DealsService {
       this.db.deal.count({ where })
     ]);
 
+    // Normalize stage to uppercase for UI consistency (pipeline uses NEW/PROPOSAL/etc)
+    const normalizedDeals = deals.map((d: any) => ({
+      ...d,
+      stage: String((d as any).stage || '').toUpperCase(),
+    }));
+
     return {
-      data: deals,
+      data: normalizedDeals,
       pagination: {
         page,
         limit,

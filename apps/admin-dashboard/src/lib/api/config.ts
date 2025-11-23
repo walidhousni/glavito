@@ -79,7 +79,11 @@ api.interceptors.response.use(
                 { refreshToken: state.tokens.refreshToken }
               );
 
-              const { accessToken } = response.data;
+              const payload = (response?.data && typeof response.data === 'object')
+                ? (response.data.data ?? response.data)
+                : response.data;
+              const accessToken = payload?.accessToken as string | undefined;
+              const newRefreshToken = (payload?.refreshToken as string | undefined) ?? state.tokens.refreshToken;
 
               // Update stored tokens
               const updatedStorage = {
@@ -89,13 +93,16 @@ api.interceptors.response.use(
                   tokens: {
                     ...state.tokens,
                     accessToken,
+                    refreshToken: newRefreshToken,
                   },
                 },
               };
               window.localStorage.setItem('auth-storage', JSON.stringify(updatedStorage));
 
               // Retry original request with new token
-              originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+              if (accessToken) {
+                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+              }
               return api(originalRequest);
             }
           }

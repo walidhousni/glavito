@@ -2,9 +2,7 @@ import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LocalizationService, type LocaleCode, type CurrencyCode } from './localization.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { CurrentTenant } from '@glavito/shared-auth';
+import { RolesGuard, Roles, CurrentTenant } from '@glavito/shared-auth';
 
 @ApiTags('Localization')
 @Controller('localization')

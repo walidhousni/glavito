@@ -1,14 +1,17 @@
 import { create } from 'zustand'
 import { analyticsApi } from '@/lib/api/analytics-client'
-import type { RealTimeMetrics, KPIMetric } from '@/types/analytics'
+import { callsApi } from '@/lib/api/calls-client'
+import type { RealTimeMetricsUI, KPIMetricUI } from '@glavito/shared-types'
 
 type Range = '24h' | '7d' | '30d' | '90d'
+export type AnalyticsType = 'overview' | 'conversations' | 'sales' | 'conversion' | 'campaign' | 'performance' | 'calls' | 'financial' | 'predictive' | 'satisfaction' | 'reports' | 'dashboards'
 
 interface AnalyticsState {
   // State
   timeRange: Range
-  realTime?: RealTimeMetrics
-  kpis?: KPIMetric[]
+  analyticsType: AnalyticsType
+  realTime?: RealTimeMetricsUI
+  kpis?: KPIMetricUI[]
   forecast?: any
   capacity?: any
   churn?: any[]
@@ -17,7 +20,11 @@ interface AnalyticsState {
   roiAnalytics?: any
   channelAnalytics?: any
   agentPerformance?: any
+  callAnalytics?: any
+  callQuality?: any
+  callTrends?: any[]
   isLoading: boolean
+  isLoadingCalls: boolean
   error: string | null
   reportTemplates?: any[]
   exportJobs?: any[]
@@ -27,10 +34,12 @@ interface AnalyticsState {
 
   // Actions
   setTimeRange: (range: Range) => void
+  setAnalyticsType: (type: AnalyticsType) => void
   fetchAll: () => Promise<void>
   refetch: () => Promise<void>
   fetchAgent: (agentId: string) => Promise<void>
   fetchChannel: () => Promise<void>
+  fetchCalls: () => Promise<void>
   loadTemplates: () => Promise<void>
   requestExport: (input: { type: 'dashboard' | 'metric' | 'survey'; sourceId?: string; templateId?: string; format: 'pdf' | 'csv' | 'excel' | 'json'; parameters?: Record<string, unknown> }) => Promise<void>
   loadExports: () => Promise<void>
@@ -43,7 +52,9 @@ interface AnalyticsState {
 
 export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
   timeRange: '7d',
+  analyticsType: 'overview',
   isLoading: false,
+  isLoadingCalls: false,
   error: null,
   reportTemplates: [],
   exportJobs: [],
@@ -52,6 +63,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
   executiveSummary: '',
 
   setTimeRange: (range) => set({ timeRange: range }),
+  setAnalyticsType: (type) => set({ analyticsType: type }),
 
   fetchAll: async () => {
     const range = get().timeRange
@@ -69,7 +81,34 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
         analyticsApi.getChannelAnalytics(range),
         analyticsApi.getAgentPerformance(undefined, range),
       ])
-      set({ realTime, kpis, forecast, capacity, churn, revenueAttribution: revAttr, costAnalytics: costs, roiAnalytics: roi, channelAnalytics: channel, agentPerformance: agent, isLoading: false })
+      
+      // Transform channel analytics to match expected format
+      const transformedChannel = channel?.channels ? {
+        channels: channel.channels.reduce((acc: Record<string, any>, ch: any) => {
+          acc[ch.channelId || ch.channelName || 'unknown'] = {
+            ticketVolume: ch.totalTickets || ch.totalInteractions || 0,
+            ...ch
+          }
+          return acc
+        }, {})
+      } : channel
+      
+      // Transform agent performance to array format
+      const transformedAgent = Array.isArray(agent) ? agent : (agent?.metrics ? [agent] : [])
+      
+      set({ 
+        realTime: realTime || undefined, 
+        kpis: Array.isArray(kpis) ? kpis : [], 
+        forecast: forecast || undefined, 
+        capacity: capacity || undefined, 
+        churn: Array.isArray(churn) ? churn : [], 
+        revenueAttribution: revAttr || undefined, 
+        costAnalytics: costs || undefined, 
+        roiAnalytics: roi || undefined, 
+        channelAnalytics: transformedChannel || undefined, 
+        agentPerformance: transformedAgent, 
+        isLoading: false 
+      })
     } catch (e) {
       set({ error: e instanceof Error ? e.message : 'Failed to load analytics', isLoading: false })
     }
@@ -96,6 +135,25 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
       set({ channelAnalytics: channel })
     } catch (e) {
       set({ error: e instanceof Error ? e.message : 'Failed to load channel analytics' })
+    }
+  },
+
+  fetchCalls: async () => {
+    set({ isLoadingCalls: true })
+    try {
+      const [callAnalytics, callQuality, callTrends] = await Promise.all([
+        callsApi.analyticsMe().catch(() => null),
+        callsApi.quality24h().catch(() => null),
+        callsApi.trends(7).catch(() => []),
+      ])
+      set({ 
+        callAnalytics: callAnalytics || undefined, 
+        callQuality: callQuality || undefined, 
+        callTrends: Array.isArray(callTrends) ? callTrends : [], 
+        isLoadingCalls: false 
+      })
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : 'Failed to load call analytics', isLoadingCalls: false })
     }
   },
 

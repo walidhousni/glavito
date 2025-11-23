@@ -141,15 +141,239 @@ export class CrmAnalyticsService {
       revenueSeries.push(predicted);
     }
 
+    // Ensure predictions is always an array
+    const safePredictions = Array.isArray(predictions) ? predictions : [];
+    
     const result = {
       periodDays,
-      totalPredicted: predictions.reduce((s, p) => s + p.predictedRevenue, 0),
-      predictions,
+      totalPredicted: safePredictions.reduce((s, p) => s + (p.predictedRevenue || 0), 0),
+      predictions: safePredictions,
     };
 
     // Cache the result
     await this.cache.set(cacheKey, result, { prefix: 'analytics', ttl: 1800 }); // 30 minutes
 
+    return result;
+  }
+
+  async getPipelineFunnel(tenantId: string, pipelineId?: string) {
+    const cacheKey = `funnel:${tenantId}:${pipelineId || 'all'}`;
+    const cached = await this.cache.get(cacheKey, { prefix: 'analytics' });
+    if (cached) {
+      return cached;
+    }
+
+    const where: any = { tenantId };
+    if (pipelineId) {
+      where.pipelineId = pipelineId;
+    }
+
+    // Get all deals
+    const deals = await this.db.deal.findMany({
+      where,
+      select: {
+        id: true,
+        stage: true,
+        value: true,
+        createdAt: true,
+        actualCloseDate: true,
+      },
+    });
+
+    // Define standard funnel stages
+    const stages = ['NEW', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'];
+    const stageMetrics: Array<{
+      stage: string;
+      count: number;
+      value: number;
+      conversionRate: number;
+      dropOffRate: number;
+      avgDaysInStage: number;
+    }> = [];
+
+    let previousCount = 0;
+    for (let i = 0; i < stages.length; i++) {
+      const stage = stages[i];
+      const stageDeals = deals.filter(d => (d.stage || 'NEW').toUpperCase() === stage);
+      const count = stageDeals.length;
+      const value = stageDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
+
+      // Calculate conversion rate (percentage of previous stage that moved to this stage)
+      const conversionRate = i === 0 ? 100 : previousCount > 0 ? (count / previousCount) * 100 : 0;
+      
+      // Calculate drop-off rate
+      const dropOffRate = i === 0 ? 0 : previousCount > 0 ? ((previousCount - count) / previousCount) * 100 : 0;
+
+      // Calculate average days in stage (simplified - would need stage history for accuracy)
+      const avgDaysInStage = stageDeals.length > 0
+        ? stageDeals.reduce((sum, d) => {
+            const days = d.actualCloseDate
+              ? Math.max(0, (d.actualCloseDate.getTime() - d.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+              : Math.max(0, (Date.now() - d.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+            return sum + days;
+          }, 0) / stageDeals.length
+        : 0;
+
+      stageMetrics.push({
+        stage,
+        count,
+        value,
+        conversionRate: Math.round(conversionRate * 100) / 100,
+        dropOffRate: Math.round(dropOffRate * 100) / 100,
+        avgDaysInStage: Math.round(avgDaysInStage * 100) / 100,
+      });
+
+      previousCount = count;
+    }
+
+    // Calculate overall metrics
+    const totalDeals = deals.length;
+    const wonDeals = deals.filter(d => (d.stage || '').toUpperCase() === 'WON').length;
+    const lostDeals = deals.filter(d => (d.stage || '').toUpperCase() === 'LOST').length;
+    const overallConversionRate = totalDeals > 0 ? (wonDeals / totalDeals) * 100 : 0;
+
+    const result = {
+      stages: stageMetrics,
+      totalDeals,
+      wonDeals,
+      lostDeals,
+      overallConversionRate: Math.round(overallConversionRate * 100) / 100,
+    };
+
+    await this.cache.set(cacheKey, result, { prefix: 'analytics', ttl: 1800 });
+    return result;
+  }
+
+  async getRepPerformance(tenantId: string, timeframe: 'week' | 'month' | 'quarter' = 'month') {
+    const cacheKey = `rep-performance:${tenantId}:${timeframe}`;
+    const cached = await this.cache.get(cacheKey, { prefix: 'analytics' });
+    if (cached) {
+      return cached;
+    }
+
+    // Calculate date range
+    const now = new Date();
+    const daysMap = { week: 7, month: 30, quarter: 90 };
+    const days = daysMap[timeframe];
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    // Get deals assigned to users in the timeframe
+    const deals = await this.db.deal.findMany({
+      where: {
+        tenantId,
+        createdAt: { gte: startDate },
+      },
+      select: {
+        id: true,
+        assignedUserId: true,
+        stage: true,
+        value: true,
+        createdAt: true,
+        actualCloseDate: true,
+        assignedUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Group by user
+    const userMetrics = new Map<string, {
+      userId: string;
+      userName: string;
+      email: string;
+      dealsCreated: number;
+      dealsWon: number;
+      dealsLost: number;
+      totalValue: number;
+      wonValue: number;
+      winRate: number;
+      avgDealSize: number;
+      avgDaysToClose: number;
+      velocity: number;
+    }>();
+
+    for (const deal of deals) {
+      if (!deal.assignedUserId || !deal.assignedUser) continue;
+
+      const userId = deal.assignedUserId;
+      if (!userMetrics.has(userId)) {
+        userMetrics.set(userId, {
+          userId,
+          userName: `${deal.assignedUser.firstName || ''} ${deal.assignedUser.lastName || ''}`.trim() || 'Unknown',
+          email: deal.assignedUser.email,
+          dealsCreated: 0,
+          dealsWon: 0,
+          dealsLost: 0,
+          totalValue: 0,
+          wonValue: 0,
+          winRate: 0,
+          avgDealSize: 0,
+          avgDaysToClose: 0,
+          velocity: 0,
+        });
+      }
+
+      const metrics = userMetrics.get(userId)!;
+      metrics.dealsCreated++;
+      metrics.totalValue += Number(deal.value) || 0;
+
+      const stage = (deal.stage || '').toUpperCase();
+      if (stage === 'WON') {
+        metrics.dealsWon++;
+        metrics.wonValue += Number(deal.value) || 0;
+      } else if (stage === 'LOST') {
+        metrics.dealsLost++;
+      }
+    }
+
+    // Calculate derived metrics
+    const repPerformance = Array.from(userMetrics.values()).map(metrics => {
+      const closedDeals = metrics.dealsWon + metrics.dealsLost;
+      metrics.winRate = closedDeals > 0 ? (metrics.dealsWon / closedDeals) * 100 : 0;
+      metrics.avgDealSize = metrics.dealsWon > 0 ? metrics.wonValue / metrics.dealsWon : 0;
+      
+      // Calculate avg days to close (simplified - would need actual close dates)
+      metrics.avgDaysToClose = metrics.dealsWon > 0 ? days / 2 : 0; // Placeholder
+      
+      // Velocity: deals won per week
+      metrics.velocity = (metrics.dealsWon / days) * 7;
+
+      // Round values
+      metrics.winRate = Math.round(metrics.winRate * 100) / 100;
+      metrics.avgDealSize = Math.round(metrics.avgDealSize * 100) / 100;
+      metrics.avgDaysToClose = Math.round(metrics.avgDaysToClose * 100) / 100;
+      metrics.velocity = Math.round(metrics.velocity * 100) / 100;
+      metrics.totalValue = Math.round(metrics.totalValue * 100) / 100;
+      metrics.wonValue = Math.round(metrics.wonValue * 100) / 100;
+
+      return metrics;
+    });
+
+    // Sort by won value descending
+    repPerformance.sort((a, b) => b.wonValue - a.wonValue);
+
+    const result = {
+      timeframe,
+      startDate: startDate.toISOString(),
+      endDate: now.toISOString(),
+      reps: repPerformance,
+      summary: {
+        totalReps: repPerformance.length,
+        totalDealsCreated: repPerformance.reduce((sum, r) => sum + r.dealsCreated, 0),
+        totalDealsWon: repPerformance.reduce((sum, r) => sum + r.dealsWon, 0),
+        totalRevenue: repPerformance.reduce((sum, r) => sum + r.wonValue, 0),
+        avgWinRate: repPerformance.length > 0
+          ? repPerformance.reduce((sum, r) => sum + r.winRate, 0) / repPerformance.length
+          : 0,
+      },
+    };
+
+    await this.cache.set(cacheKey, result, { prefix: 'analytics', ttl: 1800 });
     return result;
   }
 }

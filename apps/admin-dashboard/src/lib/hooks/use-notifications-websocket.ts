@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useNotificationStore } from '../store/notification-store';
+import { useNotificationStore, type Notification } from '../store/notification-store';
+import { useAuth } from './use-auth';
 
 export interface NotificationEventPayload {
   id: string;
@@ -12,38 +13,30 @@ export interface NotificationEventPayload {
   data?: any;
   isRead: boolean;
   priority: string;
-  category: string;
+  category?: string;
   actionUrl?: string;
   createdAt: string;
   userId: string;
   tenantId: string;
-}
-
-export interface NotificationWebSocketEvents {
-  'notification.created': NotificationEventPayload;
-  'notification.updated': NotificationEventPayload;
-  'notification.read': { id: string; userId: string; tenantId: string };
-  'notification.deleted': { id: string; userId: string; tenantId: string };
-  'notifications.read_all': { userId: string; tenantId: string };
-  'notifications.cleared': { userId: string; tenantId: string };
+  metadata?: Record<string, any>;
 }
 
 export interface UseNotificationsWebSocketOptions {
-  userId?: string;
-  tenantId?: string;
   autoConnect?: boolean;
   onNotificationCreated?: (payload: NotificationEventPayload) => void;
   onNotificationUpdated?: (payload: NotificationEventPayload) => void;
-  onNotificationRead?: (payload: { id: string; userId: string; tenantId: string }) => void;
-  onNotificationDeleted?: (payload: { id: string; userId: string; tenantId: string }) => void;
-  onNotificationsReadAll?: (payload: { userId: string; tenantId: string }) => void;
-  onNotificationsCleared?: (payload: { userId: string; tenantId: string }) => void;
+  onNotificationRead?: (payload: { id: string }) => void;
+  onNotificationDeleted?: (payload: { id: string }) => void;
+  onNotificationsReadAll?: () => void;
+  onNotificationsCleared?: () => void;
 }
 
+/**
+ * Unified WebSocket hook for notifications
+ * Automatically connects using auth context and handles all notification events
+ */
 export function useNotificationsWebSocket(options: UseNotificationsWebSocketOptions = {}) {
   const {
-    userId,
-    tenantId,
     autoConnect = true,
     onNotificationCreated,
     onNotificationUpdated,
@@ -56,10 +49,18 @@ export function useNotificationsWebSocket(options: UseNotificationsWebSocketOpti
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const { addNotification, updateNotification, removeNotification, markAsRead, clearAll } = useNotificationStore();
+  const { user } = useAuth();
+  const {
+    addNotification,
+    deleteNotification,
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications,
+    fetchNotifications,
+  } = useNotificationStore();
 
   useEffect(() => {
-    if (!autoConnect || !userId || !tenantId) return;
+    if (!autoConnect || !user?.id) return;
 
     // Get auth token from localStorage
     let token: string | null = null;
@@ -86,6 +87,9 @@ export function useNotificationsWebSocket(options: UseNotificationsWebSocketOpti
       auth: { token },
       transports: ['websocket', 'polling'],
       timeout: 10000,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     });
 
     socketRef.current = socket;
@@ -94,9 +98,8 @@ export function useNotificationsWebSocket(options: UseNotificationsWebSocketOpti
     socket.on('connect', () => {
       setIsConnected(true);
       setConnectionError(null);
-      
-      // Join user-specific room for notifications
-      socket.emit('join_user_room', { userId, tenantId });
+      // Join user room (already auto-joined by gateway, but explicit for clarity)
+      socket.emit('join', { room: `user:${user.id}` });
     });
 
     socket.on('disconnect', () => {
@@ -108,83 +111,88 @@ export function useNotificationsWebSocket(options: UseNotificationsWebSocketOpti
       setIsConnected(false);
     });
 
-    // Notification event handlers
-    socket.on('notification.created', (payload: NotificationEventPayload) => {
-      // Add to store
-      addNotification({
+    // Notification event handlers - match backend gateway events
+    socket.on('notification.created', (payload: NotificationEventPayload | Notification) => {
+      // Normalize payload to match Notification interface
+      const normalized: Notification = {
         id: payload.id,
-        type: payload.type,
-        title: payload.title,
-        message: payload.message,
-        data: payload.data,
-        isRead: payload.isRead,
-        priority: payload.priority as 'low' | 'medium' | 'high' | 'urgent',
-        category: payload.category,
-        actionUrl: payload.actionUrl,
-        createdAt: payload.createdAt,
-      });
+        type: (payload.type || 'system') as Notification['type'],
+        title: payload.title || '',
+        message: payload.message || '',
+        priority: (payload.priority || 'low') as Notification['priority'],
+        isRead: payload.isRead ?? false,
+        createdAt: payload.createdAt || new Date().toISOString(),
+        updatedAt: payload.updatedAt || new Date().toISOString(),
+        userId: payload.userId || user.id,
+        tenantId: payload.tenantId || user.tenantId,
+        metadata: payload.metadata || payload.data || {},
+      };
       
-      // Call custom handler
-      onNotificationCreated?.(payload);
+      addNotification(normalized);
+      onNotificationCreated?.(payload as NotificationEventPayload);
     });
 
-    socket.on('notification.updated', (payload: NotificationEventPayload) => {
-      // Update in store
-      updateNotification(payload.id, {
-        type: payload.type,
-        title: payload.title,
-        message: payload.message,
-        data: payload.data,
-        isRead: payload.isRead,
-        priority: payload.priority as 'low' | 'medium' | 'high' | 'urgent',
-        category: payload.category,
-        actionUrl: payload.actionUrl,
-      });
-      
-      // Call custom handler
-      onNotificationUpdated?.(payload);
+    socket.on('notification.updated', (payload: NotificationEventPayload | Notification) => {
+      // Refresh notifications to get updated data
+      fetchNotifications();
+      onNotificationUpdated?.(payload as NotificationEventPayload);
     });
 
-    socket.on('notification.read', (payload: { id: string; userId: string; tenantId: string }) => {
-      // Mark as read in store
+    socket.on('notification.marked_read', (payload: { id: string }) => {
       markAsRead(payload.id);
-      
-      // Call custom handler
       onNotificationRead?.(payload);
     });
 
-    socket.on('notification.deleted', (payload: { id: string; userId: string; tenantId: string }) => {
-      // Remove from store
-      removeNotification(payload.id);
-      
-      // Call custom handler
+    socket.on('notification.deleted', (payload: { id: string }) => {
+      deleteNotification(payload.id);
       onNotificationDeleted?.(payload);
     });
 
-    socket.on('notifications.read_all', (payload: { userId: string; tenantId: string }) => {
-      // Mark all as read in store
-      useNotificationStore.getState().markAllAsRead();
-      
-      // Call custom handler
-      onNotificationsReadAll?.(payload);
+    socket.on('notification.marked_all_read', () => {
+      markAllAsRead();
+      onNotificationsReadAll?.();
     });
 
-    socket.on('notifications.cleared', (payload: { userId: string; tenantId: string }) => {
-      // Clear all notifications in store
-      clearAll();
-      
-      // Call custom handler
-      onNotificationsCleared?.(payload);
+    socket.on('notification.cleared_all', () => {
+      clearAllNotifications();
+      onNotificationsCleared?.();
+    });
+
+    socket.on('notification.preferences_updated', () => {
+      // Refresh preferences if needed
+      fetchNotifications();
+    });
+
+    socket.on('error', (error: any) => {
+      console.error('Notifications WebSocket error:', error);
+      setConnectionError(error.message || 'WebSocket error');
     });
 
     // Cleanup on unmount
     return () => {
       if (socket.connected) {
-        socket.emit('leave_user_room', { userId, tenantId });
+        socket.emit('leave', { room: `user:${user.id}` });
       }
       socket.disconnect();
+      socketRef.current = null;
     };
-  }, [userId, tenantId, autoConnect, onNotificationCreated, onNotificationUpdated, onNotificationRead, onNotificationDeleted, onNotificationsReadAll, onNotificationsCleared, addNotification, updateNotification, removeNotification, markAsRead, clearAll]);
+  }, [
+    user?.id,
+    user?.tenantId,
+    autoConnect,
+    onNotificationCreated,
+    onNotificationUpdated,
+    onNotificationRead,
+    onNotificationDeleted,
+    onNotificationsReadAll,
+    onNotificationsCleared,
+    addNotification,
+    deleteNotification,
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications,
+    fetchNotifications,
+  ]);
 
   // Manual connection control
   const connect = () => {
@@ -223,37 +231,15 @@ export function useNotificationsWebSocket(options: UseNotificationsWebSocketOpti
   };
 }
 
-// Hook for automatic notification updates with auth context
+/**
+ * Simplified hook for automatic notification updates
+ * Uses auth context automatically
+ */
 export function useNotificationUpdates() {
   const [lastNotification, setLastNotification] = useState<NotificationEventPayload | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
   
-  // Get user info from auth store (you may need to adjust this based on your auth implementation)
-  const [userId, setUserId] = useState<string | null>(null);
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Get user info from auth storage
-    if (typeof window !== 'undefined') {
-      try {
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          const parsed = JSON.parse(authStorage);
-          const user = parsed?.state?.user;
-          if (user) {
-            setUserId(user.id);
-            setTenantId(user.tenantId);
-          }
-        }
-      } catch {
-        // Handle error silently
-      }
-    }
-  }, []);
-  
   const { isConnected, connectionError } = useNotificationsWebSocket({
-    userId: userId || undefined,
-    tenantId: tenantId || undefined,
     onNotificationCreated: (payload) => {
       setLastNotification(payload);
     },
