@@ -3,7 +3,6 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
-import { ActivityFeed } from '@/components/dashboard/activity-feed';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -100,7 +99,7 @@ export default function ActivityPage() {
       </Card>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <ActivityFeed activities={filtered as Array<{ id: string; type: 'ticket' | 'agent' | 'customer' | 'system' | 'message' | 'sla'; title: string; description?: string; user: string; time: string; priority?: 'low' | 'medium' | 'high' | 'urgent'; metadata?: Record<string, unknown> }>} loading={loading} showViewAll={false} />
+        {/* <ActivityFeed activities={filtered as Array<{ id: string; type: 'ticket' | 'agent' | 'customer' | 'system' | 'message' | 'sla'; title: string; description?: string; user: string; time: string; priority?: 'low' | 'medium' | 'high' | 'urgent'; metadata?: Record<string, unknown> }>} loading={loading} showViewAll={false} /> */}
       </motion.div>
     </div>
   );

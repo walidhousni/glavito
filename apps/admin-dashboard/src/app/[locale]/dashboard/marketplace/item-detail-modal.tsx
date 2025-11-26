@@ -42,8 +42,8 @@ export function ItemDetailModal({ open, onOpenChange, item, onInstall, onSubmitR
       setReviews(prev => [newReview, ...prev]);
       setReviewRating(0);
       setReviewComment('');
-      success({ title: 'Review submitted!' });
-    }).catch(() => error({ title: 'Failed to submit review' })).finally(() => setLoading(false));
+      success('Review submitted!');
+    }).catch(() => error('Failed to submit review')).finally(() => setLoading(false));
     if (onSubmitReview) onSubmitReview(reviewRating, reviewComment);
   };
 

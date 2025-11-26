@@ -91,14 +91,14 @@ export default function AdminSettingsPage() {
   }, [settings]);
 
   const handleCompanyChange = (field: keyof Company, value: string) => {
-    setLocalCompany(prev => ({ ...(prev || {}), [field]: value }));
+    setLocalCompany((prev: Company) => ({ ...(prev || {}), [field]: value }));
     setHasChanges(true);
   };
 
   const handleCompanyNested = (ns: 'contact' | 'address' | 'businessHours', field: string, value: string | boolean) => {
     const nextNs = { ...((localCompany as Company)[ns] || {}) } as NonNullable<Company[typeof ns]>;
     (nextNs as Record<string, string | boolean>)[field] = value;
-    setLocalCompany(prev => ({ ...(prev || {}), [ns]: nextNs } as Company));
+    setLocalCompany((prev: Company) => ({ ...(prev || {}), [ns]: nextNs } as Company));
     setHasChanges(true);
   };
   
@@ -118,7 +118,7 @@ export default function AdminSettingsPage() {
     }
     
     days[dayIndex] = { ...days[dayIndex], [field]: value };
-    setLocalCompany(prev => ({
+    setLocalCompany((prev: Company) => ({
       ...(prev || {}),
       businessHours: { ...businessHours, days },
     } as Company));
@@ -126,7 +126,7 @@ export default function AdminSettingsPage() {
   };
 
   const handleLocChange = (field: keyof Localization, value: string) => {
-    setLocalLoc(prev => ({ ...(prev || {}), [field]: value }));
+    setLocalLoc((prev: Localization) => ({ ...(prev || {}), [field]: value }));
     setHasChanges(true);
   };
 
