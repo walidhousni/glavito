@@ -54,7 +54,7 @@ export function ItemDetailModal({ open, onOpenChange, item, onInstall, onSubmitR
   };
 
   // Dynamic config fields from item.content (assume schema: { fields: [{ name, type, required, placeholder }] })
-  const configFields = item.content?.fields || [];
+  const configFields = (item.content as any)?.fields || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,9 +70,9 @@ export function ItemDetailModal({ open, onOpenChange, item, onInstall, onSubmitR
             <div>
               <h3>Overview</h3>
               <p>{item.description}</p>
-              {item.screenshots?.length > 0 && (
+              {(item.screenshots as any)?.length > 0 && (
                 <div className="flex gap-2 overflow-x-auto">
-                  {item.screenshots.map((img, idx) => <img key={idx} src={img} alt={`Screenshot ${idx}`} className="h-48 object-cover rounded" />)}
+                  {(item.screenshots as string[]).map((img: any, idx: any) => <img key={idx} src={img} alt={`Screenshot ${idx}`} className="h-48 object-cover rounded" />)}
                 </div>
               )}
             </div>
