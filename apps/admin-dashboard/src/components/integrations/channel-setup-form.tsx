@@ -45,7 +45,6 @@ export default function ChannelSetupForm({ onComplete, defaultChannel }: Props) 
   // Useful when the modal is reused for different providers
   React.useEffect(() => {
     if (defaultChannel) setChannel(defaultChannel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultChannel]);
 
   return (

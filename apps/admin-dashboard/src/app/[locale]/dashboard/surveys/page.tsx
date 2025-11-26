@@ -49,7 +49,6 @@ export default function SurveysPage() {
 
   useEffect(() => {
     void loadSurveys();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getChannelIcon = (channel: string) => {

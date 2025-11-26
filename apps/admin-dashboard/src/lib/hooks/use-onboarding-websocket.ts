@@ -80,7 +80,7 @@ export function useOnboardingWebSocket(userId?: string) {
       currentSocket.emit('leave-session', { sessionId: session.id });
       currentSocket.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [effectiveUserId, session?.id, isAuthenticated]);
   
   return {

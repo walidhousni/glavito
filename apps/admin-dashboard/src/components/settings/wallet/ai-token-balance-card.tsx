@@ -40,7 +40,6 @@ export function AITokenBalanceCard() {
 
   useEffect(() => {
     loadBalance();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isLow = balance ? balance.balance < 100 : false;

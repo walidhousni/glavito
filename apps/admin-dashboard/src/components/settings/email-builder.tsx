@@ -128,7 +128,6 @@ export function EmailBuilderPanel() {
 
   useEffect(() => {
     setHtml(toHtml());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

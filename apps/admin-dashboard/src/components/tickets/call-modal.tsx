@@ -69,7 +69,6 @@ export function CallModal({
         clearInterval(durationIntervalRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Update local video stream
@@ -102,7 +101,6 @@ export function CallModal({
         clearInterval(durationIntervalRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [call?.status]);
 
   const handleStartCall = async () => {

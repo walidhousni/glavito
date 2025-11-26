@@ -223,7 +223,6 @@ export default function OnboardingPage() {
         router.replace(target);
       }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStepConfig?.id]);
   
   const handleNext = async () => {

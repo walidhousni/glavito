@@ -59,7 +59,6 @@ export default function LeadScoringPage() {
 
   useEffect(() => {
     void loadModels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

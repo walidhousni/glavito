@@ -580,7 +580,7 @@ function EndpointRow({
 
   React.useEffect(() => {
     if (expanded) void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [expanded]);
 
   const getStatusColor = (status: string) => {

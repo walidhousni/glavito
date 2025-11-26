@@ -54,7 +54,6 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     if (tab === 'installed') loadInstalled();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
   useEffect(() => {
@@ -62,7 +61,6 @@ export default function MarketplacePage() {
       setFilters({ ...filters, search });
     }, 300);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   return (

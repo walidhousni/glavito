@@ -6,7 +6,7 @@ export function useFlows(tenantId?: string): FlowsState {
   useEffect(() => {
     // Call once per tenant change; avoid including store in deps to prevent loops
     store.fetch(tenantId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [tenantId])
   return store
 }

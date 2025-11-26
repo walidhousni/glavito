@@ -496,7 +496,6 @@ export default function WorkflowDesignerPage() {
       void load();
       void loadTemplates();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params?.id]);
 
   const handleSave = async () => {

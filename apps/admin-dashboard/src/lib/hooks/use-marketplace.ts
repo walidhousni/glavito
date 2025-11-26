@@ -7,7 +7,7 @@ export function useMarketplace(initial?: { search?: string; category?: string; t
   useEffect(() => {
     if (initial) setFilters(initial);
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const installingSlugs = useMemo(() => new Set(Object.keys(installLoading).filter((k) => installLoading[k])), [installLoading]);

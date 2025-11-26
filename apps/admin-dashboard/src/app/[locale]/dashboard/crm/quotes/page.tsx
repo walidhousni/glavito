@@ -86,7 +86,6 @@ export default function QuotesPage() {
   useEffect(() => {
     void fetchQuotes();
     void fetchQuoteStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchQuotes = async () => {
