@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { DemandForecast, CapacityPrediction, ChurnPrediction } from '@/types/analytics'
 import { analyticsApi } from '@/lib/api/analytics-client'
+import api from '@/lib/api/config'
 import type { RealTimeMetricsUI, KPIMetricUI } from '@glavito/shared-types'
 
 // API base and auth handled by analyticsApi
@@ -38,7 +39,7 @@ export function useAnalytics(
 
   const { autoRefresh = true, refreshInterval = 30000 } = options
 
-  const getTimeRangeParams = useCallback((range: '24h' | '7d' | '30d' | '90d') => analyticsApi.timeParams(range), [])
+  // Removed timeParams - not needed
 
   const fetchAnalyticsData = useCallback(async () => {
     try {
@@ -73,7 +74,7 @@ export function useAnalytics(
     } finally {
       setIsLoading(false)
     }
-  }, [tenantId, timeRange, getTimeRangeParams])
+  }, [tenantId, timeRange])
 
   const refetch = useCallback(() => {
     fetchAnalyticsData()

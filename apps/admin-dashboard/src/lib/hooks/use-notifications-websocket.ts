@@ -122,10 +122,10 @@ export function useNotificationsWebSocket(options: UseNotificationsWebSocketOpti
         priority: (payload.priority || 'low') as Notification['priority'],
         isRead: payload.isRead ?? false,
         createdAt: payload.createdAt || new Date().toISOString(),
-        updatedAt: payload.updatedAt || new Date().toISOString(),
+        updatedAt: ('updatedAt' in payload ? payload.updatedAt : undefined) || new Date().toISOString(),
         userId: payload.userId || user.id,
         tenantId: payload.tenantId || user.tenantId,
-        metadata: payload.metadata || payload.data || {},
+        metadata: payload.metadata || ('data' in payload ? payload.data : undefined) || {},
       };
       
       addNotification(normalized);

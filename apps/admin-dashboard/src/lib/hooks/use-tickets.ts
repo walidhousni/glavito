@@ -177,7 +177,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
             if (!statsLoadedRef.current) {
               if (capabilities.canViewStats) {
                 const s = await ticketsApi.stats();
-                setStats(s);
+                setStats(s as TicketStats);
               } else {
                 setStats(mockStats);
               }
@@ -337,7 +337,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
         if (!statsLoadedRef.current) {
           if (capabilities.canViewStats) {
             const s = await ticketsApi.stats();
-            setStats(s);
+            setStats(s as TicketStats);
           } else {
             setStats(mockStats);
           }
