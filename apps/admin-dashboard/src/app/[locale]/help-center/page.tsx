@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -28,7 +28,12 @@ import { useHelpCenterStore } from '@/lib/store/help-center-store'
 export default function HelpCenterRedesigned() {
   const t = useTranslations()
   const [searchQuery, setSearchQuery] = useState('')
-  const { searchKnowledge, searchResults, selectArticle, selectedArticle } = useHelpCenterStore()
+  const store = useHelpCenterStore()
+  const { searchResults, selectArticle, selectedArticle } = store
+
+  const searchKnowledge = useCallback((query: string) => {
+    store.searchKnowledge(query)
+  }, [store])
 
   useEffect(() => {
     if (searchQuery) {
@@ -37,7 +42,7 @@ export default function HelpCenterRedesigned() {
       }, 300)
       return () => clearTimeout(timeoutId)
     }
-  }, [searchQuery])
+  }, [searchQuery, searchKnowledge])
 
   const categories = [
     {
