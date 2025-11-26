@@ -20,10 +20,20 @@ const nextConfig = {
   skipTrailingSlashRedirect: true,
   output: 'standalone',
   distDir: '.next',
-  // Remove esmExternals override to avoid module interop issues with React 19 / Next 15
-  // experimental: {
-  //   esmExternals: false,
-  // },
+  
+  // Performance optimizations
+  swcMinify: true, // Use SWC minifier (faster than Terser)
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts', '@radix-ui/react-icons'],
+    turbo: {
+      resolveExtensions: ['.tsx', '.ts', '.jsx', '.js'],
+    },
+  },
+  
   headers: async () => [
     {
       source: '/(.*)',
@@ -39,7 +49,6 @@ const nextConfig = {
   outputFileTracing: true,
   trailingSlash: false,
   reactStrictMode: true,
-  devIndicators: { buildActivity: true },
   images: {
     remotePatterns: [
       {
@@ -48,12 +57,50 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
+  webpack: (config, { dev, isServer }) => {
     config.plugins = config.plugins || [];
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, 'src'),
     };
+    
+    // Optimize webpack for dev speed
+    if (dev) {
+      config.watchOptions = {
+        poll: false,
+        aggregateTimeout: 300,
+      };
+    }
+    
+    // Reduce bundle size
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        minimize: true,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // Vendor chunk
+            vendor: {
+              name: 'vendor',
+              chunks: 'all',
+              test: /node_modules/,
+              priority: 20,
+            },
+            // Common chunk
+            common: {
+              minChunks: 2,
+              priority: 10,
+              reuseExistingChunk: true,
+              enforce: true,
+            },
+          },
+        },
+      };
+    }
+    
     return config;
   },
 };

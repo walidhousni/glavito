@@ -243,10 +243,13 @@ export class AIController {
   async getRecentAnalyses(
     @CurrentTenant() tenantId: string,
     @Query('limit') limit?: string,
-    @Query('agentId') agentId?: string
+    @Query('agentId') agentId?: string,
+    @Query('maxConfidence') maxConfidence?: string
   ) {
     try {
       const take = Math.min(100, Math.max(1, parseInt(limit || '20', 10)))
+      const maxConf = maxConfidence ? parseFloat(maxConfidence) : undefined;
+
       // If agent filter provided, filter by calls the agent participated in OR conversations assigned to the agent
       if (agentId) {
         const [agentCalls, agentConvsAdv] = await Promise.all([
@@ -273,6 +276,7 @@ export class AIController {
         const items = await (this.db as any).aIAnalysisResult.findMany({
           where: {
             tenantId,
+            confidence: maxConf ? { lte: maxConf } : undefined,
             OR: [
               callIds.length ? { callId: { in: callIds } } : undefined,
               conversationIds.length ? { conversationId: { in: conversationIds } } : undefined,
@@ -297,8 +301,17 @@ export class AIController {
           : []
         return { success: true, data: mapped }
       }
-      // No agent filter: fallback to service helper
-        const items = await this.aiService.getRecentAnalyses(tenantId, take)
+      
+      // No agent filter: direct query
+      const items = await (this.db as any).aIAnalysisResult.findMany({
+          where: {
+            tenantId,
+            confidence: maxConf ? { lte: maxConf } : undefined,
+          },
+          orderBy: { createdAt: 'desc' },
+          take,
+      }).catch(() => []);
+
       return { success: true, data: items }
     } catch (error) {
       return { success: false, data: [] }
@@ -510,7 +523,7 @@ export class AIController {
   @Post('feedback')
   @ApiOperation({ summary: 'Submit AI feedback (accept/reject, category, notes)' })
   async feedback(
-    @Body() body: { analysisId?: string; conversationId?: string; accepted: boolean; category?: string; notes?: string },
+    @Body() body: { analysisId?: string; conversationId?: string; accepted: boolean; category?: string; notes?: string; correction?: string },
     @CurrentTenant() tenantId: string
   ) {
     try {
@@ -528,6 +541,7 @@ export class AIController {
             accepted: body.accepted,
             category: body.category,
             notes: body.notes,
+            correction: body.correction,
           },
           metadata: { tenantId },
           timestamp: new Date(),
@@ -748,9 +762,9 @@ export class AIController {
   @ApiOperation({ summary: 'Get comprehensive AI insights for dashboard' })
   @ApiResponse({ status: 200, description: 'Insights retrieved successfully' })
   async getInsights(
+    @CurrentTenant() tenantId: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
-    @CurrentTenant() tenantId: string,
   ) {
     const timeRange = from && to
       ? { from: new Date(from), to: new Date(to) }
@@ -836,9 +850,9 @@ export class AIController {
   @ApiOperation({ summary: 'Get auto-resolve statistics' })
   @ApiResponse({ status: 200, description: 'Statistics retrieved' })
   async getAutoResolveStats(
+    @CurrentTenant() tenantId: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
-    @CurrentTenant() tenantId: string,
   ) {
     const timeRange = from && to
       ? { from: new Date(from), to: new Date(to) }
@@ -986,8 +1000,8 @@ export class AIController {
   @ApiOperation({ summary: 'Get active AI insight alerts' })
   @ApiResponse({ status: 200, description: 'Alerts retrieved' })
   async getActiveAlerts(
-    @Query('limit') limit?: string,
     @CurrentTenant() tenantId: string,
+    @Query('limit') limit?: string,
   ) {
     const alertLimit = limit ? parseInt(limit, 10) : 50;
     const alerts = await this.insightsService.getActiveAlerts(tenantId, alertLimit);

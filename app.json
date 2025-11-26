@@ -1,8 +1,5 @@
 {
   "android": {
     "package": "com.walidhousni.glavitoworkspacesource"
-  },
-  "ios": {
-    "bundleIdentifier": "com.walidhousni.glavitoworkspacesource"
   }
 }

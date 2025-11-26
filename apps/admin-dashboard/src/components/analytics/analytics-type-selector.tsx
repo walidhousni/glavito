@@ -52,18 +52,24 @@ export function AnalyticsTypeSelector({ className }: AnalyticsTypeSelectorProps)
 
   return (
     <div className={`flex items-center gap-3 ${className || ''}`}>
-      <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-        ANALYTICS
-      </span>
+      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border border-blue-200 dark:border-blue-800/50 shadow-sm">
+        <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 uppercase tracking-wider">
+          Analytics
+        </span>
+      </div>
       <Select value={currentType} onValueChange={handleTypeChange}>
-        <SelectTrigger className="w-[200px] h-9">
+        <SelectTrigger className="w-[240px] h-11 rounded-xl border-2 border-border/50 hover:border-primary/50 transition-colors bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl shadow-sm hover:shadow-md">
           <SelectValue>
             {t(currentType, { fallback: analyticsTypes.find(t => t.value === currentType)?.labelKey || currentType })}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="rounded-xl border-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl">
           {analyticsTypes.map((type) => (
-            <SelectItem key={type.value} value={type.value}>
+            <SelectItem 
+              key={type.value} 
+              value={type.value}
+              className="rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer transition-colors"
+            >
               {t(type.labelKey, { fallback: type.labelKey })}
             </SelectItem>
           ))}

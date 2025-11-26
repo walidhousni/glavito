@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import { useAnalyticsStore, type AnalyticsType } from '@/lib/store/analytics-store'
 import { AnalyticsTypeSelector } from '@/components/analytics/analytics-type-selector'
 import { Button } from '@/components/ui/button'
-import { BarChart3 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { BarChart3, Download, RefreshCw } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   OverviewView,
   ConversationsView,
@@ -81,43 +81,94 @@ export default function AnalyticsPage() {
   const CurrentView = viewMap[currentType] || OverviewView
 
   return (
-    <div className="min-h-screen gradient-bg-primary p-6 space-y-6">
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between flex-wrap gap-4"
-      >
-        <div className="flex items-center gap-4">
-            <BarChart3 className="h-8 w-8" />
-          <AnalyticsTypeSelector />
-        </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Gradient Background Blobs */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 dark:from-blue-600/10 dark:via-purple-600/10 dark:to-pink-600/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-emerald-500/20 via-cyan-500/20 to-blue-500/20 dark:from-emerald-600/10 dark:via-cyan-600/10 dark:to-blue-600/10 rounded-full blur-3xl" />
+      </div>
 
-        {/* Time Range Selector */}
-        <div className="flex items-center gap-2">
-          {timeRanges.map((range) => (
+      <div className="p-6 space-y-6 relative">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between flex-wrap gap-4"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 shadow-lg shadow-blue-500/30 dark:shadow-blue-600/20">
+              <BarChart3 className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
+              <p className="text-sm text-muted-foreground">Track and analyze your business metrics</p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
             <Button
-              key={range.value}
-              variant={timeRange === range.value ? 'default' : 'outline'}
+              variant="outline"
               size="sm"
-              onClick={() => setTimeRange(range.value)}
-              className={timeRange === range.value ? 'time-range-btn-active' : 'time-range-btn'}
+              className="h-10 px-4 rounded-xl border-2 hover:border-primary/50 transition-colors"
+              onClick={() => fetchAll()}
             >
-              {range.label}
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
             </Button>
-          ))}
-        </div>
-      </motion.div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 px-4 rounded-xl border-2 hover:border-primary/50 transition-colors"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+        </motion.div>
 
-      {/* Analytics Content */}
-      <motion.div
-        key={currentType}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <CurrentView />
-      </motion.div>
+        {/* Type Selector and Time Range */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex items-center justify-between flex-wrap gap-4 p-4 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-border/50 shadow-sm"
+        >
+          <AnalyticsTypeSelector />
+
+          {/* Time Range Selector */}
+          <div className="flex items-center gap-2">
+            {timeRanges.map((range) => (
+              <Button
+                key={range.value}
+                variant={timeRange === range.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTimeRange(range.value)}
+                className={`h-10 px-4 rounded-xl transition-all ${
+                  timeRange === range.value
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/30'
+                    : 'border-2 hover:border-primary/50'
+                }`}
+              >
+                {range.label}
+              </Button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Analytics Content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentType}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CurrentView />
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   )
 }

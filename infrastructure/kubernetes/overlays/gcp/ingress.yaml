@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: glavito-ingress
+  annotations:
+    kubernetes.io/ingress.class: 'gce'
+    networking.gke.io/managed-certificates: 'glavito-cert'
+spec:
+  rules:
+    - host: admin.glavito.com
+      http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: admin-dashboard
+                port:
+                  number: 3000
+    - host: api.glavito.com
+      http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 3000

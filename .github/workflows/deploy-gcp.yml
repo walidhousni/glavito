@@ -1,0 +1,102 @@
+name: Deploy to GCP GKE
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment (prod)'
+        required: true
+        default: 'prod'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation
+
+    env:
+      PROJECT_ID: glavito-platform
+      REGION: us-central1
+      GAR_LOCATION: us-central1-docker.pkg.dev/glavito-platform/glavito-repo
+      CLUSTER_NAME: glavito-cluster
+      CLUSTER_ZONE: us-central1-a
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build apps
+        run: npm run build:all
+
+      # Authenticate to Google Cloud
+      # Note: You need to set up Workload Identity Federation or use a Service Account Key
+      # For simplicity in this migration, we'll assume a Service Account Key stored in secrets
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and push images
+        run: |
+          GIT_SHA=$(git rev-parse --short HEAD)
+
+          # Build API
+          docker build -f api-gateway/Dockerfile -t $GAR_LOCATION/api:$GIT_SHA -t $GAR_LOCATION/api:latest .
+          docker push $GAR_LOCATION/api:$GIT_SHA
+          docker push $GAR_LOCATION/api:latest
+
+          # Build Admin Dashboard
+          docker build -f apps/admin-dashboard/Dockerfile -t $GAR_LOCATION/admin:$GIT_SHA -t $GAR_LOCATION/admin:latest .
+          docker push $GAR_LOCATION/admin:$GIT_SHA
+          docker push $GAR_LOCATION/admin:latest
+
+      - name: Get GKE Credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.CLUSTER_NAME }}
+          location: ${{ env.CLUSTER_ZONE }}
+
+      - name: Setup yq
+        uses: mikefarah/yq@v4.44.3
+
+      - name: Update Kustomize Image Tags
+        run: |
+          GIT_SHA=$(git rev-parse --short HEAD)
+          cd infrastructure/kubernetes/overlays/gcp
+          kustomize edit set image us-central1-docker.pkg.dev/glavito-platform/glavito-repo/admin=$GAR_LOCATION/admin:$GIT_SHA
+          kustomize edit set image us-central1-docker.pkg.dev/glavito-platform/glavito-repo/api=$GAR_LOCATION/api:$GIT_SHA
+
+      - name: Deploy to GKE
+        run: |
+          kubectl apply -k infrastructure/kubernetes/overlays/gcp
+
+      - name: Run DB Migrations
+        run: |
+          # Create a temporary job manifest with the correct image tag
+          GIT_SHA=$(git rev-parse --short HEAD)
+          sed "s|IMAGE_TO_REPLACE|$GAR_LOCATION/api:$GIT_SHA|" infrastructure/kubernetes/jobs/prisma-migrate.yaml > job.yaml
+
+          # Run the job
+          kubectl apply -f job.yaml
+          kubectl wait --for=condition=complete --timeout=300s job/prisma-migrate || (kubectl logs job/prisma-migrate; exit 1)
+          kubectl delete job/prisma-migrate
+
+      - name: Check Rollout Status
+        run: |
+          kubectl rollout status deployment/api-gateway -n prod --timeout=180s
+          kubectl rollout status deployment/admin-dashboard -n prod --timeout=180s

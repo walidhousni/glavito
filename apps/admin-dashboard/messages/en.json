@@ -1,4 +1,4 @@
-{
+ {
   "dashboard": {
     "overview": "Dashboard Overview",
     "welcomeBack": "Welcome back, {name}",
@@ -2461,6 +2461,32 @@
       "dnsRequired": "DNS validation required",
       "dnsRequiredDesc": "Please configure SPF, DKIM, and DMARC records for your sender domain before sending emails.",
       "configureDNS": "Configure DNS"
+    },
+    "navigation": {
+      "company": "Company",
+      "basicInfo": "Basic Info",
+      "billing": "Billing & Plans",
+      "wallet": "Wallet",
+      "whiteLabel": "White Label",
+      "branding": "Branding & Appearance",
+      "domains": "Domains",
+      "channels": "Channels",
+      "overview": "Overview",
+      "email": "Email Configuration",
+      "automation": "Automation",
+      "aiBots": "AI Bots",
+      "team": "Team",
+      "members": "Team Members",
+      "userManagement": "User Management",
+      "system": "System",
+      "notifications": "Notifications",
+      "features": "Features"
+    },
+    "branding": {
+      "preview": {
+        "title": "Live Preview",
+        "subtitle": "See how your branding looks in real-time"
+      }
     },
     "tabs": {
       "basicInfo": "Basic Info",

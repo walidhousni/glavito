@@ -6,6 +6,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '@glavito/shared-database';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { TemplatesService } from '../templates/templates.service';
 
 export type OnboardingType = 'tenant_setup' | 'agent_welcome';
 export type OnboardingRole = 'tenant_admin' | 'agent';
@@ -13,6 +14,7 @@ export type OnboardingRole = 'tenant_admin' | 'agent';
 // Tenant Admin Steps
 export const TENANT_STEPS = [
   'welcome',
+  'industry',
   'stripe',
   'channels',
   'team',
@@ -70,6 +72,7 @@ export class OnboardingService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly templatesService: TemplatesService,
   ) {}
 
   /**
@@ -373,6 +376,40 @@ export class OnboardingService {
 
       // Mark tenant onboarding as complete
       if (session.type === 'tenant_setup') {
+        // Apply industry template if selected
+        const industry = (session.stepData as any)?.industry?.selectedIndustry;
+        if (industry) {
+          try {
+            // Find template by industry slug
+            const templates = await this.templatesService.getTemplatesByIndustry(industry);
+            if (templates.length > 0) {
+              // Use the first available template for this industry for now
+              // In the future, we might allow selecting specific sub-templates
+              const templateId = templates[0].id;
+              
+              await this.templatesService.applyTemplate({
+                tenantId: session.tenantId,
+                templateId,
+                userId: session.userId,
+                applyCustomFields: true,
+                applyWorkflows: true,
+                applySLA: true,
+                applyRouting: true,
+                applyDashboards: true,
+                applyAnalytics: true,
+                applyPipelines: true,
+                applyPortalTheme: true
+              });
+              
+              this.logger.log(`Applied industry template ${industry} (${templateId}) for tenant ${session.tenantId}`);
+            }
+          } catch (error) {
+            this.logger.error(`Failed to apply industry template: ${error}`);
+            // Don't fail the whole onboarding completion if template application fails
+            // Just log it and proceed
+          }
+        }
+
         await this.databaseService.tenant.update({
           where: { id: session.tenantId },
           data: {

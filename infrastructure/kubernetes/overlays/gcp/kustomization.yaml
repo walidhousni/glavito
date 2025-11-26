@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prod
+resources:
+  - ../../base
+  - ../../base/redis/deployment.yaml
+  - ../../base/redis/service.yaml
+  - ../../base/kafka/statefulset.yaml
+  - ../../base/kafka/service.yaml
+  - ../../shared/gcp-secretstore.yaml
+  - ingress.yaml
+  - certificate.yaml
+
+images:
+  - name: registry.me-east-1.aliyuncs.com/glavito/admin
+    newName: us-central1-docker.pkg.dev/glavito-platform/glavito-repo/admin
+    newTag: latest
+  - name: registry.me-east-1.aliyuncs.com/glavito/api
+    newName: us-central1-docker.pkg.dev/glavito-platform/glavito-repo/api
+    newTag: latest
+
+patches:
+  - target:
+      kind: ClusterSecretStore
+      name: gcp-store
+    patch: |-
+      - op: replace
+        path: /spec/provider/gcpsm/projectID
+        value: glavito-platform

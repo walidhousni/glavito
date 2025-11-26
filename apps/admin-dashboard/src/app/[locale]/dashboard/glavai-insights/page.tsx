@@ -11,8 +11,18 @@ import {
   BookOpen,
   MessageSquare,
   BarChart3,
-  Loader2
+  Loader2,
+  Check,
+  X,
+  MessageSquarePlus,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -41,6 +51,10 @@ export default function GlavaiInsightsPage() {
   const [insights, setInsights] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [trainingItems, setTrainingItems] = useState<any[]>([]);
+  const [correction, setCorrection] = useState('');
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const { toast } = useToast() as any;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,9 +66,13 @@ export default function GlavaiInsightsPage() {
         else if (timeRange === '30d') from.setDate(from.getDate() - 30);
         else from.setDate(from.getDate() - 90);
 
-        const insightsData = await glavaiClient.getInsights(from.toISOString(), to.toISOString());
+        const [insightsData, trainingData] = await Promise.all([
+          glavaiClient.getInsights(from.toISOString(), to.toISOString()),
+          glavaiClient.getRecentAnalyses({ limit: 20, maxConfidence: 0.75 })
+        ]);
 
         setInsights(insightsData);
+        setTrainingItems(Array.isArray(trainingData) ? trainingData : []);
       } catch (error) {
         console.error('Failed to fetch insights:', error);
       } finally {
@@ -92,6 +110,8 @@ export default function GlavaiInsightsPage() {
     topIntent: 'N/A',
   };
 
+  const validTrainingItems = Array.isArray(trainingItems) ? trainingItems : [];
+
   const sentimentChartData = sentimentTrends.map((trend) => ({
     date: new Date(trend.date).toLocaleString('en-US', { month: 'short', day: 'numeric' }),
     [t('sentiment.positive')]: trend.positive,
@@ -104,6 +124,32 @@ export default function GlavaiInsightsPage() {
     value: item.count,
     percentage: item.percentage,
   }));
+
+  const handleTrain = async (item: any, accepted: boolean, correctionText?: string) => {
+    try {
+      await glavaiClient.submitFeedback({
+        analysisId: item.id,
+        accepted,
+        correction: correctionText
+      });
+      
+      toast({
+        title: accepted ? "Feedback Submitted" : "Correction Submitted",
+        description: "Thank you for training Glav AI.",
+      });
+
+      // Remove item from list
+      setTrainingItems(prev => Array.isArray(prev) ? prev.filter(i => i.id !== item.id) : []);
+      setSelectedItem(null);
+      setCorrection('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen p-6 space-y-6">
@@ -251,6 +297,18 @@ export default function GlavaiInsightsPage() {
             <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-medium">{t('tabs.knowledge')}</span>
           </TabsTrigger>
+          <TabsTrigger 
+            value="training" 
+            className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg data-[state=active]:bg-pink-50 dark:data-[state=active]:bg-pink-950/30 data-[state=active]:text-pink-600 dark:data-[state=active]:text-pink-400 text-muted-foreground hover:text-foreground transition-colors border-0"
+          >
+            <MessageSquarePlus className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+            <span className="text-xs font-medium">Training</span>
+            {validTrainingItems.length > 0 && (
+              <Badge variant="secondary" className="h-4 px-1.5 text-[10px] bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300">
+                {validTrainingItems.length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sentiment">
@@ -294,7 +352,7 @@ export default function GlavaiInsightsPage() {
             <CardContent className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/50">
-                  <Alert Triangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground">{t('escalations.title')}</h3>
               </div>
@@ -421,6 +479,109 @@ export default function GlavaiInsightsPage() {
                             <span>{item.viewCount} {t('knowledge.views')}</span>
                             <span>{Math.round(item.helpfulRate * 100)}% {t('knowledge.helpful')}</span>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="training">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 rounded-lg bg-pink-50 dark:bg-pink-950/50">
+                  <MessageSquarePlus className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-foreground">Active Learning & Training (Beta)</h3>
+              </div>
+              
+              <div className="space-y-4">
+                {validTrainingItems.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-pink-50 dark:bg-pink-950/30 mb-3">
+                      <Check className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">All caught up!</p>
+                    <p className="text-xs text-muted-foreground mt-1">No low-confidence items requiring review.</p>
+                  </div>
+                ) : (
+                  validTrainingItems.map((item) => (
+                    <div key={item.id} className="p-4 rounded-lg border border-border bg-card">
+                      <div className="flex flex-col md:flex-row gap-4 justify-between">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {Math.round((item.confidence || 0) * 100)}% Confidence
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(item.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="p-3 rounded-md bg-muted/50 text-sm">
+                            <p className="font-medium text-xs text-muted-foreground mb-1">User Query:</p>
+                            {item.content}
+                          </div>
+                          <div className="p-3 rounded-md bg-purple-50 dark:bg-purple-950/20 text-sm border border-purple-100 dark:border-purple-900">
+                            <p className="font-medium text-xs text-purple-600 dark:text-purple-400 mb-1">AI Prediction:</p>
+                            <div className="flex gap-2 items-center">
+                              <span className="font-medium">Intent:</span> {item.results?.intentClassification?.primaryIntent || 'Unknown'}
+                            </div>
+                            {item.results?.responseGeneration?.suggestedResponses?.[0]?.response && (
+                              <div className="mt-2 text-muted-foreground">
+                                {item.results.responseGeneration.suggestedResponses[0].response}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 min-w-[140px] justify-center">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="w-full justify-start text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"
+                            onClick={() => handleTrain(item, true)}
+                          >
+                            <ThumbsUp className="w-4 h-4 mr-2" />
+                            Correct
+                          </Button>
+                          
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                onClick={() => setSelectedItem(item)}
+                              >
+                                <ThumbsDown className="w-4 h-4 mr-2" />
+                                Incorrect
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Provide Correction</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label>Correct Response or Intent</Label>
+                                  <Textarea 
+                                    placeholder="Type the correct response or intent here..." 
+                                    value={correction}
+                                    onChange={(e) => setCorrection(e.target.value)}
+                                    rows={4}
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setCorrection('')}>Cancel</Button>
+                                <Button onClick={() => handleTrain(item, false, correction)}>Submit Training</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </div>
                     </div>

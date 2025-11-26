@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: glavito-cert
+spec:
+  domains:
+    - admin.glavito.com
+    - api.glavito.com

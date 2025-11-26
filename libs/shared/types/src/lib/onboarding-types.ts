@@ -9,6 +9,7 @@ export type OnboardingRole = 'tenant_admin' | 'agent';
 // Tenant Admin Steps
 export const TENANT_STEPS = [
   'welcome',
+  'industry',
   'stripe',
   'channels',
   'team',

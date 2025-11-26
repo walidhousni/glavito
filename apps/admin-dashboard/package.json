@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "tunnel": "ngrok start --config ../../ops/tunnels/ngrok-admin.yml admin-dashboard",
     "dev:public": "concurrently \"next dev -p 3004\" \"npm run tunnel\"",
     "build": "next build",

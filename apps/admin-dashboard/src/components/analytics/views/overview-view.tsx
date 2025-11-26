@@ -8,6 +8,7 @@ import { ChartCard } from '@/components/analytics/core'
 import { EmptyState } from '@/components/analytics/core'
 import { LineChart, BarChart, PieChart } from '@/components/analytics/charts'
 import { chartColors } from '@/lib/chart-theme'
+import { motion } from 'framer-motion'
 import { 
   Activity,
   Users, 
@@ -122,27 +123,38 @@ export function OverviewView() {
         </ChartCard>
       </div>
 
-      <Card className="analytics-card">
+      <Card className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-border/50 shadow-lg hover:shadow-xl transition-all">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30">
+              <CheckCircle2 className="h-5 w-5 text-white" />
+            </div>
             {t('sla.compliance', { fallback: 'SLA Compliance' })}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-gradient-to-br from-green-500/10 to-green-500/5">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">95%</div>
-              <div className="text-sm text-muted-foreground mt-1">{t('sla.responseTime', { fallback: 'Response Time' })}</div>
-            </div>
-            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5">
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">92%</div>
-              <div className="text-sm text-muted-foreground mt-1">{t('sla.resolutionTime', { fallback: 'Resolution Time' })}</div>
-            </div>
-            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-500/5">
-              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">98%</div>
-              <div className="text-sm text-muted-foreground mt-1">{t('sla.overall', { fallback: 'Overall' })}</div>
-            </div>
+            <motion.div 
+              className="flex flex-col items-center justify-center p-6 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-200 dark:border-green-800/50 shadow-sm"
+              whileHover={{ scale: 1.05, y: -2 }}
+            >
+              <div className="text-4xl font-bold text-green-600 dark:text-green-400">95%</div>
+              <div className="text-sm text-muted-foreground mt-2">{t('sla.responseTime', { fallback: 'Response Time' })}</div>
+            </motion.div>
+            <motion.div 
+              className="flex flex-col items-center justify-center p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-200 dark:border-blue-800/50 shadow-sm"
+              whileHover={{ scale: 1.05, y: -2 }}
+            >
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">92%</div>
+              <div className="text-sm text-muted-foreground mt-2">{t('sla.resolutionTime', { fallback: 'Resolution Time' })}</div>
+            </motion.div>
+            <motion.div 
+              className="flex flex-col items-center justify-center p-6 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-200 dark:border-purple-800/50 shadow-sm"
+              whileHover={{ scale: 1.05, y: -2 }}
+            >
+              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400">98%</div>
+              <div className="text-sm text-muted-foreground mt-2">{t('sla.overall', { fallback: 'Overall' })}</div>
+            </motion.div>
           </div>
         </CardContent>
       </Card>

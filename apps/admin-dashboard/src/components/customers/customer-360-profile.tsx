@@ -21,34 +21,40 @@ import { useToast } from '@/components/ui/toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import {
-  FaUser,
-  FaBuilding,
-  FaEnvelope,
-  FaPhone,
-  FaCalendarAlt,
-  FaRunning,
-  FaComment,
-  FaTicketAlt,
-  FaArrowUp,
-  FaStar,
-  FaBullseye,
-  FaBolt,
-  FaExclamationTriangle,
-  FaCheckCircle,
-  FaEye,
-  FaEdit,
-  FaPaperPlane,
-  FaShieldAlt,
-  FaTrophy,
-  FaBriefcase,
-  FaTimes,
-  FaExternalLinkAlt,
-  FaCopy,
-  FaDownload,
-  FaChartLine,
-  FaMagic,
-  FaDollarSign
-} from 'react-icons/fa';
+  User,
+  Building,
+  Mail,
+  Phone,
+  Calendar,
+  Activity,
+  MessageSquare,
+  Ticket,
+  TrendingUp,
+  Star,
+  Zap,
+  Shield,
+  CheckCircle,
+  Eye,
+  Edit,
+  Send,
+  Briefcase,
+  X,
+  ExternalLink,
+  Copy,
+  Download,
+  LineChart,
+  Sparkles,
+  DollarSign,
+  Clock,
+  AlertTriangle,
+  ArrowUpRight,
+  ArrowDownRight,
+  MoreHorizontal,
+  CreditCard,
+  ShoppingBag,
+  Trophy
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CustomerHealthScore } from './customer-health-score';
 import { CustomerJourneyTimeline } from './customer-journey-timeline';
 import { cn } from '@/lib/utils';
@@ -247,10 +253,10 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
             <div className="text-center space-y-6 animate-fade-in">
               <div className="relative">
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 dark:from-blue-600 dark:via-blue-700 dark:to-blue-800 rounded-2xl flex items-center justify-center mx-auto shadow-lg animate-pulse">
-                  <FaUser className="h-10 w-10 text-white" />
+                  <User className="h-10 w-10 text-white" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-7 h-7 bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700 rounded-full flex items-center justify-center shadow-lg">
-                  <FaMagic className="h-4 w-4 text-white animate-spin" />
+                  <Sparkles className="h-4 w-4 text-white animate-spin" />
                 </div>
               </div>
               <div className="space-y-3">
@@ -274,7 +280,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
           <div className="flex items-center justify-center h-96">
             <div className="text-center space-y-6 animate-fade-in">
               <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/30 dark:to-red-800/30 rounded-2xl flex items-center justify-center mx-auto shadow-lg border border-red-200 dark:border-red-800/50">
-                <FaExclamationTriangle className="h-10 w-10 text-red-600 dark:text-red-400" />
+                <AlertTriangle className="h-10 w-10 text-red-600 dark:text-red-400" />
               </div>
               <div className="space-y-3">
                 <h3 className="text-xl font-semibold text-foreground">{t('profile.notFound')}</h3>
@@ -319,18 +325,18 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       <DialogTitle className="text-lg font-bold text-foreground truncate">
                         {customer360Data.customer.firstName} {customer360Data.customer.lastName}
                       </DialogTitle>
-                      <FaStar className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                      <Star className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{customer360Data.customer.email}</p>
 
                     {/* Company & Tags Row */}
                     <div className="flex items-center gap-2 flex-wrap text-xs">
                       <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 dark:bg-blue-950/30 rounded-md border border-blue-200 dark:border-blue-800/50">
-                        <FaBuilding className="h-3 w-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        <Building className="h-3 w-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                         <span className="font-medium truncate text-blue-900 dark:text-blue-100">{customer360Data.customer.company}</span>
                       </div>
                       <Badge variant="secondary" className="px-2 py-0.5 text-xs rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
-                        <FaShieldAlt className="h-2.5 w-2.5 mr-1" />
+                        <Shield className="h-2.5 w-2.5 mr-1" />
                         {t('profile.verified')}
                       </Badge>
                       {customer360Data.segments.slice(0, 2).map((segment: any) => (
@@ -356,7 +362,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       </div>
                       <div className="px-2 py-1.5 rounded-md bg-muted/30 border border-border/30">
                         <div className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium flex items-center gap-1">
-                          <FaShieldAlt className="h-3 w-3 text-red-600 dark:text-red-400" />
+                          <Shield className="h-3 w-3 text-red-600 dark:text-red-400" />
                           {t('profile.slaLabel')}
                         </div>
                         <div className={cn("text-sm font-bold", slaSummary.breached > 0 && "text-red-600")}>{slaSummary.breached}</div>
@@ -383,7 +389,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       setEditOpen(true);
                     }}
                   >
-                    <FaEdit className="h-3 w-3 mr-1.5 text-blue-600 dark:text-blue-400" />
+                    <Edit className="h-3 w-3 mr-1.5 text-blue-600 dark:text-blue-400" />
                     {t('profile.edit')}
                   </Button>
                   <Button
@@ -404,13 +410,13 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       } catch (_e) { toastError(t('profile.channelsLoadFailed')); }
                     }}
                   >
-                    <FaPaperPlane className="h-3 w-3 mr-1.5" />
+                    <Send className="h-3 w-3 mr-1.5" />
                     {t('profile.sendMessage')}
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="h-8 px-3 text-xs border-0 shadow-sm">
-                        <FaMagic className="h-3 w-3 mr-1.5 text-purple-600 dark:text-purple-400" />
+                        <Sparkles className="h-3 w-3 mr-1.5 text-purple-600 dark:text-purple-400" />
                         {t('profile.sendSurvey')}
                       </Button>
                     </DropdownMenuTrigger>
@@ -435,7 +441,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                     className="h-8 w-8"
                     onClick={() => onOpenChange(false)}
                   >
-                    <FaTimes className="h-4 w-4 text-muted-foreground" />
+                    <X className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </div>
               </div>
@@ -452,23 +458,23 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                 <div className="px-4 py-2 border-b border-border/50 bg-muted/20 dark:bg-muted/10">
                   <TabsList className="w-full bg-transparent rounded-lg p-0.5 h-9 border-0">
                     <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs h-8 rounded-md data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 text-muted-foreground hover:text-foreground transition-colors px-3">
-                      <FaEye className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      <Eye className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                       <span>{t('tabs.overview')}</span>
                     </TabsTrigger>
                     <TabsTrigger value="health" className="flex items-center gap-1.5 text-xs h-8 rounded-md data-[state=active]:bg-emerald-50 dark:data-[state=active]:bg-emerald-950/30 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 text-muted-foreground hover:text-foreground transition-colors px-3">
-                      <FaChartLine className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                      <LineChart className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                       <span>{t('tabs.healthScore')}</span>
                     </TabsTrigger>
                     <TabsTrigger value="journey" className="flex items-center gap-1.5 text-xs h-8 rounded-md data-[state=active]:bg-purple-50 dark:data-[state=active]:bg-purple-950/30 data-[state=active]:text-purple-600 dark:data-[state=active]:text-purple-400 text-muted-foreground hover:text-foreground transition-colors px-3">
-                      <FaRunning className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                      <Activity className="h-3 w-3 text-purple-600 dark:text-purple-400" />
                       <span>{t('tabs.journey')}</span>
                     </TabsTrigger>
                     <TabsTrigger value="interactions" className="flex items-center gap-1.5 text-xs h-8 rounded-md data-[state=active]:bg-orange-50 dark:data-[state=active]:bg-orange-950/30 data-[state=active]:text-orange-600 dark:data-[state=active]:text-orange-400 text-muted-foreground hover:text-foreground transition-colors px-3">
-                      <FaComment className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+                      <MessageSquare className="h-3 w-3 text-orange-600 dark:text-orange-400" />
                       <span>{t('tabs.interactions')}</span>
                     </TabsTrigger>
                     <TabsTrigger value="insights" className="flex items-center gap-1.5 text-xs h-8 rounded-md data-[state=active]:bg-yellow-50 dark:data-[state=active]:bg-yellow-950/30 data-[state=active]:text-yellow-600 dark:data-[state=active]:text-yellow-400 text-muted-foreground hover:text-foreground transition-colors px-3">
-                      <FaBolt className="h-3 w-3 text-yellow-600 dark:text-yellow-400" />
+                      <Zap className="h-3 w-3 text-yellow-600 dark:text-yellow-400" />
                       <span>{t('tabs.insights')}</span>
                     </TabsTrigger>
                   </TabsList>
@@ -482,14 +488,14 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                         <div className="grid gap-3 grid-cols-3">
                           <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex items-start gap-2 mb-2">
-                              <FaDollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                              <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-base font-bold text-foreground truncate">
                                   {formatCurrency(customer360Data.lifetimeValue.totalValue)}
                                 </div>
                                 <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('lifetimeValue')}</div>
                               </div>
-                              <FaArrowUp className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
+                              <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
                             </div>
                             <div className="flex items-center justify-between text-[10px] mb-1.5">
                               <span className="text-muted-foreground">
@@ -504,7 +510,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
 
                           <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800/50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex items-start gap-2 mb-2">
-                              <FaChartLine className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                              <LineChart className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-base font-bold text-foreground">
                                   {customer360Data.healthScore.score}
@@ -525,14 +531,14 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
 
                           <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800/50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex items-start gap-2 mb-2">
-                              <FaCalendarAlt className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+                              <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-base font-bold text-foreground">
                                   {Math.floor((Date.now() - new Date(customer360Data.customer.createdAt).getTime()) / (365 * 24 * 60 * 60 * 1000))}y
                                 </div>
                                 <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('customerSince')}</div>
                               </div>
-                              <FaTrophy className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400 flex-shrink-0" />
+                              <Trophy className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400 flex-shrink-0" />
                             </div>
                             <p className="text-[10px] text-muted-foreground mb-1.5 truncate">
                               {formatDate(customer360Data.customer.createdAt)}
@@ -547,7 +553,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <div className="p-2 bg-emerald-600 dark:bg-emerald-700 rounded-lg shadow-sm border border-emerald-700 dark:border-emerald-800">
-                                  <FaTicketAlt className="h-4 w-4 text-white" />
+                                  <Ticket className="h-4 w-4 text-white" />
                                 </div>
                                 <div>
                                   <h3 className="text-base font-semibold text-foreground">{tc('recent')} {t('profile.ordersLabel')}</h3>
@@ -558,7 +564,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                                 <Button variant="outline" size="sm" className="h-8 text-xs border-0 shadow-sm" onClick={async () => {
                                   try { const ro = await customersApi.getRecentOrders(customerId, 10) as any; setRecentOrders(Array.isArray(ro) ? ro : []); } catch { /* noop */ }
                                 }}>
-                                  <FaExternalLinkAlt className="h-3 w-3 mr-1.5 text-blue-600 dark:text-blue-400" />
+                                  <ExternalLink className="h-3 w-3 mr-1.5 text-blue-600 dark:text-blue-400" />
                                   {tc('refresh')}
                                 </Button>
                                 <Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white shadow-sm" disabled={creatingOrder} onClick={async () => {
@@ -592,7 +598,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                               )) : (
                                 <div className="text-center py-8">
                                   <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950/30 rounded-2xl flex items-center justify-center mb-4 mx-auto border border-blue-200 dark:border-blue-800/50">
-                                    <FaArrowUp className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                                    <ArrowUpRight className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                                   </div>
                                   <p className="text-base text-muted-foreground">{t('profile.noRecentOrders')}</p>
                                 </div>
@@ -607,7 +613,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                             <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800/50">
-                                  <FaRunning className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                  <Activity className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                               </div>
                               <div>
                                   <h3 className="text-base font-semibold text-foreground">{t('recentActivity')}</h3>
@@ -615,7 +621,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                               </div>
                             </div>
                               <Button variant="outline" size="sm" className="h-8 text-xs border-0 shadow-sm">
-                                <FaExternalLinkAlt className="h-3 w-3 mr-1.5 text-blue-600 dark:text-blue-400" />
+                                <ExternalLink className="h-3 w-3 mr-1.5 text-blue-600 dark:text-blue-400" />
                               {tc('viewAll')}
                             </Button>
                           </div>
@@ -626,9 +632,9 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                                 <div key={interaction.id} className="group flex items-center space-x-3 p-3 rounded-lg border border-border/30 bg-muted/30 dark:bg-muted/20 hover:bg-muted/50 dark:hover:bg-muted/30 hover:shadow-md transition-all duration-300 cursor-pointer">
                                   <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-all duration-300">
                                     {interaction.type === 'conversation' ? (
-                                      <FaComment className="h-5 w-5 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors" />
+                                      <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors" />
                                     ) : (
-                                      <FaTicketAlt className="h-5 w-5 text-orange-600 dark:text-orange-400 group-hover:text-orange-700 dark:group-hover:text-orange-300 transition-colors" />
+                                      <Ticket className="h-5 w-5 text-orange-600 dark:text-orange-400 group-hover:text-orange-700 dark:group-hover:text-orange-300 transition-colors" />
                                     )}
                                   </div>
                                   <div className="flex-1 min-w-0">
@@ -651,7 +657,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                               )) : (
                                 <div className="text-center py-12 animate-fade-in">
                                   <div className="w-16 h-16 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg border border-amber-200 dark:border-amber-800/50">
-                                    <FaRunning className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                                    <Activity className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                                   </div>
                                   <h3 className="text-lg font-semibold text-foreground mb-2">{t('profile.noRecentActivity')}</h3>
                                   <p className="text-sm text-muted-foreground">{t('profile.noRecentActivityDescription')}</p>
@@ -666,7 +672,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                             <CardTitle className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 <div className="p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800/50">
-                                  <FaBolt className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                                  <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                                 </div>
                                 <div>
                                   <span className="text-xl font-semibold text-foreground">{t('keyInsights')}</span>
@@ -674,7 +680,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                                 </div>
                               </div>
                               <Badge className="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 px-3 py-1 rounded-lg">
-                                <FaMagic className="h-3 w-3 mr-1" />
+                                <Sparkles className="h-3 w-3 mr-1" />
                                 {t('profile.aiInsights')}
                               </Badge>
                             </CardTitle>
@@ -685,19 +691,19 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                                 (liveInsights?.keyInsights ?? customer360Data.insights.keyInsights).map((insight: string, index: number) => (
                                   <div key={index} className="group flex items-start space-x-4 p-4 rounded-lg border border-blue-200 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-950/20 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300">
                                     <div className="p-2 bg-blue-600 dark:bg-blue-700 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
-                                      <FaCheckCircle className="h-4 w-4 text-white" />
+                                      <CheckCircle className="h-4 w-4 text-white" />
                                     </div>
                                     <div className="flex-1">
                                       <p className="text-sm font-medium text-blue-900 dark:text-blue-100 leading-relaxed">{insight}</p>
                                     </div>
                                     <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                                      <FaCopy className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                      <Copy className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                     </Button>
                                   </div>
                                 )) : (
                                   <div className="text-center py-12 animate-fade-in">
                                     <div className="w-16 h-16 bg-yellow-50 dark:bg-yellow-950/30 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg border border-yellow-200 dark:border-yellow-800/50">
-                                      <FaBolt className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+                                      <Zap className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">{t('profile.noInsightsAvailable')}</h3>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">{t('profile.insightsPlaceholder')}</p>
@@ -732,7 +738,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                         <div>
                           <div className="flex items-center justify-between mb-3">
                             <h4 className="text-lg font-semibold flex items-center gap-2">
-                              <FaComment className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                              <MessageSquare className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                               {t('profile.recentInteractions')}
                             </h4>
                           </div>
@@ -744,9 +750,9 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                                     <div className="flex items-center space-x-3">
                                       <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-full border border-blue-200 dark:border-blue-800/50">
                                         {interaction.type === 'conversation' ? (
-                                          <FaComment className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                          <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                         ) : (
-                                          <FaTicketAlt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                          <Ticket className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                                         )}
                                       </div>
                                       <div>
@@ -764,11 +770,11 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                                   </div>
                                   <div className="flex space-x-2">
                                     <Button size="sm" variant="outline" className="border-0 shadow-sm">
-                                      <FaEye className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                                      <Eye className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
                                       {t('viewDetails')}
                                     </Button>
                                     <Button size="sm" variant="outline" className="border-0 shadow-sm">
-                                      <FaComment className="h-4 w-4 mr-2 text-orange-600 dark:text-orange-400" />
+                                      <MessageSquare className="h-4 w-4 mr-2 text-orange-600 dark:text-orange-400" />
                                       {t('reply')}
                                     </Button>
                                   </div>
@@ -783,7 +789,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                             <CardHeader className="pb-4">
                               <CardTitle className="flex items-center gap-2 text-base font-semibold">
                                 <div className="p-2 bg-blue-600 dark:bg-blue-700 rounded-lg shadow-sm border border-blue-700 dark:border-blue-800">
-                                  <FaPhone className="h-4 w-4 text-white" />
+                                  <Phone className="h-4 w-4 text-white" />
                                 </div>
                                 <span>{t('profile.recentCalls')}</span>
                               </CardTitle>
@@ -825,7 +831,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                           <Card>
                             <CardHeader>
                               <CardTitle className="flex items-center space-x-2">
-                                <FaBolt className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                                <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                                 <span>{t('sentiment')}</span>
                               </CardTitle>
                             </CardHeader>
@@ -842,7 +848,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                         <Card>
                           <CardHeader>
                             <CardTitle className="flex items-center space-x-2">
-                              <FaBullseye className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                              <ArrowUpRight className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                               <span>{t('opportunities')}</span>
                             </CardTitle>
                           </CardHeader>
@@ -850,7 +856,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                             <div className="space-y-3">
                               {(liveInsights?.opportunities ?? customer360Data.insights.opportunities).map((opportunity: string, index: number) => (
                                 <div key={index} className="flex items-start space-x-3 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg">
-                                  <FaArrowUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                                  <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
                                   <p className="text-sm text-emerald-800 dark:text-emerald-200">{opportunity}</p>
                                 </div>
                               ))}
@@ -863,7 +869,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                           <Card className="border-0 shadow-sm">
                             <CardHeader>
                               <CardTitle className="flex items-center space-x-2">
-                                <FaRunning className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                <Activity className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                                 <span>{t('recentActivity')}</span>
                               </CardTitle>
                             </CardHeader>
@@ -886,7 +892,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                         <Card className="border-0 shadow-sm">
                           <CardHeader>
                             <CardTitle className="flex items-center space-x-2">
-                              <FaBolt className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                              <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                               <span>{t('nextBestActions')}</span>
                             </CardTitle>
                           </CardHeader>
@@ -895,7 +901,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                               {(liveInsights?.nextBestActions ?? customer360Data.insights.nextBestActions).map((action: string, index: number) => (
                                 <div key={index} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg">
                                   <div className="flex items-start space-x-3">
-                                    <FaCheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                                    <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                                     <p className="text-sm text-blue-800 dark:text-blue-200">{action}</p>
                                   </div>
                                   <Button size="sm" variant="outline" className="border-0 shadow-sm">
@@ -926,7 +932,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                   <CardHeader className="pb-2 px-3 pt-3">
                     <CardTitle className="flex items-center space-x-2 text-xs font-semibold">
                       <div className="p-1.5 bg-blue-600 dark:bg-blue-700 rounded-md shadow-sm border border-blue-700 dark:border-blue-800">
-                        <FaUser className="h-3 w-3 text-white" />
+                        <User className="h-3 w-3 text-white" />
                       </div>
                       <span>{t('profile.contactInformation')}</span>
                     </CardTitle>
@@ -934,7 +940,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                   <CardContent className="space-y-2 pt-0 px-3 pb-3">
                     <div className="group flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors cursor-pointer border border-transparent hover:border-border/50">
                       <div className="p-1.5 bg-emerald-600 dark:bg-emerald-700 rounded-md shadow-sm flex-shrink-0 border border-emerald-700 dark:border-emerald-800">
-                        <FaEnvelope className="h-3 w-3 text-white" />
+                        <Mail className="h-3 w-3 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('channels.email')}</div>
@@ -944,7 +950,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
 
                     <div className="group flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors cursor-pointer border border-transparent hover:border-border/50">
                       <div className="p-1.5 bg-blue-600 dark:bg-blue-700 rounded-md shadow-sm flex-shrink-0 border border-blue-700 dark:border-blue-800">
-                        <FaPhone className="h-3 w-3 text-white" />
+                        <Phone className="h-3 w-3 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('channels.phone')}</div>
@@ -954,7 +960,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
 
                     <div className="group flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors cursor-pointer border border-transparent hover:border-border/50">
                       <div className="p-1.5 bg-purple-600 dark:bg-purple-700 rounded-md shadow-sm flex-shrink-0 border border-purple-700 dark:border-purple-800">
-                        <FaBuilding className="h-3 w-3 text-white" />
+                        <Building className="h-3 w-3 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('createDialog.company')}</div>
@@ -969,7 +975,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                   <CardHeader className="pb-2 px-3 pt-3">
                     <CardTitle className="flex items-center space-x-2 text-xs font-semibold">
                       <div className="p-1.5 bg-amber-600 dark:bg-amber-700 rounded-md shadow-sm border border-amber-700 dark:border-amber-800">
-                        <FaBriefcase className="h-3 w-3 text-white" />
+                        <Briefcase className="h-3 w-3 text-white" />
                       </div>
                       <span>{t('profile.companyDetails')}</span>
                     </CardTitle>
@@ -988,7 +994,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       })
                     ) : (
                       <div className="text-center py-4">
-                        <FaBriefcase className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                        <Briefcase className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
                         <p className="text-xs text-muted-foreground">{t('profile.noCustomFields')}</p>
                       </div>
                     )}
@@ -1000,7 +1006,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                   <CardHeader className="pb-2 px-3 pt-3">
                     <CardTitle className="flex items-center space-x-2 text-xs font-semibold">
                       <div className="p-1.5 bg-purple-600 dark:bg-purple-700 rounded-md shadow-sm border border-purple-700 dark:border-purple-800">
-                        <FaBolt className="h-3 w-3 text-white" />
+                        <Zap className="h-3 w-3 text-white" />
                       </div>
                       <span>{t('profile.quickActions')}</span>
                     </CardTitle>
@@ -1046,7 +1052,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       }}
                     >
                       <div className="p-1 bg-emerald-600 dark:bg-emerald-700 rounded-md mr-2 shadow-sm border border-emerald-700 dark:border-emerald-800">
-                        <FaComment className="h-3 w-3 text-white" />
+                        <MessageSquare className="h-3 w-3 text-white" />
                       </div>
                       <span className="font-medium">{t('profile.sendMessage')}</span>
                     </Button>
@@ -1076,7 +1082,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       }}
                     >
                       <div className="p-1 bg-blue-600 dark:bg-blue-700 rounded-md mr-2 shadow-sm border border-blue-700 dark:border-blue-800">
-                        <FaEnvelope className="h-3 w-3 text-white" />
+                        <Mail className="h-3 w-3 text-white" />
                       </div>
                       <span className="font-medium">Send Email</span>
                     </Button>
@@ -1149,7 +1155,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       }}
                     >
                       <div className="p-1 bg-blue-600 dark:bg-blue-700 rounded-md mr-2 shadow-sm border border-blue-700 dark:border-blue-800">
-                        <FaTicketAlt className="h-3 w-3 text-white" />
+                        <Ticket className="h-3 w-3 text-white" />
                       </div>
                       <span className="font-medium">{t('profile.createTicket')}</span>
                     </Button>
@@ -1188,7 +1194,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       }}
                     >
                       <div className="p-1 bg-purple-600 dark:bg-purple-700 rounded-md mr-2 shadow-sm border border-purple-700 dark:border-purple-800">
-                        <FaCalendarAlt className="h-3 w-3 text-white" />
+                        <Calendar className="h-3 w-3 text-white" />
                       </div>
                       <span className="font-medium">{t('profile.scheduleCall')}</span>
                     </Button>
@@ -1265,7 +1271,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                       }}
                     >
                       <div className="p-1 bg-amber-600 dark:bg-amber-700 rounded-md mr-2 shadow-sm border border-amber-700 dark:border-amber-800">
-                        <FaStar className="h-3 w-3 text-white" />
+                        <Star className="h-3 w-3 text-white" />
                       </div>
                       <span className="font-medium">{t('profile.addToVIP')}</span>
                     </Button>
@@ -1310,7 +1316,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
                           }
                         }}
                       >
-                        <FaDownload className="h-4 w-4 mr-2" />
+                        <Download className="h-4 w-4 mr-2" />
                         {t('profile.exportProfile')}
                       </Button>
                     </div>
@@ -1327,7 +1333,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold flex items-center gap-3">
               <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50">
-                <FaEdit className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <Edit className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               {t('profile.edit')}
             </DialogTitle>
@@ -1416,7 +1422,7 @@ export function Customer360Profile({ customerId, open, onOpenChange }: Customer3
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold flex items-center gap-3">
               <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50">
-                <FaPaperPlane className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <Send className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               {t('profile.sendMessage')}
             </DialogTitle>

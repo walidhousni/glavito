@@ -31,6 +31,7 @@ import type { OnboardingStep } from '@glavito/shared-types';
 
 // Import step components (we'll create these next)
 import { WelcomeStep } from '@/components/onboarding/steps/welcome-step';
+import { IndustryStep } from '@/components/onboarding/steps/industry-step';
 import { StripeStep } from '@/components/onboarding/steps/stripe-step';
 import { ChannelsStep } from '@/components/onboarding/steps/channels-step';
 import { TeamStep } from '@/components/onboarding/steps/team-step';
@@ -51,6 +52,12 @@ const TENANT_STEPS_CONFIG = [
     label: 'Welcome',
     icon: 'https://img.icons8.com/?size=32&id=3723',
     component: WelcomeStep,
+  },
+  {
+    id: 'industry',
+    label: 'Industry',
+    icon: 'https://img.icons8.com/?size=32&id=53384',
+    component: IndustryStep,
   },
   {
     id: 'stripe',

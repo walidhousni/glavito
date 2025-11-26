@@ -245,6 +245,7 @@ export class GlavaiAutoResolveService {
                 autoResolved: true,
                 confidence: responseResult.confidence,
                 intent: responseResult.intent,
+                richResponse: responseResult.richResponse,
               } as any,
           },
           });
@@ -302,6 +303,35 @@ export class GlavaiAutoResolveService {
           });
         } catch (e) {
           this.logger.error(`Failed to resolve ticket: ${String(e)}`);
+        }
+      }
+
+      // Smart Handoff Logic
+      if (analysis.results.escalationPrediction?.shouldEscalate) {
+        const escalation = analysis.results.escalationPrediction;
+        if (ticketId) {
+          try {
+            // Add internal note
+            await this.db.ticketNote.create({
+              data: {
+                ticketId,
+                content: `🤖 **AI Smart Handoff**\n\nReason: ${escalation.reasoning}\nProbability: ${Math.round(escalation.escalationProbability * 100)}%\nSuggested Action: ${escalation.suggestedActions?.[0] || 'Review ticket'}`,
+                isInternal: true,
+                userId: 'system', // or bot user id
+              } as any, // Cast as any if userId relation is strict
+            });
+
+            // Tag ticket
+            await this.db.ticket.update({
+              where: { id: ticketId },
+              data: {
+                tags: { push: 'ai-handoff' },
+                priority: 'high', // Escalate priority
+              },
+            });
+          } catch (e) {
+            this.logger.warn(`Failed to execute smart handoff: ${String(e)}`);
+          }
         }
       }
 

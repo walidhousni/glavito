@@ -14,7 +14,8 @@ import {
   Eye,
   MessageSquare,
   Target,
-  Download
+  Download,
+  ArrowRight
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -23,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface CustomerSegmentCardProps {
   segment: {
@@ -60,148 +62,158 @@ export function CustomerSegmentCard({ segment, onClick, onExport, onTriggerWorkf
   };
 
   return (
-    <Card 
-      className="cursor-pointer group transition-all hover:shadow-md"
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
-      tabIndex={0}
-      role="button"
-      aria-label={`${segment.name} segment with ${segment.customerCount} customers`}
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ type: "spring", stiffness: 300 }}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Icon className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base">{segment.name}</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">{segment.description}</p>
-            </div>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if (onViewDetails) { onViewDetails(); } else if (onClick) { onClick(); } }}>
-                <Eye className="mr-2 h-4 w-4" />
-                {t('viewDetails', { default: 'View details' })}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onExport?.('json'); }}>
-                <Download className="mr-2 h-4 w-4" />
-                {t('exportData', { default: 'Export data' })} JSON
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onExport?.('csv'); }}>
-                <Download className="mr-2 h-4 w-4" />
-                {t('exportData', { default: 'Export data' })} CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendCampaign?.(); }}>
-                <MessageSquare className="mr-2 h-4 w-4" />
-                {t('sendCampaign', { default: 'Send campaign' })}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onTriggerWorkflow?.(); }}>
-                <Target className="mr-2 h-4 w-4" />
-                {t('createAutomation', { default: 'Create automation' })}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Users className="h-3 w-3" />
-              <span>{t('segments.customers')}</span>
-            </div>
-            <div className="text-lg font-semibold">{segment.customerCount.toLocaleString()}</div>
-          </div>
-          <div className="p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <DollarSign className="h-3 w-3" />
-              <span>{t('segments.avgValue')}</span>
-            </div>
-            <div className="text-lg font-semibold">{formatCurrency(segment.averageValue)}</div>
-          </div>
-        </div>
+      <Card 
+        className="cursor-pointer group relative overflow-hidden border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300"
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+          }
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label={`${segment.name} segment with ${segment.customerCount} customers`}
+      >
+        {/* Gradient Background Effect */}
+        <div className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none",
+          "bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5"
+        )} />
 
-        {/* Growth Rate */}
-        <div className="p-3 bg-muted/50 rounded-lg">
+        <CardHeader className="pb-3 relative z-10">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t('segments.monthlyGrowth')}</span>
-            <Badge variant={segment.growthRate > 0 ? "default" : "destructive"}>
-              {React.createElement(getGrowthIcon(segment.growthRate), {
-                className: "h-3 w-3 mr-1"
-              })}
-              {segment.growthRate > 0 ? '+' : ''}{segment.growthRate}%
-            </Badge>
-          </div>
-        </div>
-
-        {/* Segment Health Indicator */}
-        <div className="pt-3 border-t">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">{t('segments.segmentHealth')}</span>
-            <Badge 
-              variant={
-                segment.growthRate > 10 ? "default" :
-                segment.growthRate > 0 ? "secondary" :
-                segment.growthRate > -10 ? "outline" :
-                "destructive"
-              }
-            >
-              {segment.growthRate > 10 ? t('excellent') :
-               segment.growthRate > 0 ? t('good') :
-               segment.growthRate > -10 ? t('attention') :
-               t('critical')}
-            </Badge>
-          </div>
-          {lastTriggeredAt && (
-            <div className="text-xs text-muted-foreground flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
-              <div className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span>Last triggered: {typeof lastTriggeredAt === 'string' ? lastTriggeredAt : new Date(lastTriggeredAt).toLocaleString()}</span>
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "p-2.5 rounded-xl transition-colors duration-300",
+                "bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30"
+              )}>
+                <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  {segment.name}
+                </CardTitle>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                  {segment.description}
+                </p>
+              </div>
             </div>
-          )}
-        </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); if (onViewDetails) { onViewDetails(); } else if (onClick) { onClick(); } }}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  {t('viewDetails', { default: 'View details' })}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onExport?.('json'); }}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t('exportData', { default: 'Export data' })} JSON
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onExport?.('csv'); }}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t('exportData', { default: 'Export data' })} CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendCampaign?.(); }}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  {t('sendCampaign', { default: 'Send campaign' })}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onTriggerWorkflow?.(); }}>
+                  <Target className="mr-2 h-4 w-4" />
+                  {t('createAutomation', { default: 'Create automation' })}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="space-y-5 relative z-10">
+          {/* Key Metrics */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 group-hover:border-blue-100 dark:group-hover:border-blue-900/30 transition-colors">
+              <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <Users className="h-3.5 w-3.5" />
+                <span>{t('segments.customers')}</span>
+              </div>
+              <div className="text-xl font-bold text-slate-900 dark:text-white">
+                {segment.customerCount.toLocaleString()}
+              </div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 group-hover:border-blue-100 dark:group-hover:border-blue-900/30 transition-colors">
+              <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <DollarSign className="h-3.5 w-3.5" />
+                <span>{t('segments.avgValue')}</span>
+              </div>
+              <div className="text-xl font-bold text-slate-900 dark:text-white">
+                {formatCurrency(segment.averageValue)}
+              </div>
+            </div>
+          </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-2 pt-2">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="flex-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onViewDetails) onViewDetails(); else if (onClick) onClick();
-            }}
-          >
-            <Eye className="h-3 w-3 mr-1" />
-            {t('segments.viewCustomers')}
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="flex-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSendCampaign?.();
-            }}
-          >
-            <MessageSquare className="h-3 w-3 mr-1" />
-            {t('segments.createCampaign')}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Growth Rate & Health */}
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center gap-2">
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "px-2 py-0.5 border-0",
+                  segment.growthRate > 0 
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" 
+                    : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                )}
+              >
+                {React.createElement(getGrowthIcon(segment.growthRate), {
+                  className: "h-3 w-3 mr-1"
+                })}
+                {segment.growthRate > 0 ? '+' : ''}{segment.growthRate}%
+              </Badge>
+              <span className="text-xs text-slate-400 dark:text-slate-500">vs last month</span>
+            </div>
+
+            {lastTriggeredAt && (
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Active</span>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Actions Overlay (visible on hover) */}
+          <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex gap-2">
+            <Button 
+              size="sm" 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onViewDetails) onViewDetails(); else if (onClick) onClick();
+              }}
+            >
+              <Eye className="h-3.5 w-3.5 mr-1.5" />
+              {t('segments.viewCustomers')}
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="flex-1 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSendCampaign?.();
+              }}
+            >
+              <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+              Campaign
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

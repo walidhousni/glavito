@@ -4,12 +4,6 @@
   "include": [],
   "references": [
     {
-      "path": "../database"
-    },
-    {
-      "path": "../types"
-    },
-    {
       "path": "./tsconfig.lib.json"
     },
     {

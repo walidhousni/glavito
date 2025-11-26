@@ -157,5 +157,20 @@ export const glavaiClient = {
     );
     return response.data.data;
   },
+
+  async getRecentAnalyses(params: { limit?: number; maxConfidence?: number } = {}): Promise<any[]> {
+    const query = new URLSearchParams();
+    if (params.limit) query.append('limit', params.limit.toString());
+    if (params.maxConfidence) query.append('maxConfidence', params.maxConfidence.toString());
+    
+    const response = await apiClient.get<{ success: boolean; data: any[] }>(
+      `/ai/analyses/recent?${query.toString()}`,
+    );
+    return Array.isArray(response.data?.data) ? response.data.data : [];
+  },
+
+  async submitFeedback(data: { analysisId: string; accepted: boolean; category?: string; correction?: string }): Promise<void> {
+    await apiClient.post('/ai/feedback', data);
+  },
 };
 

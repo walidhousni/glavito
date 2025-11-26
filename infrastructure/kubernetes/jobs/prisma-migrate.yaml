@@ -12,11 +12,10 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migrate
-          image: registry.me-east-1.aliyuncs.com/glavito/api:latest
-          command: ["/bin/sh","-c"]
+          image: IMAGE_TO_REPLACE
+          command: ['/bin/sh', '-c']
           args:
             - npx prisma migrate deploy
           envFrom:
             - secretRef:
                 name: api-gateway-env
-

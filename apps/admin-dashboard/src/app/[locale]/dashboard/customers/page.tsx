@@ -43,20 +43,22 @@ import {
   Sparkles,
   MessageSquare,
   UserPlus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Zap,
+  Activity,
+  Download,
+  RefreshCw,
+  Target,
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Users,
+  LineChart
 } from 'lucide-react';
-import { 
-  FaBullseye, 
-  FaUsers, 
-  FaChartLine, 
-  FaBolt,
-  FaArrowUp,
-  FaArrowDown,
-  FaDownload,
-  FaExclamationTriangle,
-  FaDollarSign,
-  FaRunning
-} from 'react-icons/fa';
-import { MdRefresh } from 'react-icons/md';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { CustomerSegmentCard } from '@/components/customers/customer-segment-card';
 import { CustomerHealthScore } from '@/components/customers/customer-health-score';
 import { CustomerAnalyticsDashboard } from '@/components/customers/customer-analytics-dashboard';
@@ -101,56 +103,52 @@ function MetricCard({
     );
   }
 
-  const getTrendBadge = () => {
-    if (trend === 'up') {
-      return (
-        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-          <FaArrowUp className="h-2.5 w-2.5" />
-          <span className="text-xs font-medium">{change}</span>
-        </div>
-      );
-    }
-    if (trend === 'down') {
-      return (
-        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border border-red-200 dark:border-red-800">
-          <FaArrowDown className="h-2.5 w-2.5" />
-          <span className="text-xs font-medium">{change}</span>
-        </div>
-      );
-    }
-    return (
-      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50 border border-border">
-        <span className="text-xs font-medium text-muted-foreground">{change}</span>
-      </div>
-    );
-  };
+  const isPositive = trend === 'up';
+  const isNegative = trend === 'down';
 
   return (
-    <Card className="border-0 shadow-sm">
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between mb-3">
-          <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0">
-            {title}
-          </CardDescription>
-          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50">
-            <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          </div>
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <Card className="relative overflow-hidden border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
+        <div className="absolute top-0 right-0 p-4 opacity-5">
+          <Icon className="w-24 h-24" />
         </div>
-        <div className="mb-2">
-          <CardTitle className="text-2xl font-semibold text-foreground mb-0">
-          {value}
-        </CardTitle>
+        
+        <CardContent className="p-6 relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className={cn(
+              "p-2.5 rounded-xl transition-colors duration-300",
+              "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+            )}>
+              <Icon className="h-5 w-5" />
+            </div>
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "px-2 py-0.5 border-0",
+                isPositive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" : 
+                isNegative ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400" :
+                "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
+              )}
+            >
+              {isPositive ? <ArrowUpRight className="h-3 w-3 mr-1" /> : 
+               isNegative ? <ArrowDownRight className="h-3 w-3 mr-1" /> : null}
+              {change}
+            </Badge>
           </div>
-        <div className="flex items-center justify-between">
-          {getTrendBadge()}
-      {subtitle && (
-            <span className="text-xs text-muted-foreground">
-            {subtitle}
-            </span>
-          )}
+
+          <div>
+            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{title}</h3>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</div>
+            {subtitle && (
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{subtitle}</p>
+            )}
           </div>
         </CardContent>
-    </Card>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -190,28 +188,28 @@ function CustomerCard({
       case 'low':
         return (
           <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400">
-            <img src="https://img.icons8.com/?id=61020&format=png&size=16" alt="shield" className="h-3.5 w-3.5 mr-1" />
+            <Shield className="h-3.5 w-3.5 mr-1" />
             {t('lowRisk')}
           </Badge>
         );
       case 'medium':
         return (
           <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-400">
-            <img src="https://img.icons8.com/?id=64383&format=png&size=16" alt="warning" className="h-3.5 w-3.5 mr-1" />
+            <Shield className="h-3.5 w-3.5 mr-1" />
             {t('mediumRisk')}
           </Badge>
         );
       case 'high':
         return (
           <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/20 dark:text-orange-400">
-            <img src="https://img.icons8.com/?id=64383&format=png&size=16" alt="warning" className="h-3.5 w-3.5 mr-1" />
+            <Shield className="h-3.5 w-3.5 mr-1" />
             {t('highRisk')}
           </Badge>
         );
       case 'critical':
         return (
           <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400">
-            <img src="https://img.icons8.com/?id=64383&format=png&size=16" alt="warning" className="h-3.5 w-3.5 mr-1" />
+            <Shield className="h-3.5 w-3.5 mr-1" />
             {t('criticalRisk')}
           </Badge>
         );
@@ -231,104 +229,123 @@ function CustomerCard({
   const isCompact = variant === 'compact';
 
   return (
-    <Card
-      className={`group cursor-pointer transition-all duration-200 bg-card/50 backdrop-blur-sm border-border/50 hover:border-border ${
-        isCompact
-          ? 'hover:shadow-md hover:-translate-y-[1px]'
-          : 'hover:shadow-lg hover:scale-[1.02]'
-      }`}
-      onClick={onClick}
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ type: "spring", stiffness: 300 }}
     >
-      <CardContent className={isCompact ? 'p-4' : 'p-6'}>
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Avatar className={`${isCompact ? 'h-10 w-10' : 'h-12 w-12'} ring-2 ring-primary/10`}>
-              <AvatarImage src={customer.avatar ?? undefined} />
-              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-                {customer.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
-            <div className="space-y-1 flex-1 min-w-0">
-              <h4 className={`${isCompact ? 'text-sm' : ''} font-semibold leading-none truncate`}>{customer.name}</h4>
-              <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-muted-foreground truncate`}>{customer.email}</p>
-              {customer.segments.length > 0 && (
-                <div className={`flex gap-1 flex-wrap ${isCompact ? 'mt-1' : ''}`}>
-                  {customer.segments.slice(0, 2).map((segmentId) => (
-                    <Badge key={segmentId} variant="secondary" className={`${isCompact ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-0.5'}`}>
-                      {segmentId}
-                    </Badge>
-                  ))}
-                  {customer.segments.length > 2 && (
-                    <Badge variant="secondary" className={`${isCompact ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-0.5'}`}>
-                      +{customer.segments.length - 2}
-                    </Badge>
-                  )}
-                </div>
-              )}
+      <Card
+        className={cn(
+          "group cursor-pointer relative overflow-hidden border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300",
+          isCompact ? "hover:-translate-y-[2px]" : ""
+        )}
+        onClick={onClick}
+      >
+        <CardContent className={isCompact ? 'p-4' : 'p-6'}>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Avatar className={cn(
+                "ring-2 ring-white dark:ring-slate-900 shadow-sm",
+                isCompact ? 'h-10 w-10' : 'h-12 w-12'
+              )}>
+                <AvatarImage src={customer.avatar ?? undefined} />
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                  {customer.name.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-1 flex-1 min-w-0">
+                <h4 className={cn(
+                  "font-semibold text-slate-900 dark:text-white truncate",
+                  isCompact ? 'text-sm' : 'text-base'
+                )}>{customer.name}</h4>
+                <p className={cn(
+                  "text-slate-500 dark:text-slate-400 truncate",
+                  isCompact ? 'text-xs' : 'text-sm'
+                )}>{customer.email}</p>
+                {customer.segments.length > 0 && (
+                  <div className={cn("flex gap-1 flex-wrap", isCompact ? 'mt-1' : 'mt-2')}>
+                    {customer.segments.slice(0, 2).map((segmentId) => (
+                      <Badge key={segmentId} variant="secondary" className={cn(
+                        "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0",
+                        isCompact ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-0.5'
+                      )}>
+                        {segmentId}
+                      </Badge>
+                    ))}
+                    {customer.segments.length > 2 && (
+                      <Badge variant="secondary" className={cn(
+                        "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-0",
+                        isCompact ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-0.5'
+                      )}>
+                        +{customer.segments.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>{t('actions')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAction('view'); }}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  {t('viewDetailsAction')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAction('edit'); }}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  {t('editCustomerAction')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); onAction('delete'); }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t('deleteAction')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className={`h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>{t('actions')}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAction('view'); }}>
-                <Eye className="mr-2 h-4 w-4" />
-                {t('viewDetailsAction')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAction('edit'); }}>
-                <Edit className="mr-2 h-4 w-4" />
-                {t('editCustomerAction')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={(e) => { e.stopPropagation(); onAction('delete'); }}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('deleteAction')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
 
-        {!isCompact && (
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="space-y-2">
+          {!isCompact && (
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <FaDollarSign className="h-3 w-3 text-muted-foreground" />
+              <DollarSign className="h-3 w-3 text-muted-foreground" />
               <p className="text-xs text-muted-foreground font-medium">{t('lifetimeValueLabel')}</p>
             </div>
             <p className="text-lg font-semibold">{formatCurrency(customer.lifetimeValue)}</p>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <FaRunning className="h-3 w-3 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground font-medium">{t('healthScoreLabel')}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Progress value={customer.healthScore} className="flex-1 h-2" />
-              <span className={`text-sm font-semibold ${getHealthScoreColor(customer.healthScore)}`}>
-                {customer.healthScore}
-              </span>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Activity className="h-3 w-3 text-slate-400" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t('healthScoreLabel')}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Progress value={customer.healthScore} className="flex-1 h-2 bg-slate-100 dark:bg-slate-800" />
+                <span className={`text-sm font-semibold ${getHealthScoreColor(customer.healthScore)}`}>
+                  {customer.healthScore}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-        )}
+          )}
 
-        <div className={`flex items-center justify-between ${isCompact ? '' : ''}`}>
-          {getRiskBadge(customer.riskLevel)}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            {new Date(customer.lastInteraction).toLocaleDateString()}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+            {getRiskBadge(customer.riskLevel)}
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+              <Clock className="h-3.5 w-3.5" />
+              {new Date(customer.lastInteraction).toLocaleDateString()}
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -509,7 +526,7 @@ export default function CustomersPage() {
               value=""
               change=""
               trend="neutral"
-              icon={FaUsers}
+              icon={Users}
               loading={true}
             />
           ))}
@@ -533,82 +550,86 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="container mx-auto p-6 space-y-8 max-w-7xl">
+      {/* Background Blobs */}
+      <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
+      <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
+
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50">
-              <FaUsers className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-            <h1 className="text-2xl font-semibold text-foreground">
-                  {t('title')}
-                </h1>
-              </div>
-          <p className="text-sm text-muted-foreground ml-[42px]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+              <Users className="h-5 w-5" />
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+              {t('title')}
+            </h1>
+          </div>
+          <p className="text-base text-slate-500 dark:text-slate-400 ml-[52px]">
             {t('subtitle')}
           </p>
-            </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 text-xs border-0 shadow-sm">
-            <FaDownload className="h-3 w-3 mr-1.5" />
-              {t('exportReport')}
-            </Button>
-            <Button
-              onClick={() => setShowCreateDialog(true)}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 ml-[52px] lg:ml-0">
+          <Button variant="outline" size="sm" className="h-9 text-sm border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+            <Download className="h-4 w-4 mr-2" />
+            {t('exportReport')}
+          </Button>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
             size="sm"
-            className="h-8 text-xs bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
-            >
-            <UserPlus className="h-3 w-3 mr-1.5" />
-              {t('addCustomer')}
-            </Button>
-            {selectedCustomer && (
-              <Button
+            className="h-9 text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            {t('addCustomer')}
+          </Button>
+          {selectedCustomer && (
+            <Button
               variant="ghost"
-                size="sm"
-              className="h-8 text-xs"
-                onClick={async () => {
-                  try {
-                    await customersApi.rescoreHealth(selectedCustomer);
-                    await refetchCustomers();
-                    await refetchHealth();
-                  } catch {
-                    void 0;
+              size="sm"
+              className="h-9 text-sm"
+              onClick={async () => {
+                try {
+                  await customersApi.rescoreHealth(selectedCustomer);
+                  await refetchCustomers();
+                  await refetchHealth();
+                } catch {
+                  void 0;
+                }
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {t('rescoreHealth')}
+            </Button>
+          )}
+          {selectedCustomer && (
+            <Button
+              variant={waOptOut ? "destructive" : "outline"}
+              size="sm"
+              disabled={waToggleLoading}
+              className={`h-9 text-sm ${waOptOut ? '' : 'border-slate-200 dark:border-slate-700'}`}
+              onClick={async () => {
+                if (!selectedCustomer) return;
+                setWaToggleLoading(true);
+                try {
+                  if (waOptOut) {
+                    await customersApi.whatsappOptIn(selectedCustomer);
+                    setWaOptOut(false);
+                  } else {
+                    await customersApi.whatsappOptOut(selectedCustomer);
+                    setWaOptOut(true);
                   }
-                }}
-              >
-              <MdRefresh className="h-3 w-3 mr-1.5" />
-                {t('rescoreHealth')}
-              </Button>
-            )}
-            {selectedCustomer && (
-              <Button
-                variant={waOptOut ? "destructive" : "outline"}
-                size="sm"
-                disabled={waToggleLoading}
-              className={`h-8 text-xs ${waOptOut ? '' : 'border-0 shadow-sm'}`}
-                onClick={async () => {
-                  if (!selectedCustomer) return;
-                  setWaToggleLoading(true);
-                  try {
-                    if (waOptOut) {
-                      await customersApi.whatsappOptIn(selectedCustomer);
-                      setWaOptOut(false);
-                    } else {
-                      await customersApi.whatsappOptOut(selectedCustomer);
-                      setWaOptOut(true);
-                    }
-                  } catch {
-                    /* noop */
-                  } finally {
-                    setWaToggleLoading(false);
-                  }
-                }}
-              >
-              <MessageSquare className="h-3 w-3 mr-1.5" />
-                {waOptOut ? 'WA Opt‑Out' : 'WA Opt‑In'}
-              </Button>
-            )}
+                } catch {
+                  /* noop */
+                } finally {
+                  setWaToggleLoading(false);
+                }
+              }}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              {waOptOut ? 'WA Opt‑Out' : 'WA Opt‑In'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -619,7 +640,7 @@ export default function CustomersPage() {
           value={analyticsData.overview.totalCustomers.toLocaleString()}
           change={`+${analyticsData.overview.newCustomersThisMonth}`}
           trend="up"
-          icon={FaUsers}
+          icon={Users}
           subtitle={t('stats.thisMonth')}
         />
 
@@ -631,7 +652,7 @@ export default function CustomersPage() {
             '0%'
           }
           trend="neutral"
-          icon={FaRunning}
+          icon={Activity}
           subtitle={t('stats.ofTotal')}
         />
 
@@ -640,7 +661,7 @@ export default function CustomersPage() {
           value={formatCurrency(analyticsData.overview.averageLifetimeValue)}
           change="+12.5%"
           trend="up"
-          icon={FaDollarSign}
+          icon={DollarSign}
           subtitle={t('stats.fromLastMonth')}
         />
 
@@ -649,7 +670,7 @@ export default function CustomersPage() {
           value={`${analyticsData.overview.churnRate}%`}
           change="-0.8%"
           trend="down"
-          icon={FaExclamationTriangle}
+          icon={Shield}
           subtitle={t('stats.fromLastMonth')}
         />
       </div>
@@ -663,35 +684,35 @@ export default function CustomersPage() {
                 value="overview" 
                 className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 text-muted-foreground hover:text-foreground transition-colors border-0"
               >
-                <FaBullseye className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 <span className="text-xs font-medium">{t('tabs.overview')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="segments" 
                 className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg data-[state=active]:bg-purple-50 dark:data-[state=active]:bg-purple-950/30 data-[state=active]:text-purple-600 dark:data-[state=active]:text-purple-400 text-muted-foreground hover:text-foreground transition-colors border-0"
               >
-                <FaUsers className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 <span className="text-xs font-medium">{t('tabs.segments')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="analytics" 
                 className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg data-[state=active]:bg-green-50 dark:data-[state=active]:bg-green-950/30 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 text-muted-foreground hover:text-foreground transition-colors border-0"
               >
-                <FaChartLine className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <LineChart className="h-4 w-4 text-green-600 dark:text-green-400" />
                 <span className="text-xs font-medium">{t('tabs.analytics')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="customers" 
                 className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg data-[state=active]:bg-orange-50 dark:data-[state=active]:bg-orange-950/30 data-[state=active]:text-orange-600 dark:data-[state=active]:text-orange-400 text-muted-foreground hover:text-foreground transition-colors border-0"
               >
-                <FaUsers className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 <span className="text-xs font-medium">{t('tabs.customers')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="insights" 
                 className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg data-[state=active]:bg-yellow-50 dark:data-[state=active]:bg-yellow-950/30 data-[state=active]:text-yellow-600 dark:data-[state=active]:text-yellow-400 text-muted-foreground hover:text-foreground transition-colors border-0"
               >
-                <FaBolt className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                <Zap className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                 <span className="text-xs font-medium">{t('tabs.insights')}</span>
               </TabsTrigger>
             </TabsList>
@@ -702,7 +723,7 @@ export default function CustomersPage() {
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl shadow-sm">
-                  <FaBullseye className="h-6 w-6 text-primary" />
+                  <Target className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold">{t('segments.title')}</h3>
@@ -759,7 +780,7 @@ export default function CustomersPage() {
           <TabsContent value="segments" className="p-6 space-y-6">
             <div className="flex items-center gap-4 mb-8">
               <div className="p-3 bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-2xl shadow-sm">
-                <FaUsers className="h-6 w-6 text-blue-600" />
+                <Users className="h-6 w-6 text-blue-600" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold">{t('customerSegments')}</h3>
@@ -818,7 +839,7 @@ export default function CustomersPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <FaBolt className="h-5 w-5 text-primary" />
+                    <Zap className="h-5 w-5 text-primary" />
                     {t('keyInsights')}
                   </CardTitle>
                 </CardHeader>
@@ -852,7 +873,7 @@ export default function CustomersPage() {
                       <div className="space-y-3">
                         {(insightsData.opportunities || []).map((item, i) => (
                           <div key={`opp-${i}`} className="flex items-start gap-3 p-3 border border-emerald-200 dark:border-emerald-800 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20">
-                            <FaArrowUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                            <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
                             <p className="text-sm">{item}</p>
                           </div>
                         ))}
@@ -861,8 +882,9 @@ export default function CustomersPage() {
 
                     <div className="space-y-4">
                       <h4 className="font-semibold flex items-center gap-2">
-                        <FaBullseye className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        {t('nextBestActions')}
+                      <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50">
+              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>          {t('nextBestActions')}
                       </h4>
                       <div className="space-y-3">
                         {(insightsData.nextBestActions || []).map((item, i) => (
@@ -882,7 +904,7 @@ export default function CustomersPage() {
 
                   <div className="flex justify-end">
                     <Button size="sm" variant="outline" onClick={refetchInsights} disabled={insightsLoading}>
-                      <MdRefresh className={`h-4 w-4 mr-2 ${insightsLoading ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`h-4 w-4 mr-2 ${insightsLoading ? 'animate-spin' : ''}`} />
                       {insightsLoading ? t('loading') : t('refresh')}
                     </Button>
                   </div>
@@ -1153,7 +1175,7 @@ export default function CustomersPage() {
           <TabsContent value="insights" className="p-6 space-y-8">
             <div className="flex items-center gap-4 mb-8">
               <div className="p-3 bg-gradient-to-br from-purple-500/20 to-purple-500/10 rounded-2xl shadow-sm">
-                <FaBolt className="h-6 w-6 text-purple-600" />
+                <Zap className="h-6 w-6 text-purple-600" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold">{t('customerInsights')}</h3>
@@ -1167,7 +1189,7 @@ export default function CustomersPage() {
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
                     <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                      <FaArrowUp className="h-5 w-5" />
+                      <TrendingUp className="h-5 w-5" />
                     </div>
                     {t('insights.opportunities')}
                   </CardTitle>
@@ -1180,7 +1202,7 @@ export default function CustomersPage() {
                     </div>
                     <p className="text-sm text-emerald-700 dark:text-emerald-300 mb-4">{t('insights.vipGrowthDesc')}</p>
                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
-                      <FaArrowUp className="h-4 w-4 mr-2" />
+                      <TrendingUp className="h-4 w-4 mr-2" />
                       {t('insights.expandProgram')}
                     </Button>
                   </div>
@@ -1192,7 +1214,7 @@ export default function CustomersPage() {
                     </div>
                     <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">{t('insights.newCustomerSuccessDesc')}</p>
                     <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20">
-                      <FaBullseye className="h-4 w-4 mr-2" />
+                      <Target className="h-4 w-4 mr-2" />
                       {t('insights.optimizeOnboarding')}
                     </Button>
                   </div>
@@ -1204,7 +1226,7 @@ export default function CustomersPage() {
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-3 text-red-700 dark:text-red-400">
                     <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                      <FaExclamationTriangle className="h-5 w-5" />
+                      <AlertTriangle className="h-5 w-5" />
                     </div>
                     {t('insights.risks')}
                   </CardTitle>
@@ -1212,7 +1234,7 @@ export default function CustomersPage() {
                 <CardContent className="space-y-4">
                   <div className="p-5 border border-red-200 dark:border-red-800 rounded-xl bg-red-50/80 dark:bg-red-950/30 shadow-sm">
                     <div className="flex items-center gap-3 mb-3">
-                      <FaArrowDown className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
                       <h4 className="font-semibold text-red-900 dark:text-red-100">{t('insights.atRiskIncrease')}</h4>
                     </div>
                     <p className="text-sm text-red-700 dark:text-red-300 mb-4">{t('insights.atRiskIncreaseDesc')}</p>
@@ -1229,7 +1251,7 @@ export default function CustomersPage() {
                     </div>
                     <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">{t('insights.supportVolumeRisingDesc')}</p>
                     <Button size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20">
-                      <FaRunning className="h-4 w-4 mr-2" />
+                      <Activity className="h-4 w-4 mr-2" />
                       {t('insights.reviewProcesses')}
                     </Button>
                   </div>

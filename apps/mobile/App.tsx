@@ -1,5 +1,1 @@
-import Root from './src/app/Root';
-
-export default Root;
-
-
+export { default } from './src/mobile/App';

@@ -1,9 +1,9 @@
+/* Import conversation design tokens FIRST */
+@import '../styles/conversation-tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import conversation design tokens */
-@import '../styles/conversation-tokens.css';
 
 @layer base {
   :root {

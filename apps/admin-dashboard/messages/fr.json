@@ -2460,6 +2460,32 @@
       "reset": "Réinitialiser",
       "save": "Enregistrer"
     },
+    "navigation": {
+      "company": "Entreprise",
+      "basicInfo": "Informations de base",
+      "billing": "Facturation et forfaits",
+      "wallet": "Portefeuille",
+      "whiteLabel": "Marque blanche",
+      "branding": "Marque et apparence",
+      "domains": "Domaines",
+      "channels": "Canaux",
+      "overview": "Aperçu",
+      "email": "Configuration email",
+      "automation": "Automatisation",
+      "aiBots": "Bots IA",
+      "team": "Équipe",
+      "members": "Membres de l'équipe",
+      "userManagement": "Gestion des utilisateurs",
+      "system": "Système",
+      "notifications": "Notifications",
+      "features": "Fonctionnalités"
+    },
+    "branding": {
+      "preview": {
+        "title": "Aperçu en direct",
+        "subtitle": "Voyez à quoi ressemble votre marque en temps réel"
+      }
+    },
     "basicInfo": {
       "title": "Informations de base",
       "subtitle": "Configurez les détails de base et les informations de contact de votre organisation",

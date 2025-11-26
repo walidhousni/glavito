@@ -130,6 +130,13 @@ export interface ResponseGenerationResult {
     content: string;
     relevanceScore: number;
   }>;
+  richResponse?: {
+    type: 'text' | 'buttons' | 'list' | 'template';
+    content: string;
+    options?: Array<{ label: string; value: string; action?: string }>;
+    header?: string;
+    footer?: string;
+  };
 }
 
 export interface KnowledgeSuggestionsResult {
@@ -608,7 +615,7 @@ Respond ONLY with valid JSON, no markdown or additional text.`;
   }
 
   /** Generate an autopilot reply with optional actions/templates for channels */
-  public async generateAutoReply(params: { content: string; previousMessages?: string[]; context?: { tenantId?: string; conversationId?: string; channelType?: string } }): Promise<{ intent?: string; answer: string; confidence: number; messageType?: 'text' | 'template'; templateId?: string; templateParams?: Record<string, string>; actions?: Array<{ type: string; payload?: Record<string, unknown>; summary?: string }>; language?: string }> {
+  public async generateAutoReply(params: { content: string; previousMessages?: string[]; context?: { tenantId?: string; conversationId?: string; channelType?: string } }): Promise<{ intent?: string; answer: string; confidence: number; messageType?: 'text' | 'template'; templateId?: string; templateParams?: Record<string, string>; actions?: Array<{ type: string; payload?: Record<string, unknown>; summary?: string }>; language?: string; richResponse?: ResponseGenerationResult['richResponse'] }> {
     const start = Date.now();
     try {
       const analysis = await this.analyzeContent({
@@ -642,6 +649,36 @@ Respond ONLY with valid JSON, no markdown or additional text.`;
         const qtyMatch = params.content.match(/(\d+)\s*(pcs|pieces|units)?/i);
         actions.push({ type: 'order.place', payload: { sku: skuMatch?.[1], quantity: Number(qtyMatch?.[1] || 1) } });
       }
+
+      // Rich content generation for specific channels
+      let richResponse: ResponseGenerationResult['richResponse'] | undefined;
+      
+      if (params.context?.channelType === 'whatsapp' || params.context?.channelType === 'instagram') {
+        // Simple heuristic for buttons: if response asks a question or offers choices
+        if (best.includes('?')) {
+          const lowerBest = best.toLowerCase();
+          if (lowerBest.includes('track') && lowerBest.includes('order')) {
+             richResponse = {
+               type: 'buttons',
+               content: best,
+               options: [
+                 { label: 'Track Order', value: 'track_order', action: 'track_order' },
+                 { label: 'Talk to Agent', value: 'talk_agent', action: 'escalate' }
+               ]
+             };
+          } else if (lowerBest.includes('yes') || lowerBest.includes('no')) {
+             richResponse = {
+               type: 'buttons',
+               content: best,
+               options: [
+                 { label: 'Yes', value: 'yes' },
+                 { label: 'No', value: 'no' }
+               ]
+             };
+          }
+        }
+      }
+
       return {
         intent,
         answer: best,
@@ -651,6 +688,7 @@ Respond ONLY with valid JSON, no markdown or additional text.`;
         templateParams,
         actions,
         language: lang,
+        richResponse,
       };
     } catch (error) {
       this.logger.error('generateAutoReply failed:', error);
