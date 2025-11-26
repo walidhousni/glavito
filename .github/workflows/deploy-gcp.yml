@@ -71,9 +71,6 @@ jobs:
           cluster_name: ${{ env.CLUSTER_NAME }}
           location: ${{ env.CLUSTER_ZONE }}
 
-      - name: Setup yq
-        uses: mikefarah/yq@v4.44.3
-
       - name: Update Kustomize Image Tags
         run: |
           GIT_SHA=$(git rev-parse --short HEAD)
