@@ -12,7 +12,7 @@ interface UserPresence {
   lastSeen: string; // ISO date string
 }
 
-interface TypingUser {
+export interface TypingUser {
   userId: string;
   isTyping: boolean;
   timestamp: number; // Unix timestamp
