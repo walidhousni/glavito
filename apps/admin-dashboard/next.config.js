@@ -21,8 +21,6 @@ const nextConfig = {
   output: 'standalone',
   distDir: '.next',
   
-  // Performance optimizations
-  swcMinify: true, // Use SWC minifier (faster than Terser)
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
@@ -46,7 +44,6 @@ const nextConfig = {
       ],
     },
   ],
-  outputFileTracing: true,
   trailingSlash: false,
   reactStrictMode: true,
   images: {

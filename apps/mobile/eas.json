@@ -1,4 +1,7 @@
 {
+  "cli": {
+    "version": ">=16.9.0"
+  },
   "build": {
     "production": {
       "android": {

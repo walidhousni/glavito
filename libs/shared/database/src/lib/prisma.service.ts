@@ -11,7 +11,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     description: 'Prisma query duration in seconds',
     unit: 's',
   });
-  private readonly slowThresholdMs = parseInt(process.env.PRISMA_SLOW_QUERY_MS || '200', 10);
+  private readonly slowThresholdMs = parseInt(process.env['PRISMA_SLOW_QUERY_MS'] || '200', 10);
 
   constructor() {
     super({
@@ -19,14 +19,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         { emit: 'event', level: 'error' },
         { emit: 'event', level: 'info' },
         { emit: 'event', level: 'warn' },
-        ...(process.env.NODE_ENV !== 'production' ? ([{ emit: 'event', level: 'query' }] as any) : []),
+        ...(process.env['NODE_ENV'] !== 'production' ? ([{ emit: 'event', level: 'query' }] as any) : []),
       ],
       errorFormat: 'pretty',
     });
 
     // Record query durations (all environments) using Prisma middleware (when supported)
-    if (typeof (this as any).$use === 'function') {
-      this.$use(async (params: any, next: (params: any) => Promise<any>) => {
+    if (typeof (this as any)['$use'] === 'function') {
+      this['$use'](async (params: any, next: (params: any) => Promise<any>) => {
         const start = process.hrtime.bigint();
         const result = await next(params);
         const end = process.hrtime.bigint();
@@ -59,7 +59,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       };
       const fields = piiFieldsByModel[model];
       if (!fields) return data;
-      const key = process.env.DATA_ENCRYPTION_KEY || '';
+      const key = process.env['DATA_ENCRYPTION_KEY'] || '';
       if (!key) return data;
       const enc = (v: string) => Buffer.from(v.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i % key.length))).join('')).toString('base64');
       for (const f of fields) {
@@ -70,8 +70,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       return data;
     };
 
-    if (typeof (this as any).$use === 'function') {
-      this.$use(async (params: any, next: (params: any) => Promise<any>) => {
+    if (typeof (this as any)['$use'] === 'function') {
+      this['$use'](async (params: any, next: (params: any) => Promise<any>) => {
         const actions = new Set(['create', 'update', 'upsert']);
         if (params?.model && actions.has(params.action)) {
           if (params.args?.data) {
@@ -89,8 +89,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
 
     // In non-production, also attach Prisma query event for debug with truncated SQL
-    if (process.env.NODE_ENV !== 'production' && typeof (this as any).$on === 'function') {
-      this.$on('query' as never, (e: any) => {
+    if (process.env['NODE_ENV'] !== 'production' && typeof (this as any)['$on'] === 'function') {
+      this['$on']('query' as never, (e: any) => {
         const durationMs = e.duration;
         if (durationMs >= this.slowThresholdMs) {
           const sql = (e.query || '').slice(0, 500);
@@ -142,7 +142,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Clean up database for testing
    */
   async cleanDatabase() {
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env['NODE_ENV'] === 'test') {
       try {
         await this.$transaction([
           this.auditLog.deleteMany(),

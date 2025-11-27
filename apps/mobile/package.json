@@ -23,5 +23,16 @@
     "react-native-svg": "*",
     "react-native-svg-transformer": "*",
     "react-native-web": "*"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "options": {
+          "platform": "android",
+          "profile": "production",
+          "interactive": false
+        }
+      }
+    }
   }
 }
