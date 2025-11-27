@@ -11,7 +11,7 @@ const withNextIntl = createNextIntlPlugin('./next-intl.config.js');
  **/
 const nextConfig = {
   nx: {
-    svgr: false,
+    // svgr option is deprecated/removed in recent Nx versions
   },
   eslint: {
     ignoreDuringBuilds: true,
