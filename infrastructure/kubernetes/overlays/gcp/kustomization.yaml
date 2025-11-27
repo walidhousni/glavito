@@ -2,12 +2,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: prod
 resources:
+  - namespace.yaml
   - ../../base
   - ../../base/redis/deployment.yaml
   - ../../base/redis/service.yaml
   - ../../base/kafka/statefulset.yaml
   - ../../base/kafka/service.yaml
   - ../../shared/gcp-secretstore.yaml
+  - ../shared-namespace.yaml
+  - ../../shared/gcp-external-secrets-sa.yaml
+  - secrets.yaml
   - ingress.yaml
   - certificate.yaml
 
