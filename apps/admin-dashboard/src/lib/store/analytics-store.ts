@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+  import { create } from 'zustand'
 import { analyticsApi } from '@/lib/api/analytics-client'
 import { callsApi } from '@/lib/api/calls-client'
 import type { RealTimeMetricsUI, KPIMetricUI } from '@glavito/shared-types'
@@ -94,7 +94,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
       } : channel
       
       // Transform agent performance to array format
-      const transformedAgent = Array.isArray(agent) ? agent : (agent?.metrics ? [agent] : [])
+      const transformedAgent = Array.isArray(agent) ? agent : ((agent as any)?.metrics ? [agent] : [])
       
       set({ 
         realTime: realTime || undefined, 

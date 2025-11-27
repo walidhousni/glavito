@@ -66,7 +66,7 @@ export function InstagramSettings() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center">
-                <Icon name="instagram" className="w-6 h-6 text-white" />
+                <Icon name="messageSquare" className="w-6 h-6 text-white" />
               </div>
               <div>
                 <CardTitle>Instagram Business Account</CardTitle>
@@ -77,12 +77,12 @@ export function InstagramSettings() {
             </div>
             {isConnected ? (
               <Button variant="outline" onClick={handleDisconnect}>
-                <Icon name="unlink" className="w-4 h-4 mr-2" />
+                <Icon name="plug" className="w-4 h-4 mr-2" />
                 Disconnect
               </Button>
             ) : (
               <Button onClick={handleConnect}>
-                <Icon name="instagram" className="w-4 h-4 mr-2" />
+                <Icon name="messageSquare" className="w-4 h-4 mr-2" />
                 Connect Instagram
               </Button>
             )}
@@ -100,7 +100,7 @@ export function InstagramSettings() {
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                <Icon name="clock" className="w-5 h-5 text-blue-600" />
+                <Icon name="info" className="w-5 h-5 text-blue-600" />
                 <div>
                   <div className="text-sm font-medium">24-Hour Window</div>
                   <div className="text-xs text-muted-foreground">{analytics.activeWithin24h}% active</div>
@@ -271,7 +271,7 @@ export function InstagramSettings() {
                 <CardContent>
                   <div className="text-3xl font-bold">{analytics.avgResponseTime} min</div>
                   <div className="flex items-center gap-1 text-sm text-green-600 mt-2">
-                    <Icon name="trendingDown" className="w-4 h-4" />
+                    <Icon name="trendingUp" className="w-4 h-4" />
                     <span>-15% faster</span>
                   </div>
                 </CardContent>
@@ -343,7 +343,7 @@ export function InstagramSettings() {
                   <Label htmlFor="profile-photo">Profile Photo</Label>
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center">
-                      <Icon name="instagram" className="w-8 h-8 text-white" />
+                      <Icon name="messageSquare" className="w-8 h-8 text-white" />
                     </div>
                     <Button variant="outline">
                       <Icon name="upload" className="w-4 h-4 mr-2" />
@@ -413,14 +413,14 @@ export function InstagramSettings() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center mb-4">
-              <Icon name="instagram" className="w-8 h-8 text-white" />
+              <Icon name="messageSquare" className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-lg font-medium mb-2">Connect Your Instagram Account</h3>
             <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
               Connect your Instagram Business account to manage DMs, respond to stories, and engage with your audience.
             </p>
             <Button onClick={handleConnect}>
-              <Icon name="instagram" className="w-4 h-4 mr-2" />
+              <Icon name="messageSquare" className="w-4 h-4 mr-2" />
               Connect Instagram Business
             </Button>
           </CardContent>

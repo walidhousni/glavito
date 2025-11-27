@@ -57,15 +57,15 @@ export function FAQsSection({
         id: faq.id,
         title: full.title,
         content: (full as unknown as { content?: string }).content || '',
-        tags: (faq.tags || []).join(',')
-      })
+        tags: faq.tags || []
+      } as any)
     } catch {
       onEdit({
         id: faq.id,
         title: faq.title,
         content: '',
-        tags: (faq.tags || []).join(',')
-      })
+        tags: faq.tags || []
+      } as any)
     }
   }
 

@@ -532,36 +532,38 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
 
           {/* Routing Suggestions */}
           <RoutingSuggestionsPanel
-            ticketId={params.id}
-            initialAgentId={ticketData?.assignedAgentId || null}
-            onAssign={async (agentId: string) => {
-              try {
-                await ticketsApi.assign(params.id, agentId);
-                push(t('tickets.ticketAssigned') || 'Ticket assigned successfully', 'success');
-                // Reload ticket data
-                const ticket = await ticketsApi.get(params.id);
-                if (ticket) {
-                  setTicketData(ticket as { assignedAgentId?: string | null });
+            {...{
+              ticketId: params.id,
+              initialAgentId: ticketData?.assignedAgentId || null,
+              onAssign: async (agentId: string) => {
+                try {
+                  await ticketsApi.assign(params.id, agentId);
+                  push(t('tickets.ticketAssigned') || 'Ticket assigned successfully', 'success');
+                  // Reload ticket data
+                  const ticket = await ticketsApi.get(params.id);
+                  if (ticket) {
+                    setTicketData(ticket as { assignedAgentId?: string | null });
+                  }
+                } catch (error) {
+                  push(error instanceof Error ? error.message : t('tickets.assignmentFailed') || 'Failed to assign ticket', 'error');
+                  throw error;
                 }
-              } catch (error) {
-                push(error instanceof Error ? error.message : t('tickets.assignmentFailed') || 'Failed to assign ticket', 'error');
-                throw error;
-              }
-            }}
-            onAutoAssign={async () => {
-              try {
-                await ticketsApi.autoAssign(params.id);
-                push(t('tickets.ticketAutoAssigned') || 'Ticket auto-assigned successfully', 'success');
-                // Reload ticket data
-                const ticket = await ticketsApi.get(params.id);
-                if (ticket) {
-                  setTicketData(ticket as { assignedAgentId?: string | null });
+              },
+              onAutoAssign: async () => {
+                try {
+                  await ticketsApi.autoAssign(params.id);
+                  push(t('tickets.ticketAutoAssigned') || 'Ticket auto-assigned successfully', 'success');
+                  // Reload ticket data
+                  const ticket = await ticketsApi.get(params.id);
+                  if (ticket) {
+                    setTicketData(ticket as { assignedAgentId?: string | null });
+                  }
+                } catch (error) {
+                  push(error instanceof Error ? error.message : t('tickets.autoAssignmentFailed') || 'Failed to auto-assign ticket', 'error');
+                  throw error;
                 }
-              } catch (error) {
-                push(error instanceof Error ? error.message : t('tickets.autoAssignmentFailed') || 'Failed to auto-assign ticket', 'error');
-                throw error;
-              }
-            }}
+              },
+            } as any}
           />
 
           {/* AI Analysis */}

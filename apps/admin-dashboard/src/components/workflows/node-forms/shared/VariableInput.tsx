@@ -16,6 +16,7 @@ interface VariableInputProps {
   label?: string;
   type?: 'input' | 'textarea';
   className?: string;
+  required?: boolean;
 }
 
 const AVAILABLE_VARIABLES = [
@@ -33,6 +34,7 @@ export function VariableInput({
   label,
   type = 'input',
   className,
+  required,
 }: VariableInputProps) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -62,6 +64,7 @@ export function VariableInput({
       placeholder={placeholder}
       className={className}
       rows={3}
+      required={required}
     />
   ) : (
     <Input
@@ -69,6 +72,7 @@ export function VariableInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       className={className}
+      required={required}
     />
   );
 

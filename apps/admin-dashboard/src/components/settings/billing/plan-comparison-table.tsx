@@ -69,7 +69,7 @@ export function PlanComparisonTable({ plans, billingCycle }: PlanComparisonTable
                   <td className="p-4 font-medium">{row.label}</td>
                   {plans.map((plan) => {
                     const value = plan.features[row.key];
-                    const displayValue = row.format(value as any);
+                    const displayValue = (row.format as any)(value);
                     const hasFeature = value !== undefined && value !== null && value !== false && value !== 0;
                     
                     return (

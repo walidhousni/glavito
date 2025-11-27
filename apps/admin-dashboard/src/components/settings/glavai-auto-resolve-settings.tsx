@@ -141,7 +141,6 @@ export function GlavaiAutoResolveSettings() {
             </span>
           </div>
           <Slider
-            id="confidence-threshold"
             min={0.5}
             max={1.0}
             step={0.05}

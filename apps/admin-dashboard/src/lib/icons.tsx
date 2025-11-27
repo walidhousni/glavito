@@ -49,6 +49,7 @@ import {
   Trash2,
   Copy,
   ExternalLink,
+  RotateCw,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -108,6 +109,7 @@ export const icons = {
   trash: Trash2,
   copy: Copy,
   externalLink: ExternalLink,
+  refresh: RotateCw,
 } as const;
 
 export type IconName = keyof typeof icons;

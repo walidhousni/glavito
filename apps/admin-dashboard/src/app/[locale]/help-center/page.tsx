@@ -42,6 +42,7 @@ export default function HelpCenterRedesigned() {
       }, 300)
       return () => clearTimeout(timeoutId)
     }
+    return undefined;
   }, [searchQuery, searchKnowledge])
 
   const categories = [

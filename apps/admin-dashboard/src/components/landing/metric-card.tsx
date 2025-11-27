@@ -57,6 +57,7 @@ export function MetricCard({
 
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [isInView, value, delay, duration]);
 
   return (
@@ -64,7 +65,7 @@ export function MetricCard({
       ref={ref}
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
       animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-      transition={{ delay, duration: 0.5, ease: 'easeOut' }}
+      transition={{ delay, duration: 0.5, ease: 'easeOut' } as any}
       className={cn(
         'relative overflow-hidden rounded-2xl p-6 shadow-xl',
         'bg-gradient-to-br',

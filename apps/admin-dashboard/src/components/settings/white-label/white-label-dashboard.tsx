@@ -55,7 +55,7 @@ export function WhiteLabelDashboard() {
     },
   ];
 
-  const tier = settings?.whiteLabelTier || 'basic';
+  const tier = (settings as any)?.whiteLabelTier || 'basic';
 
   const getTierBadge = () => {
     const tierConfig = {

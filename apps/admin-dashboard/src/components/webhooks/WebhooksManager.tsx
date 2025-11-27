@@ -35,7 +35,7 @@ export function WebhooksManagerDialog({ open, onOpenChange }: { open: boolean; o
   const [loading, setLoading] = React.useState(false);
   const [endpoints, setEndpoints] = React.useState<WebhookEndpoint[]>([]);
   const [createLoading, setCreateLoading] = React.useState(false);
-  const [deleteLoading] = React.useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = React.useState<string | null>(null);
   const [testLoading, setTestLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = React.useState(false);

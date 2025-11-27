@@ -23,7 +23,7 @@ export function SalesView() {
   const load = React.useCallback(async () => {
     try {
       setLoading(true)
-      const res = await analyticsApi.getBusinessInsights(timeRange)
+      const res = await (analyticsApi as any).getBusinessInsights(timeRange)
       setSummary(res.summary || { orders: 0, confirmations: 0, deliveries: 0, earnings: 0 })
       setDaily(Array.isArray(res?.trends?.daily) ? res.trends.daily : [])
       setCustomers(res.customers || { newCustomers: 0, activeCustomers: 0, revenuePerCustomer: 0, averageOrderValue: 0, repeatPurchaseRate: 0 })

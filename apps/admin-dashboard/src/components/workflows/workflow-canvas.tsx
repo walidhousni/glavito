@@ -186,7 +186,7 @@ function WorkflowCanvasInner({
   // Handle node changes
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
-    onNodesChange?.(getNodes());
+    onNodesChange?.(getNodes() as Node<WorkflowNodeData>[]);
   }, [onNodesChangeInternal, onNodesChange, getNodes]);
 
   // Handle edge changes
@@ -203,7 +203,7 @@ function WorkflowCanvasInner({
         ...params,
         id: `e${params.source}-${params.target}-${Date.now()}`,
         animated: true,
-      };
+      } as Edge;
       setEdges((eds) => addEdge(newEdge, eds));
     },
     [setEdges, readOnly]
@@ -464,7 +464,7 @@ function WorkflowCanvasInner({
               case 'running': return '#3b82f6';
               case 'error': return '#ef4444';
               case 'success': return '#10b981';
-              default: return colorMap[category] || colorMap.default;
+              default: return colorMap[category as string] || colorMap.default;
             }
           }}
           nodeStrokeWidth={3}

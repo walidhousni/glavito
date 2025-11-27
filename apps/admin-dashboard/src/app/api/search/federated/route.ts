@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
-    const limit = searchParams.get('limit') || '10';
+    const limit = searchParams.get('limit') || '10'; 
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       `${apiUrl}/api/search/federated?q=${encodeURIComponent(query)}&limit=${limit}`,
       {
         headers: {
-          'Authorization': `Bearer ${session.accessToken}`,
+          'Authorization': `Bearer ${(session as any).accessToken}`,
           'Content-Type': 'application/json',
         },
       }

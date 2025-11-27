@@ -50,7 +50,7 @@ export function SatisfactionAnalytics() {
   React.useEffect(() => {
     const loadAnalytics = async () => {
       try {
-        const data = await analyticsApi.getCustomerSatisfaction(timeRange).catch(() => ({} as Record<string, unknown>))
+        const data = await (analyticsApi as any).getCustomerSatisfaction(timeRange).catch(() => ({} as Record<string, unknown>))
         const overall = (data?.overall || {}) as { totalResponses?: number; responseRate?: number; averageScore?: number }
         const byChannelArr = Array.isArray(data?.byChannel) ? data.byChannel : []
         const channelBreakdown: Record<string, number> = {}

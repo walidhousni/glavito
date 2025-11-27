@@ -239,7 +239,7 @@ export function SMSSettings() {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon name="phone" className="w-5 h-5 text-primary" />
+                    <Icon name="smartphone" className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">

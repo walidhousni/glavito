@@ -42,9 +42,11 @@ export function AITriageSettings({ onClose }: AITriageSettingsProps) {
     try {
       setLoading(true);
       const config = await aiApi.getAutopilotConfig();
-      setMode(config.mode || 'off');
-      setMinConfidence(config.minConfidence || 0.7);
-      setAllowedChannels(config.allowedChannels || []);
+      if (config) {
+        setMode(config.mode || 'off');
+        setMinConfidence(config.minConfidence || 0.7);
+        setAllowedChannels(config.allowedChannels || []);
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -59,7 +61,7 @@ export function AITriageSettings({ onClose }: AITriageSettingsProps) {
   async function saveConfig() {
     try {
       setSaving(true);
-      await aiApi.updateAutopilotConfig({
+      await aiApi.setAutopilotConfig({
         mode,
         minConfidence,
         allowedChannels,
@@ -204,7 +206,6 @@ export function AITriageSettings({ onClose }: AITriageSettingsProps) {
               </Badge>
             </div>
             <Slider
-              id="confidence"
               value={[minConfidence * 100]}
               onValueChange={(v) => setMinConfidence(v[0] / 100)}
               min={50}

@@ -207,16 +207,15 @@ export function AgentGoalsTab({ agent }: AgentGoalsTabProps) {
                   className="group relative"
                 >
                   <div className="aspect-square rounded-2xl bg-gradient-to-br p-1 shadow-lg hover:shadow-xl transition-all cursor-pointer group-hover:scale-105"
-                    style={{ backgroundImage: `linear-gradient(135deg, ${getBadgeColor(achievement.badgeType)})` }}
                   >
                     <div className="h-full w-full rounded-xl bg-card/95 backdrop-blur-sm flex flex-col items-center justify-center p-4">
                       <Trophy className="h-8 w-8 text-yellow-500 mb-2 animate-achievement-unlock" />
-                      <div className="text-xs font-medium text-center">{achievement.name ?? achievement.badgeType}</div>
+                      <div className="text-xs font-medium text-center">{(achievement as any).name ?? achievement.badgeType}</div>
                     </div>
                   </div>
                   <div className="absolute inset-x-0 -bottom-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="bg-popover border border-border rounded-lg p-2 text-xs text-center shadow-xl">
-                      {achievement.description ?? t('achievementEarned', { fallback: 'Achievement earned!' })}
+                      {(achievement as any).description ?? t('achievementEarned', { fallback: 'Achievement earned!' })}
                     </div>
                   </div>
                 </motion.div>

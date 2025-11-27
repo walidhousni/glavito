@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       `${apiUrl}/api/search/suggestions?q=${encodeURIComponent(query)}`,
       {
         headers: {
-          'Authorization': `Bearer ${session.accessToken}`,
+          'Authorization': `Bearer ${(session as any).accessToken}`,
           'Content-Type': 'application/json',
         },
       }

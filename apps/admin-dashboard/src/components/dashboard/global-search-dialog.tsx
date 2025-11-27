@@ -85,8 +85,8 @@ export function GlobalSearchDialog() {
             q: query,
             limit: 5,
           }).catch(() => ({ data: [] })),
-          customersApi.search(query, { limit: 5 }).catch(() => []),
-          conversationsApi.search({ query, limit: 5 }).catch(() => ({ data: [] })),
+          customersApi.list(query).catch(() => []),
+          conversationsApi.list({ limit: 5, page: 1 }).catch(() => ({ data: [] })),
         ]);
 
         const searchResults: SearchResult[] = [];

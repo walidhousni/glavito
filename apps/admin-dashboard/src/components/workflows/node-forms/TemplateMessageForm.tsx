@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 import { validateTemplateMessage, ValidationError } from './shared/validation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -45,7 +47,7 @@ export function TemplateMessageForm({ config, onChange }: TemplateMessageFormPro
     }
   }, [channel]);
 
-  const selectedTemplate = waTemplates?.find((t) => t.name === templateId);
+  const selectedTemplate = waTemplates?.find((t: WhatsAppTemplate) => t.name === templateId);
 
   const errors = validateTemplateMessage(config);
 
@@ -153,7 +155,7 @@ export function TemplateMessageForm({ config, onChange }: TemplateMessageFormPro
         <div className="space-y-1">
           <Label className="text-xs">Template Parameters</Label>
           <div className="space-y-2">
-            {selectedTemplate.variables.map((varName) => (
+            {selectedTemplate.variables.map((varName: string) => (
               <VariableInput
                 key={varName}
                 value={templateParams[varName] || ''}

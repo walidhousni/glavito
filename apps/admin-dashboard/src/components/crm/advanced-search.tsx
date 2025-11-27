@@ -401,7 +401,7 @@ export function AdvancedSearch({
                   value={filters.entities?.join(',') || ''}
                   onValueChange={(value) => {
                     updateFilters({
-                      entities: value ? value.split(',') as unknown : undefined
+                      entities: value ? value.split(',') as ('lead' | 'deal' | 'customer' | 'segment')[] : undefined
                     });
                   }}
                 >

@@ -38,7 +38,7 @@ export function WorkflowPickerDialog({ open, onOpenChange, onConfirm }: Workflow
         const data = (res as any)?.data?.data ?? res.data ?? [];
         if (!mounted) return;
         const items: WorkflowItem[] = Array.isArray(data)
-          ? data.map((w: unknown) => ({ id: String(w.id), name: String(w.name || 'Untitled'), description: w.description, isActive: !!w.isActive }))
+          ? data.map((w: any) => ({ id: String(w.id), name: String(w.name || 'Untitled'), description: w.description, isActive: !!w.isActive }))
           : [];
         setWorkflows(items);
       } catch {

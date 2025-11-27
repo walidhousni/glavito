@@ -17,13 +17,13 @@ export interface ChannelAnalytics {
 }
 
 export class ChannelSettingsClient {
-  constructor(private readonly api: ApiClient) {}
+  constructor(private readonly api: typeof ApiClient) {}
 
   async getChannelBranding(channelType: string): Promise<ChannelBranding | null> {
     const response = await this.api.get<{ data: ChannelBranding }>(
       `/channels/settings/${channelType}/branding`
     );
-    return response.data;
+    return response.data.data;
   }
 
   async updateChannelBranding(
@@ -34,7 +34,7 @@ export class ChannelSettingsClient {
       `/channels/settings/${channelType}/branding`,
       branding
     );
-    return response.data;
+    return response.data.data;
   }
 
   async getChannelAnalytics(
@@ -50,14 +50,14 @@ export class ChannelSettingsClient {
     const response = await this.api.get<{ data: ChannelAnalytics }>(
       `/channels/settings/${channelType}/analytics?${params.toString()}`
     );
-    return response.data;
+    return response.data.data;
   }
 
   async syncWhatsAppTemplates(): Promise<{ synced: number }> {
     const response = await this.api.post<{ data: { synced: number } }>(
       '/channels/settings/whatsapp/sync-templates'
     );
-    return response.data;
+    return response.data.data;
   }
 }
 
