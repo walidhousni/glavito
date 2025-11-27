@@ -15,7 +15,7 @@ COPY apps/admin-dashboard/package.json ./apps/admin-dashboard/package.json
 COPY libs ./libs/
 
 # Install all dependencies (including dev dependencies)
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Development stage
 FROM base AS development

@@ -12,7 +12,7 @@ COPY nx.json ./
 COPY tsconfig.base.json ./
 
 # Install dependencies (including dev dependencies for build)
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Development stage
 FROM base AS development
