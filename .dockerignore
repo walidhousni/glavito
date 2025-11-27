@@ -69,11 +69,15 @@ jspm_packages/
 
 # Next.js build output
 .next
+**/.next
 out
+**/out
 
 # Nuxt.js build / generate output
 .nuxt
+**/.nuxt
 dist
+**/dist
 
 # Gatsby files
 .cache/
@@ -107,7 +111,7 @@ Thumbs.db
 
 # Git
 .git
-.gitignore
+
 
 # Docker
 Dockerfile*
