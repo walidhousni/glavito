@@ -14,6 +14,9 @@ COPY api-gateway/package.json ./api-gateway/package.json
 COPY apps/admin-dashboard/package.json ./apps/admin-dashboard/package.json
 COPY libs ./libs/
 
+# Remove any node_modules from internal libraries to prevent conflicts
+RUN find libs -type d -name node_modules -exec rm -rf {} + || true
+
 # Install all dependencies (including dev dependencies)
 RUN npm ci --legacy-peer-deps
 
@@ -55,10 +58,16 @@ ENV PORT=3000
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 
+# Copy package files for production install
+COPY --from=builder --chown=nestjs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nestjs:nodejs /app/api-gateway/package.json ./api-gateway/
+
+# Install only production dependencies
+RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
+
 # Copy the built application
 # The api-gateway build outputs to /app/api-gateway/dist (see webpack.config.js)
 COPY --from=builder --chown=nestjs:nodejs /app/api-gateway/dist ./
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 
 USER nestjs
 
