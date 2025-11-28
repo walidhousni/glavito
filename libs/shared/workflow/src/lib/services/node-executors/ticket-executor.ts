@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NodeExecutor, FlowExecutionContext } from '../flow-execution.service';
 import { PrismaService } from '@glavito/shared-database';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class TicketNodeExecutor implements NodeExecutor {

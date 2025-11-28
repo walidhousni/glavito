@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@glavito/shared-database';
 import { AdvancedEventBusService } from '@glavito/shared-kafka';
-import { Prisma } from '@prisma/client';
 
 export interface EmojiReaction {
   emoji: string;

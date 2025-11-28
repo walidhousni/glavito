@@ -2,7 +2,6 @@ import { Injectable, Logger, Inject, Optional } from '@nestjs/common';
 import { NodeExecutor, FlowExecutionContext } from '../flow-execution.service';
 import { PrismaService } from '@glavito/shared-database';
 import { randomUUID } from 'crypto';
-import { Prisma } from '@prisma/client';
 
 /**
  * Analytics Tracker Node Executor

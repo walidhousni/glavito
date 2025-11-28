@@ -1,6 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '@glavito/shared-database';
-import { Prisma } from '@prisma/client';
 import { EventPublisherService } from '@glavito/shared-kafka';
 import { WorkflowExecutionService } from './workflow-execution.service';
 import { WorkflowTemplates } from '../templates/workflow-templates';
@@ -135,7 +134,6 @@ export class WorkflowEngineService implements OnModuleInit {
             conditions: [] as unknown as any,
             actions: [] as unknown as any,
             triggers: (def.triggers || []) as unknown as any,
-            schedule: null,
             metadata: {
               isTemplate: true,
               templateSlug: slug,
