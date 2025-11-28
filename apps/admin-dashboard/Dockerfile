@@ -6,12 +6,18 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
+# Copy package files (workspace-aware for faster caching)
 COPY package*.json ./
 COPY nx.json ./
 COPY tsconfig.base.json ./
+COPY apps/admin-dashboard/package.json ./apps/admin-dashboard/package.json
+COPY api-gateway/package.json ./api-gateway/package.json
+COPY libs ./libs/
 
-# Install dependencies (including dev dependencies for build)
+# Remove any node_modules from internal libraries to prevent conflicts
+RUN find libs -type d -name node_modules -exec rm -rf {} + || true
+
+# Install all dependencies (including dev dependencies for build)
 RUN npm ci --legacy-peer-deps
 
 # Development stage
@@ -34,6 +40,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Set build-time environment variables
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV SKIP_ENV_VALIDATION=true
+
 # Build the Next.js application using Nx
 RUN npx nx build admin-dashboard
 
@@ -43,8 +54,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=${PORT:-3000}
-# Railway will automatically set PORT environment variable
+ENV PORT=3000
+# Railway and other platforms can override PORT via environment variables at runtime
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

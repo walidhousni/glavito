@@ -30,6 +30,9 @@ const nextConfig = {
     turbo: {
       resolveExtensions: ['.tsx', '.ts', '.jsx', '.js'],
     },
+    // Skip prerendering for error pages during build
+    workerThreads: false,
+    cpus: 1,
   },
   
   headers: async () => [
