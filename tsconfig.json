@@ -29,9 +29,6 @@
     },
     {
       "path": "./libs/shared/auth"
-    },
-    {
-      "path": "./apps/mobile"
     }
   ]
 }
