@@ -56,7 +56,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 
 # Copy the built application
-COPY --from=builder --chown=nestjs:nodejs /app/dist/api-gateway ./
+# The api-gateway build outputs to /app/api-gateway/dist (see webpack.config.js)
+COPY --from=builder --chown=nestjs:nodejs /app/api-gateway/dist ./
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 
 USER nestjs
