@@ -50,7 +50,7 @@ export class TicketNodeExecutor implements NodeExecutor {
 
     // Validate channelId exists
     if (channelId) {
-      const channelExists = await this.prisma.channel.findFirst({
+      const channelExists = await this.prisma['channel'].findFirst({
         where: { id: channelId, tenantId: context.tenantId }
       });
       if (!channelExists) {
@@ -58,7 +58,7 @@ export class TicketNodeExecutor implements NodeExecutor {
       }
     }
 
-    const ticket = await this.prisma.ticket.create({
+    const ticket = await this.prisma['ticket'].create({
       data: {
         tenantId: context.tenantId,
         customerId: customerId || context.customerId || '',
@@ -68,12 +68,12 @@ export class TicketNodeExecutor implements NodeExecutor {
         priority: priority || 'medium',
         status: 'open',
         tags: (config['tags'] as string[]) || [],
-        customFields: ((config['customFields'] as Record<string, unknown>) || {}) as Prisma.InputJsonValue,
+        customFields: ((config['customFields'] as Record<string, unknown>) || {}) as any,
       },
     });
 
     // Add timeline event
-    await this.prisma.ticketTimelineEvent.create({
+    await this.prisma['ticketTimelineEvent'].create({
       data: {
         ticketId: ticket.id,
         userId: context.userId,
@@ -114,20 +114,20 @@ export class TicketNodeExecutor implements NodeExecutor {
     }
     if (tags) updateData['tags'] = tags;
 
-    const ticket = await this.prisma.ticket.update({
+    const ticket = await this.prisma['ticket'].update({
       where: { id: ticketId },
       data: updateData,
     });
 
     // Add timeline event
-    await this.prisma.ticketTimelineEvent.create({
+    await this.prisma['ticketTimelineEvent'].create({
       data: {
         ticketId: ticket.id,
         userId: context.userId,
         eventType: 'updated',
         description: 'Ticket updated by workflow',
         oldValue: {},
-        newValue: updateData as Prisma.InputJsonValue,
+        newValue: updateData as any,
         metadata: {
           workflowNode: nodeKey,
         },
@@ -151,7 +151,7 @@ export class TicketNodeExecutor implements NodeExecutor {
       throw new Error('assignToUserId required for ticket_assign node');
     }
 
-    const ticket = await this.prisma.ticket.update({
+    const ticket = await this.prisma['ticket'].update({
       where: { id: ticketId },
       data: {
         assignedAgentId: assignToUserId,
@@ -159,7 +159,7 @@ export class TicketNodeExecutor implements NodeExecutor {
     });
 
     // Create assignment record
-    await this.prisma.ticketAssignment.create({
+    await this.prisma['ticketAssignment'].create({
       data: {
         ticketId: ticket.id,
         teamMemberId: assignToUserId,
@@ -170,7 +170,7 @@ export class TicketNodeExecutor implements NodeExecutor {
     });
 
     // Add timeline event
-    await this.prisma.ticketTimelineEvent.create({
+    await this.prisma['ticketTimelineEvent'].create({
       data: {
         ticketId: ticket.id,
         userId: context.userId,
@@ -195,7 +195,7 @@ export class TicketNodeExecutor implements NodeExecutor {
       throw new Error('ticketId required for ticket_close node');
     }
 
-    const ticket = await this.prisma.ticket.update({
+    const ticket = await this.prisma['ticket'].update({
       where: { id: ticketId },
       data: {
         status: 'resolved',
@@ -204,7 +204,7 @@ export class TicketNodeExecutor implements NodeExecutor {
     });
 
     // Add timeline event
-    await this.prisma.ticketTimelineEvent.create({
+    await this.prisma['ticketTimelineEvent'].create({
       data: {
         ticketId: ticket.id,
         userId: context.userId,

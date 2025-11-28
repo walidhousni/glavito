@@ -55,7 +55,7 @@ export class FlowService {
     const { tenantId, name, description, nodes = [], edges = [] } = request;
 
     // Create flow
-    const flow = await this.prisma.flow.create({
+    const flow = await this.prisma['flow'].create({
       data: {
         tenantId,
         name,
@@ -65,7 +65,7 @@ export class FlowService {
     });
 
     // Create initial version
-    const version = await this.prisma.flowVersion.create({
+    const version = await this.prisma['flowVersion'].create({
       data: {
         flowId: flow.id,
         version: 1,
@@ -76,7 +76,7 @@ export class FlowService {
 
     // Create nodes
     if (nodes.length > 0) {
-      await this.prisma.flowNode.createMany({
+      await this.prisma['flowNode'].createMany({
         data: nodes.map((node) => ({
           versionId: version.id,
           key: node.key,
@@ -90,7 +90,7 @@ export class FlowService {
 
     // Create edges
     if (edges.length > 0) {
-      await this.prisma.flowEdge.createMany({
+      await this.prisma['flowEdge'].createMany({
         data: edges.map((edge) => ({
           versionId: version.id,
           sourceKey: edge.sourceKey,
@@ -108,7 +108,7 @@ export class FlowService {
   }
 
   async getFlow(flowId: string, tenantId?: string): Promise<any> {
-    const flow = await this.prisma.flow.findFirst({
+    const flow = await this.prisma['flow'].findFirst({
       where: {
         id: flowId,
         ...(tenantId ? { tenantId } : {}),
@@ -158,7 +158,7 @@ export class FlowService {
     }
 
     const [flows, total] = await Promise.all([
-      this.prisma.flow.findMany({
+      this.prisma['flow'].findMany({
         where,
         include: {
           currentVersion: {
@@ -175,7 +175,7 @@ export class FlowService {
         skip: (page - 1) * limit,
         take: limit,
       }),
-      this.prisma.flow.count({ where }),
+      this.prisma['flow'].count({ where }),
     ]);
 
     return { data: flows, total, page, limit };
@@ -186,7 +186,7 @@ export class FlowService {
     request: UpdateFlowRequest,
     tenantId?: string
   ): Promise<any> {
-    const flow = await this.prisma.flow.findFirst({
+    const flow = await this.prisma['flow'].findFirst({
       where: {
         id: flowId,
         ...(tenantId ? { tenantId } : {}),
@@ -198,7 +198,7 @@ export class FlowService {
     }
 
     // Update flow metadata
-    await this.prisma.flow.update({
+    await this.prisma['flow'].update({
       where: { id: flowId },
       data: {
         name: request.name,
@@ -221,7 +221,7 @@ export class FlowService {
     edges: any[]
   ): Promise<any> {
     // Get latest version number
-    const latestVersion = await this.prisma.flowVersion.findFirst({
+    const latestVersion = await this.prisma['flowVersion'].findFirst({
       where: { flowId },
       orderBy: { version: 'desc' },
     });
@@ -229,7 +229,7 @@ export class FlowService {
     const nextVersion = (latestVersion?.version || 0) + 1;
 
     // Create new version
-    const version = await this.prisma.flowVersion.create({
+    const version = await this.prisma['flowVersion'].create({
       data: {
         flowId,
         version: nextVersion,
@@ -240,7 +240,7 @@ export class FlowService {
 
     // Create nodes
     if (nodes.length > 0) {
-      await this.prisma.flowNode.createMany({
+      await this.prisma['flowNode'].createMany({
         data: nodes.map((node) => ({
           versionId: version.id,
           key: node.key,
@@ -254,7 +254,7 @@ export class FlowService {
 
     // Create edges
     if (edges.length > 0) {
-      await this.prisma.flowEdge.createMany({
+      await this.prisma['flowEdge'].createMany({
         data: edges.map((edge) => ({
           versionId: version.id,
           sourceKey: edge.sourceKey,
@@ -271,7 +271,7 @@ export class FlowService {
   }
 
   async publishFlow(flowId: string, tenantId?: string): Promise<any> {
-    const flow = await this.prisma.flow.findFirst({
+    const flow = await this.prisma['flow'].findFirst({
       where: {
         id: flowId,
         ...(tenantId ? { tenantId } : {}),
@@ -291,13 +291,13 @@ export class FlowService {
     const latestVersion = flow.versions[0];
 
     // Mark version as published
-    await this.prisma.flowVersion.update({
+    await this.prisma['flowVersion'].update({
       where: { id: latestVersion.id },
       data: { isPublished: true },
     });
 
     // Update flow to point to this version and set as published
-    await this.prisma.flow.update({
+    await this.prisma['flow'].update({
       where: { id: flowId },
       data: {
         currentVersionId: latestVersion.id,
@@ -309,7 +309,7 @@ export class FlowService {
   }
 
   async deleteFlow(flowId: string, tenantId?: string): Promise<void> {
-    const flow = await this.prisma.flow.findFirst({
+    const flow = await this.prisma['flow'].findFirst({
       where: {
         id: flowId,
         ...(tenantId ? { tenantId } : {}),
@@ -320,7 +320,7 @@ export class FlowService {
       throw new NotFoundException(`Flow ${flowId} not found`);
     }
 
-    await this.prisma.flow.delete({
+    await this.prisma['flow'].delete({
       where: { id: flowId },
     });
 
@@ -329,10 +329,10 @@ export class FlowService {
 
   async getFlowStatistics(tenantId: string): Promise<any> {
     const [totalFlows, publishedFlows, totalRuns, recentRuns] = await Promise.all([
-      this.prisma.flow.count({ where: { tenantId } }),
-      this.prisma.flow.count({ where: { tenantId, status: 'published' } }),
-      this.prisma.flowRun.count({ where: { tenantId } }),
-      this.prisma.flowRun.findMany({
+      this.prisma['flow'].count({ where: { tenantId } }),
+      this.prisma['flow'].count({ where: { tenantId, status: 'published' } }),
+      this.prisma['flowRun'].count({ where: { tenantId } }),
+      this.prisma['flowRun'].findMany({
         where: { tenantId },
         orderBy: { startedAt: 'desc' },
         take: 10,
@@ -344,11 +344,11 @@ export class FlowService {
       }),
     ]);
 
-    const successfulRuns = await this.prisma.flowRun.count({
+    const successfulRuns = await this.prisma['flowRun'].count({
       where: { tenantId, status: 'completed' },
     });
 
-    const failedRuns = await this.prisma.flowRun.count({
+    const failedRuns = await this.prisma['flowRun'].count({
       where: { tenantId, status: 'failed' },
     });
 
@@ -360,7 +360,7 @@ export class FlowService {
       successfulRuns,
       failedRuns,
       successRate: totalRuns > 0 ? (successfulRuns / totalRuns) * 100 : 0,
-      recentRuns: recentRuns.map((run) => ({
+      recentRuns: recentRuns.map((run: any) => ({
         id: run.id,
         flowName: run.flow.name,
         status: run.status,
@@ -371,7 +371,7 @@ export class FlowService {
   }
 
   async listFlowTemplates(tenantId?: string): Promise<any[]> {
-    const templates = await this.prisma.flowTemplate.findMany({
+    const templates = await this.prisma['flowTemplate'].findMany({
       where: {
         OR: [
           { tenantId },
@@ -393,7 +393,7 @@ export class FlowService {
     customDescription?: string
   ): Promise<any> {
     // First, try database templates
-    const template = await this.prisma.flowTemplate.findFirst({
+    const template = await this.prisma['flowTemplate'].findFirst({
       where: {
         id: templateId,
         OR: [

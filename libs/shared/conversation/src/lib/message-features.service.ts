@@ -59,7 +59,7 @@ export class MessageFeaturesService {
     const { messageId, emoji, userId, userName } = dto;
 
     try {
-      const message = await this.prisma.messageAdvanced.findUnique({
+      const message = await this.prisma['messageAdvanced'].findUnique({
         where: { id: messageId },
       });
 
@@ -93,9 +93,9 @@ export class MessageFeaturesService {
       reactions.push(newReaction);
 
       // Update message
-      await this.prisma.messageAdvanced.update({
+      await this.prisma['messageAdvanced'].update({
         where: { id: messageId },
-        data: { reactions: reactions as unknown as Prisma.InputJsonValue },
+        data: { reactions: reactions as unknown as any },
       });
 
       this.logger.log(`Added reaction ${emoji} to message ${messageId} by user ${userId}`);
@@ -134,7 +134,7 @@ export class MessageFeaturesService {
     const { messageId, emoji, userId } = dto;
 
     try {
-      const message = await this.prisma.messageAdvanced.findUnique({
+      const message = await this.prisma['messageAdvanced'].findUnique({
         where: { id: messageId },
       });
 
@@ -153,9 +153,9 @@ export class MessageFeaturesService {
       );
 
       // Update message
-      await this.prisma.messageAdvanced.update({
+      await this.prisma['messageAdvanced'].update({
         where: { id: messageId },
-        data: { reactions: updatedReactions as unknown as Prisma.InputJsonValue },
+        data: { reactions: updatedReactions as unknown as any },
       });
 
       this.logger.log(`Removed reaction ${emoji} from message ${messageId} by user ${userId}`);
@@ -192,7 +192,7 @@ export class MessageFeaturesService {
    * Get all reactions for a message
    */
   async getReactions(messageId: string): Promise<EmojiReaction[]> {
-    const message = await this.prisma.messageAdvanced.findUnique({
+    const message = await this.prisma['messageAdvanced'].findUnique({
       where: { id: messageId },
       select: { reactions: true },
     });
@@ -213,7 +213,7 @@ export class MessageFeaturesService {
     const { conversationId, authorId, content, mentions, isPinned, parentNoteId } = dto;
 
     try {
-      const note = await this.prisma.conversationNote.create({
+      const note = await this.prisma['conversationNote'].create({
         data: {
           conversationId,
           authorId,
@@ -284,7 +284,7 @@ export class MessageFeaturesService {
    */
   async updateInternalNote(noteId: string, dto: UpdateInternalNoteDto) {
     try {
-      const note = await this.prisma.conversationNote.update({
+      const note = await this.prisma['conversationNote'].update({
         where: { id: noteId },
         data: {
           ...(dto.content !== undefined && { content: dto.content }),
@@ -326,7 +326,7 @@ export class MessageFeaturesService {
    */
   async deleteInternalNote(noteId: string) {
     try {
-      const note = await this.prisma.conversationNote.delete({
+      const note = await this.prisma['conversationNote'].delete({
         where: { id: noteId },
       });
 
@@ -371,7 +371,7 @@ export class MessageFeaturesService {
       where['isPinned'] = true;
     }
 
-    const notes = await this.prisma.conversationNote.findMany({
+    const notes = await this.prisma['conversationNote'].findMany({
       where,
       orderBy: [
         { isPinned: 'desc' },
@@ -389,7 +389,7 @@ export class MessageFeaturesService {
     const { emoji, userId, userName } = dto;
 
     try {
-      const note = await this.prisma.conversationNote.findUnique({
+      const note = await this.prisma['conversationNote'].findUnique({
         where: { id: noteId },
       });
 
@@ -420,9 +420,9 @@ export class MessageFeaturesService {
       reactions.push(newReaction);
 
       // Update note
-      await this.prisma.conversationNote.update({
+      await this.prisma['conversationNote'].update({
         where: { id: noteId },
-        data: { reactions: reactions as unknown as Prisma.InputJsonValue },
+        data: { reactions: reactions as unknown as any },
       });
 
       this.logger.log(`Added reaction ${emoji} to note ${noteId} by user ${userId}`);
@@ -440,7 +440,7 @@ export class MessageFeaturesService {
    */
   async toggleNotePin(noteId: string): Promise<boolean> {
     try {
-      const note = await this.prisma.conversationNote.findUnique({
+      const note = await this.prisma['conversationNote'].findUnique({
         where: { id: noteId },
       });
 
@@ -450,7 +450,7 @@ export class MessageFeaturesService {
 
       const newPinnedState = !note.isPinned;
 
-      await this.prisma.conversationNote.update({
+      await this.prisma['conversationNote'].update({
         where: { id: noteId },
         data: { isPinned: newPinnedState },
       });

@@ -55,7 +55,7 @@ export class AnalyticsTrackerNodeExecutor implements NodeExecutor {
       
       const contextExt = context as unknown as Record<string, unknown>;
       
-      const event = await this.prisma.eventStore.create({
+      const event = await this.prisma['eventStore'].create({
         data: {
           eventId,
           eventType,
@@ -63,7 +63,7 @@ export class AnalyticsTrackerNodeExecutor implements NodeExecutor {
           aggregateId: this.getAggregateId(context, config),
           aggregateType: this.getAggregateType(context, config),
           aggregateVersion: 1,
-          eventData: payload as Prisma.InputJsonValue,
+          eventData: payload as any,
           metadata: {
             flowRunId: contextExt['runId'],
             nodeKey: node['key'],
@@ -71,7 +71,7 @@ export class AnalyticsTrackerNodeExecutor implements NodeExecutor {
             tenantId: context.tenantId,
             workflowNodeType: node['kind'],
             timestamp: timestamp.toISOString(),
-          } as Prisma.InputJsonValue,
+          } as any,
           timestamp,
         },
       });

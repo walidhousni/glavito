@@ -57,7 +57,7 @@ export class AudioCallService {
 
     try {
       // Verify conversation exists
-      const conversation = await this.prisma.conversationAdvanced.findUnique({
+      const conversation = await this.prisma['conversationAdvanced'].findUnique({
         where: { id: conversationId },
       });
 
@@ -103,7 +103,7 @@ export class AudioCallService {
       });
 
       // Log event in conversation
-      await this.prisma.conversationEventLog.create({
+      await this.prisma['conversationEventLog'].create({
         data: {
           conversationId,
           eventType: 'call_initiated',
@@ -214,7 +214,7 @@ export class AudioCallService {
       });
 
       // Log event in conversation
-      await this.prisma.conversationEventLog.create({
+      await this.prisma['conversationEventLog'].create({
         data: {
           conversationId: callSession.conversationId,
           eventType: 'call_ended',
@@ -277,7 +277,7 @@ export class AudioCallService {
     });
 
     // Log event
-    await this.prisma.conversationEventLog.create({
+    await this.prisma['conversationEventLog'].create({
       data: {
         conversationId: callSession.conversationId,
         eventType: 'call_declined',
@@ -326,7 +326,7 @@ export class AudioCallService {
   async saveCallTranscription(callId: string, transcription: string): Promise<void> {
     try {
       // Find the message associated with this call
-      const message = await this.prisma.messageAdvanced.findFirst({
+      const message = await this.prisma['messageAdvanced'].findFirst({
         where: {
           metadata: {
             path: ['callId'],
@@ -336,7 +336,7 @@ export class AudioCallService {
       });
 
       if (message) {
-        await this.prisma.messageAdvanced.update({
+        await this.prisma['messageAdvanced'].update({
           where: { id: message.id },
           data: { transcription },
         });
@@ -360,7 +360,7 @@ export class AudioCallService {
           ? `${callSession.callType === 'audio' ? '📞' : '📹'} Call ended (${callSession.duration}s)`
           : `${callSession.callType === 'audio' ? '📞' : '📹'} Call ${callSession.status}`;
 
-      await this.prisma.messageAdvanced.create({
+      await this.prisma['messageAdvanced'].create({
         data: {
           conversationId: callSession.conversationId,
           senderId: callSession.initiatorId,

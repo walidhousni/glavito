@@ -20,7 +20,7 @@ export class SendMessageNodeExecutor implements NodeExecutor {
     
     if (!conversationId && context.customerId) {
       // Find or create conversation for customer
-      const existingConversation = await this.prisma.conversation.findFirst({
+      const existingConversation = await this.prisma['conversation'].findFirst({
         where: {
           tenantId: context.tenantId,
           customerId: context.customerId,
@@ -36,7 +36,7 @@ export class SendMessageNodeExecutor implements NodeExecutor {
           throw new Error('channelId required to create new conversation');
         }
         
-        const newConv = await this.prisma.conversation.create({
+        const newConv = await this.prisma['conversation'].create({
           data: {
             tenantId: context.tenantId,
             customerId: context.customerId!,
@@ -56,7 +56,7 @@ export class SendMessageNodeExecutor implements NodeExecutor {
     const messageContent = this.replaceVariables(config.message || config.content || '', context.variables);
 
     // Create message in database
-    const message = await this.prisma.message.create({
+    const message = await this.prisma['message'].create({
       data: {
         conversationId,
         senderId: context.userId || 'system',

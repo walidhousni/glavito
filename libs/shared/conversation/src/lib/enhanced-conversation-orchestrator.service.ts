@@ -1337,7 +1337,7 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
     let customer = customerAdvancedRow;
     if (!customer && (conv as any).customerId) {
       try {
-        customer = await this.prisma.customer.findUnique({
+        customer = await this.prisma['customer'].findUnique({
           where: { id: (conv as any).customerId },
           select: {
             id: true,
@@ -1361,7 +1361,7 @@ export class EnhancedConversationOrchestratorService implements OnModuleInit {
     let channel = channelAdvanced;
     if (!channel && (conv as any).channelId) {
       try {
-        channel = await this.prisma.channel.findUnique({
+        channel = await this.prisma['channel'].findUnique({
           where: { id: (conv as any).channelId },
           select: { id: true, name: true, type: true }
         });

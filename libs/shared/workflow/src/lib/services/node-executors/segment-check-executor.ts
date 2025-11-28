@@ -61,7 +61,7 @@ export class SegmentCheckNodeExecutor implements NodeExecutor {
       }
 
       // Get segments
-      const segments = await this.prisma.customerSegment.findMany({
+      const segments = await this.prisma['customerSegment'].findMany({
         where: segmentWhere,
         select: { id: true, name: true, description: true },
       });
@@ -75,10 +75,10 @@ export class SegmentCheckNodeExecutor implements NodeExecutor {
       }
 
       // Check if customer is in any of these segments
-      const memberships = await this.prisma.customerSegmentMembership.findMany({
+      const memberships = await this.prisma['customerSegmentMembership'].findMany({
         where: {
           customerId: context.customerId,
-          segmentId: { in: segments.map(s => s.id) },
+          segmentId: { in: segments.map((s: any) => s.id) },
         },
         include: {
           segment: {
@@ -92,7 +92,7 @@ export class SegmentCheckNodeExecutor implements NodeExecutor {
       });
 
       const inSegment = memberships.length > 0;
-      const matchedSegments = memberships.map(m => ({
+      const matchedSegments = memberships.map((m: any) => ({
         id: m.segment.id,
         name: m.segment.name,
         description: m.segment.description,
@@ -101,7 +101,7 @@ export class SegmentCheckNodeExecutor implements NodeExecutor {
       // Store segment info in context
       context.variables['inSegment'] = inSegment;
       context.variables['matchedSegments'] = matchedSegments;
-      context.variables['segmentNames'] = matchedSegments.map(s => s.name);
+      context.variables['segmentNames'] = matchedSegments.map((s: any) => s.name);
 
       // Determine output path
       const outputPath = inSegment ? 'in_segment' : 'not_in_segment';
@@ -111,7 +111,7 @@ export class SegmentCheckNodeExecutor implements NodeExecutor {
       if (segmentRouting && Array.isArray(segmentRouting) && inSegment) {
         for (const routing of segmentRouting as Array<{ segmentId?: string; segmentName?: string; outputPath: string }>) {
           const matchesSegment = matchedSegments.some(
-            s => s.id === routing.segmentId || s.name === routing.segmentName
+            (s: any) => s.id === routing.segmentId || s.name === routing.segmentName
           );
           if (matchesSegment) {
             return {
@@ -133,7 +133,7 @@ export class SegmentCheckNodeExecutor implements NodeExecutor {
         inSegment,
         matchedSegments,
         segmentCount: matchedSegments.length,
-        checkedSegments: segments.map(s => s.name),
+        checkedSegments: segments.map((s: any) => s.name),
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

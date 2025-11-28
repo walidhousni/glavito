@@ -38,7 +38,7 @@ export class FlowExecutionService {
   ): Promise<any> {
     const startTime = Date.now();
     
-    const flow = await this.prisma.flow.findUnique({
+    const flow = await this.prisma['flow'].findUnique({
       where: { id: flowId },
       include: {
         currentVersion: {
@@ -74,7 +74,7 @@ export class FlowExecutionService {
     }
 
     // Create flow run
-    const run = await this.prisma.flowRun.create({
+    const run = await this.prisma['flowRun'].create({
       data: {
         flowId: flow.id,
         versionId: versionToExecute.id,
@@ -110,7 +110,7 @@ export class FlowExecutionService {
       );
 
       // Update run as completed
-      await this.prisma.flowRun.update({
+      await this.prisma['flowRun'].update({
         where: { id: run.id },
         data: {
           status: 'completed',
@@ -130,7 +130,7 @@ export class FlowExecutionService {
     } catch (error: any) {
       this.logger.error(`Flow execution failed: ${error.message}`, error.stack);
 
-      await this.prisma.flowRun.update({
+      await this.prisma['flowRun'].update({
         where: { id: run.id },
         data: {
           status: 'failed',
@@ -286,7 +286,7 @@ export class FlowExecutionService {
       ? new Date(waitConfig.resumeAt) 
       : new Date(Date.now() + delayMs);
 
-    await this.prisma.flowWait.create({
+    await this.prisma['flowWait'].create({
       data: {
         runId,
         tenantId: context.tenantId,
@@ -307,7 +307,7 @@ export class FlowExecutionService {
     message?: string,
     data?: any
   ): Promise<void> {
-    await this.prisma.flowEvent.create({
+    await this.prisma['flowEvent'].create({
       data: {
         runId,
         nodeKey,
@@ -333,7 +333,7 @@ export class FlowExecutionService {
   }
 
   async getFlowRun(runId: string): Promise<any> {
-    return this.prisma.flowRun.findUnique({
+    return this.prisma['flowRun'].findUnique({
       where: { id: runId },
       include: {
         events: {
@@ -344,7 +344,7 @@ export class FlowExecutionService {
   }
 
   async listFlowRuns(flowId: string, limit = 50): Promise<any[]> {
-    return this.prisma.flowRun.findMany({
+    return this.prisma['flowRun'].findMany({
       where: { flowId },
       orderBy: { startedAt: 'desc' },
       take: limit,

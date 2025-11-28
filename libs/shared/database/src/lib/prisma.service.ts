@@ -102,7 +102,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleInit() {
     try {
-      await this.$connect();
+      await this['$connect']();
       this.logger.log('Successfully connected to database');
     } catch (error) {
       this.logger.error('Failed to connect to database', error);
@@ -112,7 +112,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleDestroy() {
     try {
-      await this.$disconnect();
+      await this['$disconnect']();
       this.logger.log('Successfully disconnected from database');
     } catch (error) {
       this.logger.error('Error disconnecting from database', error);
@@ -123,7 +123,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Execute a transaction with proper typing
    */
   async executeTransaction<T>(fn: (tx: any) => Promise<T>): Promise<T> {
-    return this.$transaction(fn);
+    return this['$transaction'](fn);
   }
 
   /**
@@ -131,7 +131,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    */
   async healthCheck(): Promise<{ status: 'ok' | 'error'; message: string }> {
     try {
-      await this.$queryRaw`SELECT 1`;
+      await (this as any)['$queryRaw']`SELECT 1`;
       return { status: 'ok', message: 'Database connection is healthy' };
     } catch (error: any) {
       return { status: 'error', message: `Database connection failed: ${error.message}` };
@@ -144,15 +144,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async cleanDatabase() {
     if (process.env['NODE_ENV'] === 'test') {
       try {
-        await this.$transaction([
-          this.auditLog.deleteMany(),
-          this.message.deleteMany(),
-          this.conversation.deleteMany(),
-          this.channel.deleteMany(),
-          this.ticket.deleteMany(),
-          this.customer.deleteMany(),
-          this.user.deleteMany(),
-          this.tenant.deleteMany(),
+        await this['$transaction']([
+          this['auditLog'].deleteMany(),
+          this['message'].deleteMany(),
+          this['conversation'].deleteMany(),
+          this['channel'].deleteMany(),
+          this['ticket'].deleteMany(),
+          this['customer'].deleteMany(),
+          this['user'].deleteMany(),
+          this['tenant'].deleteMany(),
         ]);
       } catch (error) {
         this.logger.warn('Error during database cleanup:', error);

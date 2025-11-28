@@ -83,7 +83,7 @@ export class WorkflowEngineService implements OnModuleInit {
     for (const def of defs) {
       const slug = def.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       // 1) Exact template exists by slug -> skip
-      const existingBySlug = await this.prisma.workflowRule.findFirst({
+      const existingBySlug = await this.prisma['workflowRule'].findFirst({
         where: {
           tenantId,
           metadata: { path: ['isTemplate'], equals: true },
@@ -93,17 +93,17 @@ export class WorkflowEngineService implements OnModuleInit {
       if (existingBySlug) continue;
 
       // 2) A rule with the same name exists (maybe created previously without metadata)
-      const existingByName = await this.prisma.workflowRule.findFirst({
+      const existingByName = await this.prisma['workflowRule'].findFirst({
         where: { tenantId, name: def.name }
       });
       if (existingByName) {
         // Mark it as a template and merge essential metadata
         const meta = (existingByName as any).metadata || {};
-        await this.prisma.workflowRule.update({
+        await this.prisma['workflowRule'].update({
           where: { id: existingByName.id },
           data: {
             isActive: false,
-            triggers: ((def.triggers || (existingByName as any).triggers || []) as any) as unknown as Prisma.InputJsonValue,
+            triggers: ((def.triggers || (existingByName as any).triggers || []) as any) as unknown as any,
             metadata: {
               ...meta,
               isTemplate: true,
@@ -124,7 +124,7 @@ export class WorkflowEngineService implements OnModuleInit {
 
       // 3) Create a persisted template (handle race with unique constraint)
       try {
-        await this.prisma.workflowRule.create({
+        await this.prisma['workflowRule'].create({
           data: {
             tenantId,
             name: def.name,
@@ -132,10 +132,10 @@ export class WorkflowEngineService implements OnModuleInit {
             type: 'automation',
             priority: 0,
             isActive: false,
-            conditions: [] as unknown as Prisma.InputJsonValue,
-            actions: [] as unknown as Prisma.InputJsonValue,
-            triggers: (def.triggers || []) as unknown as Prisma.InputJsonValue,
-            schedule: Prisma.DbNull,
+            conditions: [] as unknown as any,
+            actions: [] as unknown as any,
+            triggers: (def.triggers || []) as unknown as any,
+            schedule: null,
             metadata: {
               isTemplate: true,
               templateSlug: slug,
@@ -178,7 +178,7 @@ export class WorkflowEngineService implements OnModuleInit {
     if (!tenantId || !eventType) return;
 
     // Load active workflows for tenant and filter in-memory on triggers
-    const rules = await this.prisma.workflowRule.findMany({
+    const rules = await this.prisma['workflowRule'].findMany({
       where: {
         tenantId,
         isActive: true,
@@ -200,7 +200,7 @@ export class WorkflowEngineService implements OnModuleInit {
 
       // Create execution and run
       try {
-        const execution = await this.prisma.workflowExecution.create({
+        const execution = await this.prisma['workflowExecution'].create({
           data: {
             workflowId: (rule as any).id,
             triggeredBy: event.userId || 'system',
@@ -280,7 +280,7 @@ export class WorkflowEngineService implements OnModuleInit {
    * List workflow templates for a tenant (persisted)
    */
   async listWorkflowTemplates(tenantId: string): Promise<Array<{ slug: string; name: string; description?: string; category?: string; tags?: string[]; nodeCount?: number; triggerTypes?: string[] }>> {
-    const rows = await this.prisma.workflowRule.findMany({
+    const rows = await this.prisma['workflowRule'].findMany({
       where: {
         tenantId,
         metadata: { path: ['isTemplate'], equals: true }
@@ -306,7 +306,7 @@ export class WorkflowEngineService implements OnModuleInit {
    */
   async getTemplateBySlug(tenantId: string, slug: string): Promise<any | null> {
     await this.ensureTemplates(tenantId);
-    const rec = await this.prisma.workflowRule.findFirst({
+    const rec = await this.prisma['workflowRule'].findFirst({
       where: {
         tenantId,
         metadata: { path: ['isTemplate'], equals: true },
@@ -328,7 +328,7 @@ export class WorkflowEngineService implements OnModuleInit {
       await this.validateWorkflowRule(request);
 
       // Create the workflow rule in the database
-      const workflowRule = await this.prisma.workflowRule.create({
+      const workflowRule = await this.prisma['workflowRule'].create({
         data: {
           tenantId: request.tenantId,
           name: request.name,
@@ -336,9 +336,9 @@ export class WorkflowEngineService implements OnModuleInit {
           type: request.type,
           priority: request.priority ?? 0,
           isActive: request.isActive ?? true,
-          conditions: (Array.isArray(request.conditions) ? request.conditions : (request.conditions ? [request.conditions] : [])) as unknown as Prisma.InputJsonValue,
-          actions: (Array.isArray(request.actions) ? request.actions : (request.actions ? [request.actions] : [])) as unknown as Prisma.InputJsonValue,
-          triggers: (Array.isArray(request.triggers) ? request.triggers : (request.triggers ? [request.triggers] : [])) as unknown as Prisma.InputJsonValue,
+          conditions: (Array.isArray(request.conditions) ? request.conditions : (request.conditions ? [request.conditions] : [])) as unknown as any,
+          actions: (Array.isArray(request.actions) ? request.actions : (request.actions ? [request.actions] : [])) as unknown as any,
+          triggers: (Array.isArray(request.triggers) ? request.triggers : (request.triggers ? [request.triggers] : [])) as unknown as any,
           schedule: request.schedule,
           metadata: {
             ...request.metadata,
@@ -384,7 +384,7 @@ export class WorkflowEngineService implements OnModuleInit {
         where.tenantId = tenantId;
       }
 
-      const workflowRule = await this.prisma.workflowRule.findFirst({
+      const workflowRule = await this.prisma['workflowRule'].findFirst({
         where,
         include: {
           executions: {
@@ -441,7 +441,7 @@ export class WorkflowEngineService implements OnModuleInit {
       const skip = (page - 1) * limit;
 
       const [workflowRules, total] = await Promise.all([
-        this.prisma.workflowRule.findMany({
+        this.prisma['workflowRule'].findMany({
           where,
           skip,
           take: limit,
@@ -456,11 +456,11 @@ export class WorkflowEngineService implements OnModuleInit {
             }
           }
         }),
-        this.prisma.workflowRule.count({ where })
+        this.prisma['workflowRule'].count({ where })
       ]);
 
       return {
-        data: workflowRules.map(rule => this.mapToWorkflowRule(rule)),
+        data: workflowRules.map((rule: any) => this.mapToWorkflowRule(rule)),
         total,
         page,
         limit
@@ -495,7 +495,7 @@ export class WorkflowEngineService implements OnModuleInit {
       }
 
       // Update the workflow rule
-      const workflowRule = await this.prisma.workflowRule.update({
+      const workflowRule = await this.prisma['workflowRule'].update({
         where: { id },
         data: {
           ...(request.name && { name: request.name }),
@@ -503,9 +503,9 @@ export class WorkflowEngineService implements OnModuleInit {
           ...(request.type && { type: request.type }),
           ...(request.priority !== undefined && { priority: request.priority }),
           ...(request.isActive !== undefined && { isActive: request.isActive }),
-          ...(request.conditions && { conditions: (Array.isArray(request.conditions) ? request.conditions : [request.conditions]) as unknown as Prisma.InputJsonValue }),
-          ...(request.actions && { actions: (Array.isArray(request.actions) ? request.actions : [request.actions]) as unknown as Prisma.InputJsonValue }),
-          ...(request.triggers && { triggers: (Array.isArray(request.triggers) ? request.triggers : [request.triggers]) as unknown as Prisma.InputJsonValue }),
+          ...(request.conditions && { conditions: (Array.isArray(request.conditions) ? request.conditions : [request.conditions]) as unknown as any }),
+          ...(request.actions && { actions: (Array.isArray(request.actions) ? request.actions : [request.actions]) as unknown as any }),
+          ...(request.triggers && { triggers: (Array.isArray(request.triggers) ? request.triggers : [request.triggers]) as unknown as any }),
           ...(request.schedule !== undefined && { schedule: request.schedule }),
           ...(request.metadata && {
             metadata: {
@@ -549,7 +549,7 @@ export class WorkflowEngineService implements OnModuleInit {
       }
 
       // Delete the workflow rule (this will cascade delete executions)
-      await this.prisma.workflowRule.delete({
+      await this.prisma['workflowRule'].delete({
         where: { id }
       });
 
@@ -592,7 +592,7 @@ export class WorkflowEngineService implements OnModuleInit {
       }
 
       // Create execution record
-      const execution = await this.prisma.workflowExecution.create({
+      const execution = await this.prisma['workflowExecution'].create({
         data: {
           workflowId: id,
           triggeredBy,
@@ -607,7 +607,7 @@ export class WorkflowEngineService implements OnModuleInit {
       });
 
       // Update execution count
-      await this.prisma.workflowRule.update({
+      await this.prisma['workflowRule'].update({
         where: { id },
         data: {
           executionCount: { increment: 1 },
@@ -637,7 +637,7 @@ export class WorkflowEngineService implements OnModuleInit {
    */
   async getWorkflowExecution(id: string, tenantId?: string): Promise<WorkflowExecution | null> {
     try {
-      const execution = await this.prisma.workflowExecution.findFirst({
+      const execution = await this.prisma['workflowExecution'].findFirst({
         where: {
           id,
           ...(tenantId && { workflow: { tenantId } })
@@ -677,7 +677,7 @@ export class WorkflowEngineService implements OnModuleInit {
       const skip = (page - 1) * limit;
 
       const [executions, total] = await Promise.all([
-        this.prisma.workflowExecution.findMany({
+        this.prisma['workflowExecution'].findMany({
           where,
           skip,
           take: limit,
@@ -686,11 +686,11 @@ export class WorkflowEngineService implements OnModuleInit {
             workflow: true
           }
         }),
-        this.prisma.workflowExecution.count({ where })
+        this.prisma['workflowExecution'].count({ where })
       ]);
 
       return {
-        data: executions.map(execution => this.mapToWorkflowExecution(execution)),
+        data: executions.map((execution: any) => this.mapToWorkflowExecution(execution)),
         total,
         page,
         limit
@@ -723,24 +723,24 @@ export class WorkflowEngineService implements OnModuleInit {
         failedExecutions,
         avgExecutionTime
       ] = await Promise.all([
-        this.prisma.workflowRule.count({ where }),
-        this.prisma.workflowRule.count({ where: { ...where, isActive: true } }),
-        this.prisma.workflowExecution.count({
+        this.prisma['workflowRule'].count({ where }),
+        this.prisma['workflowRule'].count({ where: { ...where, isActive: true } }),
+        this.prisma['workflowExecution'].count({
           where: tenantId ? { workflow: { tenantId } } : {}
         }),
-        this.prisma.workflowExecution.count({
+        this.prisma['workflowExecution'].count({
           where: {
             status: ExecutionStatus.COMPLETED,
             ...(tenantId && { workflow: { tenantId } })
           }
         }),
-        this.prisma.workflowExecution.count({
+        this.prisma['workflowExecution'].count({
           where: {
             status: ExecutionStatus.FAILED,
             ...(tenantId && { workflow: { tenantId } })
           }
         }),
-        this.prisma.workflowExecution.aggregate({
+        this.prisma['workflowExecution'].aggregate({
           where: {
             duration: { not: null },
             ...(tenantId && { workflow: { tenantId } })
@@ -768,7 +768,7 @@ export class WorkflowEngineService implements OnModuleInit {
    */
   private async validateWorkflowRule(request: CreateWorkflowRuleRequest, ignoreId?: string): Promise<void> {
     // Check for duplicate names within tenant
-    const existing = await this.prisma.workflowRule.findFirst({
+    const existing = await this.prisma['workflowRule'].findFirst({
       where: {
         tenantId: request.tenantId,
         name: request.name,
@@ -956,7 +956,7 @@ export class WorkflowEngineService implements OnModuleInit {
     newValues: any
   ): Promise<void> {
     try {
-      await this.prisma.auditLog.create({
+      await this.prisma['auditLog'].create({
         data: {
           tenantId,
           action,
