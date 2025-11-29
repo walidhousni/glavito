@@ -61,8 +61,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy the built application
-COPY --from=builder --chown=nextjs:nodejs /app/dist/apps/admin-dashboard/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/dist/apps/admin-dashboard/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/admin-dashboard/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/admin-dashboard/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/admin-dashboard/public ./public
 
 USER nextjs
